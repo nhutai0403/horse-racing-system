@@ -1,0 +1,52 @@
+TÓM TẮT LUỒNG HỆ THỐNG QUẢN LÝ ĐUA NGỰA
+1. Tổng quan Role trong hệ thống
+1. Spectator (Người xem)
+Role mặc định khi đăng ký tài khoản.
+Không cần Admin duyệt.
+Có thể:
+Xem giải đấu, cuộc đua, kết quả.
+Xem giả lập đua ngựa.
+Chat trong phòng đua.
+Cá cược.
+Nạp/Rút tiền.
+Có thể gửi yêu cầu nâng cấp thành:
+Horse Owner
+Jockey
+2. Horse Owner (Chủ ngựa)
+
+Sau khi gửi form và được Admin duyệt:
+
+Quản lý thông tin ngựa.
+Đăng ký ngựa và Jockey  tham gia giải đấu.
+gửi lời mời kết bạn cho cho Jockey
+( khi nào Jockey đồng ý thì mới có thể đăng kí tham gia giải đấu) 
+Xác nhận ngựa tham gia trước giờ đua.
+Theo dõi kết quả, bảng xếp hạng, tiền thưởng.
+Quản lý ví tiền.
+3. Jockey 
+
+Sau khi gửi hồ sơ và được Admin duyệt:
+
+Tìm và gửi lời mời kết bạn Horse Owner
+Nhận hoặc từ chối lời mời từ Horse Owner.
+Tham gia đua.
+Theo dõi lịch đua và tiền thưởng.
+Quản lý ví tiền.
+4. Race Referee (Trọng tài)
+Kiểm tra cân nặng Jockey trước đua.
+Kiểm tra điều kiện sân.
+Điều khiển trạng thái cuộc đua.
+bát đầu/ dung cuộc đua
+Gắn cờ vi phạm cho ngựa.
+cho account vi phạm vào Blacklist.
+quản lí tiền
+5. Admin
+Duyệt tài khoản nâng cấp.
+Tạo và quản lý giải đấu.
+Set phần thưởng, thời gian, luật chơi.
+Điều hành toàn bộ cuộc đua.
+quản lí tiền ví dụ thua cuộc của spectator
+Quản lý blacklist.
+
+
+hệ thống giả lập 1 cuộc đua ngựa 
