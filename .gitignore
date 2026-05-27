@@ -6,6 +6,7 @@ backend/*.war
 
 # Node/React
 frontend/node_modules/
+frontend/package-lock.json
 frontend/dist/
 frontend/dist-ssr/
 frontend/*.local
