@@ -1,0 +1,32 @@
+:root {
+  /* Colors */
+  --color-primary: #0b4f32;           /* Forest Green (Picker Top) */
+  --color-primary-light: rgba(11, 79, 50, 0.1);
+  --color-accent: #fcd34d;            /* Golden Yellow (Mockup Button / Picker Bottom-Left) */
+  --color-accent-hover: #0b4f32;      /* Primary Green on hover */
+  --color-text-main: #2d3748;         /* Dark Slate */
+  --color-text-muted: #718096;        /* Muted Gray */
+  --color-text-placeholder: #a0aec0;  /* Placeholder Gray */
+  --color-bg-light: #ffffff;
+  --color-bg-input: #f0f5f2;          /* Light Mint Grey (Picker Bottom-Right) */
+  --color-border: #edf2f7;            /* Thin Border */
+  --color-gold: #cca028;              /* Gold for links like Forgot? */
+  --color-gold-border: #b88d1d;
+
+  /* Fonts */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  color: var(--color-text-main);
+  background-color: var(--color-bg-light);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

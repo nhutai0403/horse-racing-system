@@ -1,0 +1,62 @@
+.input-group {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--color-text-placeholder);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.input-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.input-field {
+  width: 100%;
+  background-color: var(--color-bg-input);
+  color: var(--color-text-main);
+  border: 2px solid transparent;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.input-field::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.input-field:focus {
+  background-color: var(--color-bg-light);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(0, 51, 34, 0.1);
+}
+
+.input-field.has-icon {
+  padding-left: 2.5rem;
+}
