@@ -31,17 +31,20 @@ public class User {
     @Column(name = "full_name", nullable = false, length = 255)
     private String fullName;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Role role;
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'SPECTATOR'")
+    private Role role = Role.SPECTATOR;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private AuthProvider provider;
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'LOCAL'")
+    private AuthProvider provider = AuthProvider.LOCAL;
 
     @Column(name = "provider_id", length = 255)
     private String providerId;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean enabled = true;
 
