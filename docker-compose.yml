@@ -4,7 +4,7 @@ services:
     container_name: horse-racing-db
     restart: always
     environment:
-      SA_PASSWORD: "123456"
+      SA_PASSWORD: "HorseRacing@123"
       ACCEPT_EULA: "Y"
       MSSQL_PID: "Developer"
     ports:
@@ -15,19 +15,32 @@ services:
       test:
         [
           "CMD",
-          "/opt/mssql-tools/bin/sqlcmd",
+          "/opt/mssql-tools18/bin/sqlcmd",
           "-S",
           "localhost",
           "-U",
           "sa",
           "-P",
-          "123456",
+          "HorseRacing@123",
+          "-C",
           "-Q",
           "SELECT 1",
         ]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: horse-racing-db-init
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "HorseRacing@123" -C -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'horseracing') CREATE DATABASE [horseracing]"
 
   backend:
     build: ./backend
@@ -40,10 +53,12 @@ services:
       DB_PORT: 1433
       DB_NAME: horseracing
       DB_USER: sa
-      DB_PASSWORD: 123456
+      DB_PASSWORD: "HorseRacing@123"
     depends_on:
       db:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
 
   frontend:
     build: ./frontend

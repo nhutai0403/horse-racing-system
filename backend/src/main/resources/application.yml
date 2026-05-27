@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=HorseRacingDB;encrypt=true;trustServerCertificate=true;
-    username: sa
-    password: 123456
+    url: jdbc:sqlserver://${DB_HOST:localhost}:${DB_PORT:1433};databaseName=${DB_NAME:HorseRacingDB};encrypt=true;trustServerCertificate=true;
+    username: ${DB_USER:sa}
+    password: ${DB_PASSWORD:HorseRacing@123}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     hibernate:
@@ -21,8 +21,8 @@ app:
     # Base64-encoded 256-bit secret key for HMAC-SHA256
     # IMPORTANT: Change this in production and use environment variables!
     secret: dGhpc0lzQVZlcnlMb25nU2VjcmV0S2V5Rm9ySldUU2lnbmluZ1B1cnBvc2VzMTIzNDU2Nzg5MA==
-    access-token-expiration: 900000       # 15 minutes (in milliseconds)
-    refresh-token-expiration: 604800000   # 7 days (in milliseconds)
+    access-token-expiration: 900000 # 15 minutes (in milliseconds)
+    refresh-token-expiration: 604800000 # 7 days (in milliseconds)
   google:
     # Replace with your actual Google OAuth2 Client ID and Secret
     # Get these from: https://console.cloud.google.com/apis/credentials
