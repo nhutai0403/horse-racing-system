@@ -1,9 +1,11 @@
 import { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { loginAPI, loginWithGoogleAPI } from '../services/auth';
 
 export function useLogin() {
   const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
   
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -43,7 +45,7 @@ export function useLogin() {
     try {
       const user = await loginAPI(identifier, password);
       login(user);
-      alert(`Login success! Welcome, ${user.name}`);
+      navigate('/');
     } catch (err) {
       setError(err.message || 'An error occurred during login. Please try again.');
     } finally {
@@ -58,7 +60,7 @@ export function useLogin() {
     try {
       const user = await loginWithGoogleAPI();
       login(user);
-      alert(`Login success with Google! Welcome, ${user.name}`);
+      navigate('/');
     } catch (err) {
       setError(err.message || 'Google login failed. Please try again.');
     } finally {
