@@ -46,10 +46,11 @@ public class AuthService {
         }
 
         User user = User.builder()
+                .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .role(Role.SPECTATOR)
+                .role(request.getRole() != null ? request.getRole() : Role.SPECTATOR)
                 .provider(AuthProvider.LOCAL)
                 .enabled(true)
                 .build();
@@ -105,6 +106,7 @@ public class AuthService {
             User user = userRepository.findByEmail(email)
                     .orElseGet(() -> {
                         User newUser = User.builder()
+                                .username(email)
                                 .email(email)
                                 .fullName(name != null ? name : email)
                                 .role(Role.SPECTATOR)

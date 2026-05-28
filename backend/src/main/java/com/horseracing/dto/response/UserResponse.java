@@ -15,7 +15,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class UserResponse {
-    private Long id;
+    private Integer id;
+    private String username;
     private String email;
     private String fullName;
     private Role role;
@@ -26,6 +27,7 @@ public class UserResponse {
     public static UserResponse fromEntity(User user) {
         return UserResponse.builder()
                 .id(user.getId())
+                .username(user.getUsername())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole())

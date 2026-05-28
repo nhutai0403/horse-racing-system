@@ -20,7 +20,10 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
+
+    @Column(nullable = false, unique = true, length = 255)
+    private String username;
 
     @Column(nullable = false, unique = true, length = 255)
     private String email;
@@ -45,7 +48,7 @@ public class User {
     private String providerId;
 
     @Builder.Default
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "bit default 1")
     private boolean enabled = true;
 
     @CreationTimestamp
