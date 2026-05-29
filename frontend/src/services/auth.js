@@ -11,6 +11,7 @@ const MOCK_USERS = [
       email: 'admin@gmail.com',
       phone: '0987654321',
       walletBalance: '$15,000.00',
+      role: 'ADMIN',
     }
   },
   {
@@ -21,6 +22,7 @@ const MOCK_USERS = [
       email: 'racer@gmail.com',
       phone: '0987654321',
       walletBalance: '$2,500.00',
+      role: 'SPECTATOR',
     }
   }
 ];
@@ -51,6 +53,7 @@ export function loginWithGoogleAPI() {
         email: 'googleuser@gmail.com',
         phone: 'N/A',
         walletBalance: '$9,999.00',
+        role: 'SPECTATOR',
       });
     }, 1200); // 1.2s delay
   });
@@ -79,6 +82,7 @@ export function signupAPI(name, email, password) {
         email: trimmedEmail,
         phone: 'N/A',
         walletBalance: '$0.00',
+        role: 'SPECTATOR',
       };
       
       // Save new user temporarily in MOCK_USERS for active session login
