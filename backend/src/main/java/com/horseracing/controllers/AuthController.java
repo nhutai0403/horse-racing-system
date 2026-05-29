@@ -29,8 +29,7 @@ public class AuthController {
             AuthResponse response = authService.register(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(new ErrorResponse(400, e.getMessage()));
+            return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
         }
     }
 
@@ -49,8 +48,8 @@ public class AuthController {
     }
 
     /**
-     * Login or register with Google OAuth2.
-     * Receives the Google ID token (credential) from the frontend.
+     * Login or register with Google OAuth2. Receives the Google ID token (credential) from the
+     * frontend.
      */
     @PostMapping("/google")
     public ResponseEntity<?> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
@@ -58,8 +57,8 @@ public class AuthController {
             AuthResponse response = authService.googleLogin(request);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ErrorResponse(401, "Google authentication failed: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    new ErrorResponse(401, "Google authentication failed: " + e.getMessage()));
         }
     }
 
@@ -86,8 +85,7 @@ public class AuthController {
             authService.logout(request);
             return ResponseEntity.ok().body("{\"message\": \"Logged out successfully\"}");
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(new ErrorResponse(400, e.getMessage()));
+            return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
         }
     }
 
