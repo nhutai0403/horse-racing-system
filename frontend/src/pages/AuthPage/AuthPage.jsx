@@ -1,4 +1,3 @@
-import React from 'react';
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
 import horseImage from '../../assets/horse_racing_statue.png';

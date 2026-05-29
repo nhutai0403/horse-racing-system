@@ -1,25 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useContext } from 'react';
 import { Navbar, Nav, Container, Badge, NavDropdown } from 'react-bootstrap';
 import { FiBell, FiSettings, FiLogOut } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../contexts/AuthContext';
 
 const Header = () => {
-  const [username, setUsername] = useState('');
-
-  useEffect(() => {
-    // Hàm này chạy mỗi khi component được nạp (mount)
-    const checkUser = () => {
-      const savedUser = localStorage.getItem('username');
-      if (savedUser) {
-        setUsername(savedUser);
-      }
-    };
-
-    checkUser();
-    
-    // Lắng nghe sự kiện thay đổi storage (để cập nhật ngay khi vừa login xong)
-    window.addEventListener('storage', checkUser);
-    return () => window.removeEventListener('storage', checkUser);
-  }, []);
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const username = user?.fullName || user?.name || user?.username || user?.email || '';
 
   // Logic xử lý Avatar: Lấy chữ cái đầu của tên
   // Nếu là "Admin" -> "A", nếu là "Nguyễn Văn An" -> "N"
@@ -29,9 +17,12 @@ const Header = () => {
   };
 
   const handleLogout = () => {
+    logout();
     localStorage.removeItem('username');
     localStorage.removeItem('token'); // Nếu bạn có dùng token
-    window.location.href = '/login'; // Chuyển hướng về trang login
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    navigate('/login', { replace: true });
   };
 
   return (
