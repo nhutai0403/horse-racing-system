@@ -44,23 +44,23 @@ public class AuthService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email is already registered");
         }
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Username is already taken");
+        }
 
-        User user = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
+        User user = User.builder().username(request.getUsername()).email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
                 .role(request.getRole() != null ? request.getRole() : Role.SPECTATOR)
-                .provider(AuthProvider.LOCAL)
-                .enabled(true)
-                .build();
+                .provider(AuthProvider.LOCAL).enabled(true).build();
 
         user = userRepository.save(user);
 
         String accessToken = jwtUtils.generateAccessToken(user);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-        return new AuthResponse(accessToken, refreshToken.getToken(), UserResponse.fromEntity(user));
+        return new AuthResponse(accessToken, refreshToken.getToken(),
+                UserResponse.fromEntity(user));
     }
 
     /**
@@ -68,8 +68,7 @@ public class AuthService {
      */
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -77,21 +76,21 @@ public class AuthService {
         String accessToken = jwtUtils.generateAccessToken(user);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-        return new AuthResponse(accessToken, refreshToken.getToken(), UserResponse.fromEntity(user));
+        return new AuthResponse(accessToken, refreshToken.getToken(),
+                UserResponse.fromEntity(user));
     }
 
     /**
-     * Authenticate or register a user via Google OAuth2.
-     * Receives the Google ID token (credential) from frontend, verifies it,
-     * and either finds or creates a user.
+     * Authenticate or register a user via Google OAuth2. Receives the Google ID token (credential)
+     * from frontend, verifies it, and either finds or creates a user.
      */
     @Transactional
     public AuthResponse googleLogin(GoogleLoginRequest request) {
         try {
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                    new NetHttpTransport(), GsonFactory.getDefaultInstance())
-                    .setAudience(Collections.singletonList(googleClientId))
-                    .build();
+            GoogleIdTokenVerifier verifier =
+                    new GoogleIdTokenVerifier.Builder(new NetHttpTransport(),
+                            GsonFactory.getDefaultInstance())
+                                    .setAudience(Collections.singletonList(googleClientId)).build();
 
             GoogleIdToken idToken = verifier.verify(request.getCredential());
             if (idToken == null) {
@@ -103,19 +102,12 @@ public class AuthService {
             String name = (String) payload.get("name");
             String googleId = payload.getSubject();
 
-            User user = userRepository.findByEmail(email)
-                    .orElseGet(() -> {
-                        User newUser = User.builder()
-                                .username(email)
-                                .email(email)
-                                .fullName(name != null ? name : email)
-                                .role(Role.SPECTATOR)
-                                .provider(AuthProvider.GOOGLE)
-                                .providerId(googleId)
-                                .enabled(true)
-                                .build();
-                        return userRepository.save(newUser);
-                    });
+            User user = userRepository.findByEmail(email).orElseGet(() -> {
+                User newUser = User.builder().username(email).email(email)
+                        .fullName(name != null ? name : email).role(Role.SPECTATOR)
+                        .provider(AuthProvider.GOOGLE).providerId(googleId).enabled(true).build();
+                return userRepository.save(newUser);
+            });
 
             // If user exists with LOCAL provider, update to link Google account
             if (user.getProvider() == AuthProvider.LOCAL && user.getProviderId() == null) {
@@ -126,7 +118,8 @@ public class AuthService {
             String accessToken = jwtUtils.generateAccessToken(user);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-            return new AuthResponse(accessToken, refreshToken.getToken(), UserResponse.fromEntity(user));
+            return new AuthResponse(accessToken, refreshToken.getToken(),
+                    UserResponse.fromEntity(user));
 
         } catch (Exception e) {
             throw new RuntimeException("Google authentication failed: " + e.getMessage());
@@ -150,11 +143,8 @@ public class AuthService {
         refreshTokenService.revokeToken(request.getRefreshToken());
         RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
 
-        return AuthResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken.getToken())
-                .tokenType("Bearer")
-                .build();
+        return AuthResponse.builder().accessToken(newAccessToken)
+                .refreshToken(newRefreshToken.getToken()).tokenType("Bearer").build();
     }
 
     /**

@@ -23,15 +23,11 @@ public class JwtUtils {
      * Generate an access token for the given user.
      */
     public String generateAccessToken(User user) {
-        return Jwts.builder()
-                .subject(user.getEmail())
-                .claim("role", user.getRole().name())
-                .claim("userId", user.getId())
-                .claim("fullName", user.getFullName())
+        return Jwts.builder().subject(user.getEmail()).claim("role", user.getRole().name())
+                .claim("userId", user.getId()).claim("fullName", user.getFullName())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
-                .signWith(getSigningKey())
-                .compact();
+                .signWith(getSigningKey()).compact();
     }
 
     /**
@@ -54,10 +50,7 @@ public class JwtUtils {
     }
 
     private Claims getClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
+        return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token)
                 .getPayload();
     }
 

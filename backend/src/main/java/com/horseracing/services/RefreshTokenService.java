@@ -22,17 +22,15 @@ public class RefreshTokenService {
     private long refreshTokenExpiration;
 
     /**
-     * Create a new refresh token for the user.
-     * Revokes any existing non-revoked tokens for the user first.
+     * Create a new refresh token for the user. Revokes any existing non-revoked tokens for the user
+     * first.
      */
     @Transactional
     public RefreshToken createRefreshToken(User user) {
-        RefreshToken refreshToken = RefreshToken.builder()
-                .user(user)
-                .token(UUID.randomUUID().toString())
-                .expiryDate(Instant.now().plusMillis(refreshTokenExpiration))
-                .revoked(false)
-                .build();
+        RefreshToken refreshToken =
+                RefreshToken.builder().user(user).token(UUID.randomUUID().toString())
+                        .expiryDate(Instant.now().plusMillis(refreshTokenExpiration)).revoked(false)
+                        .build();
 
         return refreshTokenRepository.save(refreshToken);
     }

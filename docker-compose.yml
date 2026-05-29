@@ -36,11 +36,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./database/init/HorseRacingDB.sql:/init.sql
     entrypoint:
       - /bin/bash
       - -c
       - |
         /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "HorseRacing@123" -C -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'horseracing') CREATE DATABASE [horseracing]"
+        /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "HorseRacing@123" -C -d horseracing -i /init.sql
 
   backend:
     build: ./backend

@@ -25,15 +25,9 @@ public class UserResponse {
     private LocalDateTime createdAt;
 
     public static UserResponse fromEntity(User user) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .role(user.getRole())
-                .provider(user.getProvider())
-                .enabled(user.isEnabled())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return UserResponse.builder().id(user.getId()).username(user.getUsername())
+                .email(user.getEmail()).fullName(user.getFullName()).role(user.getRole())
+                .provider(user.getProvider()).enabled(user.isEnabled())
+                .createdAt(user.getCreatedAt()).build();
     }
 }
