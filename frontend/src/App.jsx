@@ -1,10 +1,11 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet} from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import AuthPage from './pages/AuthPage/AuthPage';
 import Home from './pages/Home/Home'; 
+import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import Header from './components/Header/Header'; 
 import Footer from './components/Footer/Footer';
+import ProtectedRoute from './routes/ProtectedRoute';
 
 const MainLayout = () => {
   return (
@@ -29,9 +30,24 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<MainLayout />}>
-            <Route path="/" element={<Home />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute allowedRoles={["SPECTATOR", "ADMIN", "HORSE_OWNER"]}>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/home" element={<Navigate to="/" replace />} />
           </Route>
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/login" element={<AuthPage view="login" />} />
           <Route path="/signup" element={<AuthPage view="signup" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
