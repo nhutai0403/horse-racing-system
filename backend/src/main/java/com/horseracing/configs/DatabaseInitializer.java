@@ -43,22 +43,22 @@ public class DatabaseInitializer implements CommandLineRunner {
             log.info("Created default administrator account: admin@gmail.com / Admin@12345");
         }
 
-        // Initialize Race Tracks
+        // Initialize Race Tracks (Updated to 10 world-famous racecourses)
         if (raceTrackRepository.count() == 0) {
             List<RaceTrack> tracks = List.of(
-                    RaceTrack.builder().name("Sân Phú Thọ").location("Thành phố Hồ Chí Minh").surfaceCondition("EXCELLENT").build(),
-                    RaceTrack.builder().name("Sân Đại Nam").location("Bình Dương").surfaceCondition("EXCELLENT").build(),
-                    RaceTrack.builder().name("Sân Happy Land").location("Long An").surfaceCondition("GOOD").build(),
-                    RaceTrack.builder().name("Sân đua Hà Nội").location("Hà Nội").surfaceCondition("GOOD").build(),
-                    RaceTrack.builder().name("Sân đua Đà Nẵng").location("Đà Nẵng").surfaceCondition("GOOD").build(),
-                    RaceTrack.builder().name("Sân đua Nha Trang").location("Khánh Hòa").surfaceCondition("EXCELLENT").build(),
-                    RaceTrack.builder().name("Sân đua Vũng Tàu").location("Bà Rịa - Vũng Tàu").surfaceCondition("FAIR").build(),
-                    RaceTrack.builder().name("Sân đua Cần Thơ").location("Cần Thơ").surfaceCondition("FAIR").build(),
-                    RaceTrack.builder().name("Sân đua Hải Phòng").location("Hải Phòng").surfaceCondition("GOOD").build(),
-                    RaceTrack.builder().name("Sân đua Đà Lạt").location("Lâm Đồng").surfaceCondition("EXCELLENT").build()
+                    RaceTrack.builder().name("Churchill Downs").location("Kentucky, USA").surfaceCondition("EXCELLENT").build(),
+                    RaceTrack.builder().name("Ascot Racecourse").location("Berkshire, UK").surfaceCondition("EXCELLENT").build(),
+                    RaceTrack.builder().name("Meydan Racecourse").location("Dubai, UAE").surfaceCondition("EXCELLENT").build(),
+                    RaceTrack.builder().name("Tokyo Racecourse").location("Tokyo, Japan").surfaceCondition("GOOD").build(),
+                    RaceTrack.builder().name("Longchamp Racecourse").location("Paris, France").surfaceCondition("EXCELLENT").build(),
+                    RaceTrack.builder().name("Flemington Racecourse").location("Melbourne, Australia").surfaceCondition("GOOD").build(),
+                    RaceTrack.builder().name("Saratoga Race Course").location("New York, USA").surfaceCondition("GOOD").build(),
+                    RaceTrack.builder().name("Sha Tin Racecourse").location("Hong Kong").surfaceCondition("EXCELLENT").build(),
+                    RaceTrack.builder().name("Epsom Downs").location("Surrey, UK").surfaceCondition("FAIR").build(),
+                    RaceTrack.builder().name("Chantilly Racecourse").location("Chantilly, France").surfaceCondition("GOOD").build()
             );
             raceTrackRepository.saveAll(tracks);
-            log.info("Initialized 10 default race tracks.");
+            log.info("Initialized 10 world-famous race tracks.");
         }
 
         // Initialize Horse Breeds
