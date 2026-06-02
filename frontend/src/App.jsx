@@ -37,6 +37,17 @@ function App() {
           <Route path="/signup" element={<AuthPage view="signup" />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
+          {/* Standalone Horse Owner Dashboard Suite */}
+          <Route
+            path="/owner"
+            element={
+              <ProtectedRoute allowedRoles={["HORSE_OWNER"]}>
+                <HorseOwnerPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/horseowner/dashboard" element={<Navigate to="/owner" replace />} />
+
           {/* Protected Routes enclosed in MainLayout */}
           <Route element={<MainLayout />}>
             {/* Landing Dashboard */}
@@ -60,17 +71,6 @@ function App() {
               }
             />
             <Route path="/admin/dashboard" element={<Navigate to="/admin" replace />} />
-
-            {/* Horse Owner Dashboard */}
-            <Route
-              path="/owner"
-              element={
-                <ProtectedRoute allowedRoles={["HORSE_OWNER"]}>
-                  <HorseOwnerPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/horseowner/dashboard" element={<Navigate to="/owner" replace />} />
 
             {/* Jockey Dashboard */}
             <Route

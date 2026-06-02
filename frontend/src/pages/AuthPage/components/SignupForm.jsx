@@ -16,6 +16,8 @@ export default function SignupForm() {
     handleUsernameChange,
     handleNameChange,
     handleEmailChange,
+    role,
+    handleRoleChange,
     handlePasswordChange,
     handleAgreeTermsChange,
     handleSubmit,
@@ -69,6 +71,8 @@ export default function SignupForm() {
             </svg>
           }
         />
+
+
 
         <Input
           type="password"

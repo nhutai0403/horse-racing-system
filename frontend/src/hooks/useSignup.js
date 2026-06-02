@@ -11,6 +11,7 @@ export function useSignup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('SPECTATOR');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -32,6 +33,11 @@ export function useSignup() {
 
   const handlePasswordChange = (e) => {
     setPassword(e.target.value);
+    if (error) setError(null);
+  };
+
+  const handleRoleChange = (e) => {
+    setRole(e.target.value);
     if (error) setError(null);
   };
 
@@ -88,17 +94,20 @@ export function useSignup() {
     setError(null);
 
     try {
-      // Connect to the real backend register API. Role is hardcoded to SPECTATOR.
       const authData = await signupAPI({
         username: username.trim(),
         fullName: name.trim(),
         email: email.trim(),
         password,
-        role: 'SPECTATOR',
+        role,
       });
       
       login(authData);
-      navigate('/spectator'); // Registered users default to SPECTATOR dashboard
+      if (role === 'HORSE_OWNER') navigate('/owner');
+      else if (role === 'JOCKEY') navigate('/jockey');
+      else if (role === 'ADMIN') navigate('/admin');
+      else if (role === 'RACE_REFEREE') navigate('/referee');
+      else navigate('/spectator');
     } catch (err) {
       setError(err.message || 'An error occurred during sign up. Please try again.');
     } finally {
@@ -130,6 +139,7 @@ export function useSignup() {
     name,
     email,
     password,
+    role,
     agreeTerms,
     loading,
     error,
@@ -137,6 +147,7 @@ export function useSignup() {
     handleNameChange,
     handleEmailChange,
     handlePasswordChange,
+    handleRoleChange,
     handleAgreeTermsChange,
     handleSubmit,
     handleGoogleSuccess,
