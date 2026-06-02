@@ -1,0 +1,8 @@
+tuần 4
+tích hợp AI
+hỏi lại về các sân đua/ đường đua
+notifaction
+luồng horse_owner
+luồng jockey
+---------------------------
+tuần 5
