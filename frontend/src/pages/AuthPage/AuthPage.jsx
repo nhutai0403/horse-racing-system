@@ -28,7 +28,7 @@ export default function AuthPage({ view }) {
 
   return (
     <div className={`auth-container ${isLogin ? 'mode-login' : 'mode-signup'}`}>
-      
+
       {/* Background Forms Container - Forms stay statically in their halves */}
       <div className="auth-forms-container">
         {/* Left Side Form Column - Login */}
@@ -58,18 +58,18 @@ export default function AuthPage({ view }) {
       <div className="auth-overlay-panel">
         <div className="auth-overlay-content-wrapper">
           {/* Background Image for Login */}
-          <img 
-            src={horseImage} 
-            alt="Premium Horse Statue" 
+          <img
+            src={horseImage}
+            alt="Premium Horse Statue"
             className={`auth-bg-image login-bg ${isLogin ? 'active' : ''}`}
           />
           {/* Background Image for Signup */}
-          <img 
-            src={horseSignupImage} 
-            alt="Dynamic Horse Racing" 
+          <img
+            src={horseSignupImage}
+            alt="Dynamic Horse Racing"
             className={`auth-bg-image signup-bg ${!isLogin ? 'active' : ''}`}
           />
-          
+
           <div className="auth-gradient-overlay"></div>
           <div className="auth-image-content">
             <div className="badge-live">
