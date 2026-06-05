@@ -10,6 +10,8 @@ import com.horseracing.repositories.HorseOwnerProfileRepository;
 import com.horseracing.repositories.JockeyProfileRepository;
 import com.horseracing.repositories.UserConnectionRepository;
 import com.horseracing.repositories.UserRepository;
+import com.horseracing.repositories.UpgradeRequestRepository;
+import com.horseracing.entities.UpgradeRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,7 @@ public class UserConnectionService {
     private final UserRepository userRepository;
     private final JockeyProfileRepository jockeyProfileRepository;
     private final HorseOwnerProfileRepository horseOwnerProfileRepository;
+    private final UpgradeRequestRepository upgradeRequestRepository;
 
     @Transactional
     public ConnectionUserResponse sendRequest(String requesterEmail, Integer recipientId) {
@@ -209,6 +212,14 @@ public class UserConnectionService {
                         .reputationStars(op.getReputationStars());
             }
         }
+
+        List<String> documentUrls = upgradeRequestRepository.findByUserOrderByCreatedAtDesc(user).stream()
+                .filter(req -> req.getStatus() == com.horseracing.entities.enums.RequestStatus.APPROVED 
+                        && req.getRequestedRole() == user.getRole())
+                .findFirst()
+                .map(UpgradeRequest::getDocumentUrls)
+                .orElse(java.util.Collections.emptyList());
+        builder.documentUrls(documentUrls);
 
         return builder.build();
     }

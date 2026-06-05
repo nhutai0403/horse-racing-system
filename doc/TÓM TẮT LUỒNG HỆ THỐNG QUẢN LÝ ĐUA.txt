@@ -34,6 +34,7 @@ Nhận hoặc từ chối lời mời từ Horse Owner.
 Tham gia đua.
 Theo dõi lịch đua và tiền thưởng.
 Quản lý ví tiền.
+báo cáo Horse_owner và Race Referee lên admin
 4. Race Referee (Trọng tài)
 Kiểm tra cân nặng Jockey trước đua.
 Kiểm tra điều kiện sân.

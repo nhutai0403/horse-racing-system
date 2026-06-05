@@ -21,6 +21,7 @@ public class HorseService {
     private final HorseBreedRepository horseBreedRepository;
     private final HorseOwnerProfileRepository horseOwnerProfileRepository;
     private final UserRepository userRepository;
+    private final UpgradeRequestRepository upgradeRequestRepository;
 
     @Transactional
     public HorseResponse createHorse(String ownerEmail, CreateHorseRequest request) {
@@ -60,6 +61,14 @@ public class HorseService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         HorseOwnerProfile owner = horseOwnerProfileRepository.findByUserEmail(email)
                 .orElseThrow(() -> new RuntimeException("Horse owner profile not found"));
+
+        List<String> documentUrls = upgradeRequestRepository.findByUserOrderByCreatedAtDesc(user).stream()
+                .filter(req -> req.getStatus() == com.horseracing.entities.enums.RequestStatus.APPROVED 
+                        && req.getRequestedRole() == com.horseracing.entities.enums.Role.HORSE_OWNER)
+                .findFirst()
+                .map(UpgradeRequest::getDocumentUrls)
+                .orElse(java.util.Collections.emptyList());
+
         return OwnerProfileResponse.builder()
                 .id(owner.getId())
                 .fullName(user.getFullName())
@@ -73,6 +82,7 @@ public class HorseService {
                 .bankAccount(owner.getBankAccount())
                 .identityNumber(owner.getIdentityNumber())
                 .dateOfBirth(owner.getDateOfBirth())
+                .documentUrls(documentUrls)
                 .build();
     }
 
@@ -100,6 +110,13 @@ public class HorseService {
         userRepository.save(user);
         owner = horseOwnerProfileRepository.save(owner);
 
+        List<String> documentUrls = upgradeRequestRepository.findByUserOrderByCreatedAtDesc(user).stream()
+                .filter(req -> req.getStatus() == com.horseracing.entities.enums.RequestStatus.APPROVED 
+                        && req.getRequestedRole() == com.horseracing.entities.enums.Role.HORSE_OWNER)
+                .findFirst()
+                .map(UpgradeRequest::getDocumentUrls)
+                .orElse(java.util.Collections.emptyList());
+
         return OwnerProfileResponse.builder()
                 .id(owner.getId())
                 .fullName(user.getFullName())
@@ -113,6 +130,7 @@ public class HorseService {
                 .bankAccount(owner.getBankAccount())
                 .identityNumber(owner.getIdentityNumber())
                 .dateOfBirth(owner.getDateOfBirth())
+                .documentUrls(documentUrls)
                 .build();
     }
 }

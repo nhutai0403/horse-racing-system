@@ -15,6 +15,7 @@ FE
 check và làm thêm
 Horse Owner
 - thêm 1 ô mô tả trong profile của owner để ổng có thể flex bản thân
+- thêm nơi để chứa tài liệu giấy tờ mà ban đầu horse owner đã up lên trong lúc đăng kí cho admin duyệt
 - thêm phần uy tin ( gợi ý thể hiện qua số sao để các jockey có thể đánh giá owner)
 giống ngựa chọn theo Id
 + khi đăng ngựa lên web thì owner chọn Id và nó hiện tên ra theo database đã lưu
@@ -36,3 +37,4 @@ gọi API thật luồng profile và kết bạn của owner
 ----------------------------
 BE
 làm xử lí thông tin ngựa thật của owner, nhớ set các con ngựa mới là 100/100 và không cho owner chỉnh sữa
+-----------------------------------

@@ -28,4 +28,6 @@ public class ConnectionUserResponse {
     private String stableAddress;
     private String description;
     private Double reputationStars;
+
+    private java.util.List<String> documentUrls;
 }

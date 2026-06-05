@@ -3,6 +3,7 @@ package com.horseracing.dto.response;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -22,4 +23,6 @@ public class OwnerProfileResponse {
     private String bankAccount;
     private String identityNumber;
     private LocalDate dateOfBirth;
+    private List<String> documentUrls;
 }
+
