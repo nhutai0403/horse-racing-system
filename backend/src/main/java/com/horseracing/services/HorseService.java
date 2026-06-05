@@ -22,6 +22,7 @@ public class HorseService {
     private final HorseOwnerProfileRepository horseOwnerProfileRepository;
     private final UserRepository userRepository;
     private final UpgradeRequestRepository upgradeRequestRepository;
+    private final RaceParticipantRepository raceParticipantRepository;
 
     @Transactional
     public HorseResponse createHorse(String ownerEmail, CreateHorseRequest request) {
@@ -37,22 +38,55 @@ public class HorseService {
                 .name(request.getName())
                 .age(request.getAge())
                 .gender(request.getGender())
-                .color(request.getColor())
                 .trainingStatus("ACTIVE")
                 .healthStatus("EXCELLENT")
-                .speedRating(75.0)
                 .status("ACTIVE")
+                .imageUrl(request.getImageUrl())
                 .build();
 
         horse = horseRepository.save(horse);
-        return HorseResponse.fromEntity(horse);
+        return toHorseResponse(horse);
     }
 
     @Transactional(readOnly = true)
     public List<HorseResponse> getMyHorses(String ownerEmail) {
         return horseRepository.findByOwnerUserEmail(ownerEmail).stream()
-                .map(HorseResponse::fromEntity)
+                .map(this::toHorseResponse)
                 .collect(Collectors.toList());
+    }
+
+    private HorseResponse toHorseResponse(Horse horse) {
+        List<RaceParticipant> participations = raceParticipantRepository.findByHorseId(horse.getId());
+        int totalRaces = 0;
+        int top1Count = 0;
+        int top2Count = 0;
+        int top3Count = 0;
+
+        for (RaceParticipant rp : participations) {
+            if (rp.getFinalRank() != null) {
+                totalRaces++;
+                if (rp.getFinalRank() == 1) {
+                    top1Count++;
+                } else if (rp.getFinalRank() == 2) {
+                    top2Count++;
+                } else if (rp.getFinalRank() == 3) {
+                    top3Count++;
+                }
+            }
+        }
+
+        double top1Rate = totalRaces > 0 ? ((double) top1Count / totalRaces) * 100.0 : 0.0;
+        double top2Rate = totalRaces > 0 ? ((double) top2Count / totalRaces) * 100.0 : 0.0;
+        double top3Rate = totalRaces > 0 ? ((double) top3Count / totalRaces) * 100.0 : 0.0;
+        boolean isNewbie = totalRaces == 0;
+
+        HorseResponse response = HorseResponse.fromEntity(horse);
+        response.setTotalRaces(totalRaces);
+        response.setTop1Rate(top1Rate);
+        response.setTop2Rate(top2Rate);
+        response.setTop3Rate(top3Rate);
+        response.setIsNewbie(isNewbie);
+        return response;
     }
 
     @Transactional(readOnly = true)

@@ -17,6 +17,17 @@ Jockey
 Sau khi gửi form và được Admin duyệt:
 
 Quản lý thông tin ngựa.
+ngựa có
+tên
+Tuổi
+giới tính
+giống
+có thể upload ảnh avata ngựa
+ngựa sẽ có tỉ lệ win các trận đấu
+Thay vì mình đưa mấy cái chỉ số vận tốc, sức mạnh... Thì mình đưa tỉ lệ mà con ngựa có thể vào top và có giải
+Giải nhất, nhì, ba là 3 giải có thưởng
+Vd: ngựa tham gia 4 trận. 2 lần giải nhất, 1 lần giải nhì và 1 lần giải 3 thì tỉ lệ của top1, top 2, top 3 lần lượt là 50% 25% 25%
+còn ngựa mới thì thanh tỷ lệ là 0 và đc gắn thẻ newbie
 Đăng ký ngựa và Jockey  tham gia giải đấu.
 gửi lời mời kết bạn cho cho Jockey
 ( khi nào Jockey đồng ý thì mới có thể đăng kí tham gia giải đấu)

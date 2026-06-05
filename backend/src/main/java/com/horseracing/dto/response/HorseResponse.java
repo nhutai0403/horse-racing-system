@@ -15,11 +15,17 @@ public class HorseResponse {
     private String breedName;
     private Integer age;
     private String gender;
-    private String color;
     private String trainingStatus;
     private String healthStatus;
-    private Double speedRating;
     private String status;
+    private String imageUrl;
+
+    // Dynamic stats calculated from race history
+    private Integer totalRaces;
+    private Double top1Rate;
+    private Double top2Rate;
+    private Double top3Rate;
+    private Boolean isNewbie;
 
     public static HorseResponse fromEntity(Horse h) {
         if (h == null) return null;
@@ -30,11 +36,10 @@ public class HorseResponse {
                 .breedName(h.getBreed().getBreedName())
                 .age(h.getAge())
                 .gender(h.getGender())
-                .color(h.getColor())
                 .trainingStatus(h.getTrainingStatus())
                 .healthStatus(h.getHealthStatus())
-                .speedRating(h.getSpeedRating())
                 .status(h.getStatus())
+                .imageUrl(h.getImageUrl())
                 .build();
     }
 }

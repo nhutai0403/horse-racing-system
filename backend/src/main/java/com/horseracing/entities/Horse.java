@@ -32,18 +32,15 @@ public class Horse {
     @Column(length = 20)
     private String gender;
 
-    @Column(length = 50)
-    private String color;
-
     @Column(name = "training_status", length = 50)
     private String trainingStatus;
 
     @Column(name = "health_status", length = 50)
     private String healthStatus;
 
-    @Column(name = "speed_rating")
-    private Double speedRating;
-
     @Column(length = 20)
     private String status; // E.g., ACTIVE, INACTIVE, INJURED
+
+    @Column(name = "image_url", length = 1000)
+    private String imageUrl;
 }

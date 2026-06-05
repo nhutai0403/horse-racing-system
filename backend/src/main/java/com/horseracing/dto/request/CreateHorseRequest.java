@@ -23,5 +23,5 @@ public class CreateHorseRequest {
     private Integer age;
 
     private String gender;
-    private String color;
+    private String imageUrl;
 }
