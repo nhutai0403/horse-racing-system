@@ -9,7 +9,7 @@ Xem giả lập đua ngựa.
 Chat trong phòng đua.
 Cá cược.
 Nạp/Rút tiền.
-Có thể gửi yêu cầu nâng cấp thành:
++Có thể gửi yêu cầu nâng cấp thành:
 Horse Owner
 Jockey
 2. Horse Owner (Chủ ngựa)
@@ -32,6 +32,10 @@ còn ngựa mới thì thanh tỷ lệ là 0 và đc gắn thẻ newbie
 gửi lời mời kết bạn cho cho Jockey
 ( khi nào Jockey đồng ý thì mới có thể đăng kí tham gia giải đấu)
 Theo dõi kết quả, bảng xếp hạng, tiền thưởng.
+-khi admin mở giải đấu thì sẽ đăng kí ngựa và jockey,.... và khi đăng kí xong thì sẽ gửi thông tin đó qua cho jockey xác nhận là đúng thông tin đã thỏa thuận chưa nếu đúng thì jockey xác nhận và thông tin đó đc đưa lên admin khi thành công thì cả owner và jockey đó cũng sẽ nhận đc thông báo
+- còn nếu jockey reject thì phải đăng kí lại từ đầu
+- khi chưa đến hạn đóng đăng kí thì không biết có những owner nào đã tham gia và trong lúc đó có thể update các thông tin mới như muốn đổi ngựa và jockey và jockey cũng sẽ nhận được thông báo
+- sau khi hết hạn đóng đăng kí thì admin sẽ duyệt và chỉ lấy top đầu từ trên xuống theo số lượng ngựa đã đặt ra và lúc này thì mới xem được mình có được tham gia hay không
 Quản lý ví tiền.
 tìm kiếm Jockey theo ID để kết bạn
 view đc danh sách các Horse Owner,Jockey đã kết bạn, 1 nơi xem đc các Horse Owner, Jockey khác( có thể tìm kiếm theo role)
@@ -41,7 +45,7 @@ view đc danh sách các Horse Owner,Jockey đã kết bạn, 1 nơi xem đc cá
 Sau khi gửi hồ sơ và được Admin duyệt:
 
 Tìm và gửi lời mời kết bạn Horse Owner
-Nhận hoặc từ chối lời mời từ Horse Owner.
+chấp nhận/ REJECT lời mời đua ngựa của Horse_owner nếu đồng ý thì
 Tham gia đua.
 Theo dõi lịch đua và tiền thưởng.
 Quản lý ví tiền.
@@ -58,21 +62,26 @@ quản lí tiền
 Duyệt tài khoản nâng cấp.
 Admin tạo giải đấu, set up phần thưởng ( tiền ) cho
 giải nhất-nhì-ba với đơn vị là VNĐ
-quy định số ngựa tham gia
-có 3 loại
-7 con, 8 con, 12 con
-chọn loại sân có khoảng
-10 sân phân theo tên để admin chọn
-thời gian tổ chức ngày tháng và tư mấy giờ tới mấy giờ và đương nhiên không được trùng lịch
-về việc cá cược
-- khi admin tạo xong giải đấu thì hệ thống tự động đổi trạng thái cuộc đua thành OPEN_FOR_REGISTER   Horse_owner cần phải đăng kí ngựa và Jockey cũng như xét tỷ lệ ăn chia
-(ví dụ jockey 30%, horse_owner là 70%)
-và gửi lên admin sẽ thấy thông tin và duyệt
+quy định rule cho giải đấu ( số ngựa tham gia, giống,...)
+chọn nơi thi đấu, ngày giờ và không được trùng lịch
+
+sau đó sẽ cho Owner tiến hành đăng kí và sẽ có thông báo về số ngày sẽ đóng đăng kí
+trong thời gian đăng kí thì owner có thể đăng kí và update lại các thông tin và các tài khoản đăng kí sẽ được thêm vào 1 danh sách mà chỉ admin mới có thể thấy được
+mỗi lần owner update lại danh sách đăng kí thì sẽ bị đẩy xuống cuối danh sách
+sau khi hết hạn đăng kí thì admin sẽ duyệt danh sách và chỉ công nhận các account phù hợp với tiêu chỉ đã đặt ra tính từ đầu danh sách xuống ( ví dụ set rule là 8 người thi đấu thì admin sẽ duyệt từ trên xuống và lấy ra 8 người)
+
+khi đã duyệt xong thì danh sách sẽ được public cho mọi người thấy và đặt cược
+
 - thiết lập số tiền cược tối thiểu của spectator
 Điều hành toàn bộ cuộc đua.
 quản lí tiền ví dụ thua cuộc của spectator
 Quản lý blacklist.
+có dashboard để theo dõi lịch sử, doanh thu,vv
 
-
-hệ thống giả lập 1 cuộc đua ngựa
-có tính năng đổi nền sáng - tối
+*hệ thống giả lập 1 cuộc đua ngựa:
+mọi thứ sẽ theo set up của admin và khi trọng tài bắt đầu thì hệ thống sẽ giả lập đua theo thời gian thực
+cho các con ngựa chạy từ A-B và có tên jockey, ngựa, giống để ng xem biết
+khi thời gian chạy hết thì sẽ hiện ra top 1, top 2, top 3 và phân chia tiền thưởng cho owner, jockey theo tỉ lệ đã set up cũng như cược của spectator
+trong khi thi nếu con ngựa nào bị trọng tài gắn cờ vi phạm thì sẽ + thêm thời gian cho con ngựa đó
+nếu bị gắn 3 cờ coi như bị xử thua
+và khi hết giải thì con ngựa nào ít thời gina nhất sẽ thắng
