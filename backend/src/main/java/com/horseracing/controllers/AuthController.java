@@ -103,4 +103,56 @@ public class AuthController {
                     .body(new ErrorResponse(401, "Not authenticated"));
         }
     }
+
+    /**
+     * Verify and activate user account using verification token/OTP.
+     */
+    @GetMapping("/verify")
+    public ResponseEntity<?> verifyAccount(@RequestParam("token") String token) {
+        try {
+            authService.verifyAccount(token);
+            return ResponseEntity.ok().body("{\"message\": \"Tài khoản đã được kích hoạt thành công! Bạn có thể đăng nhập ngay bây giờ.\"}");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
+        }
+    }
+
+    /**
+     * Request a password reset OTP code.
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        try {
+            authService.forgotPassword(request);
+            return ResponseEntity.ok().body("{\"message\": \"Mã OTP khôi phục mật khẩu đã được gửi đến email của bạn.\"}");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
+        }
+    }
+
+    /**
+     * Verify the password reset OTP code.
+     */
+    @PostMapping("/verify-reset-otp")
+    public ResponseEntity<?> verifyResetOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        try {
+            authService.verifyResetOtp(request);
+            return ResponseEntity.ok().body("{\"message\": \"Mã OTP chính xác. Bạn có thể thiết lập mật khẩu mới.\"}");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
+        }
+    }
+
+    /**
+     * Reset password using OTP and the new password.
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        try {
+            authService.resetPassword(request);
+            return ResponseEntity.ok().body("{\"message\": \"Mật khẩu đã được cập nhật thành công.\"}");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
+        }
+    }
 }
