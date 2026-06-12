@@ -3,6 +3,7 @@ package com.horseracing.controllers;
 import com.horseracing.dto.request.*;
 import com.horseracing.dto.response.AuthResponse;
 import com.horseracing.dto.response.ErrorResponse;
+import com.horseracing.dto.response.MessageResponse;
 import com.horseracing.dto.response.UserResponse;
 import com.horseracing.services.AuthService;
 import jakarta.validation.Valid;
@@ -83,7 +84,7 @@ public class AuthController {
     public ResponseEntity<?> logout(@Valid @RequestBody LogoutRequest request) {
         try {
             authService.logout(request);
-            return ResponseEntity.ok().body("{\"message\": \"Logged out successfully\"}");
+            return ResponseEntity.ok(new MessageResponse("Logged out successfully"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
         }
@@ -111,7 +112,7 @@ public class AuthController {
     public ResponseEntity<?> verifyAccount(@RequestParam("token") String token) {
         try {
             authService.verifyAccount(token);
-            return ResponseEntity.ok().body("{\"message\": \"Tài khoản đã được kích hoạt thành công! Bạn có thể đăng nhập ngay bây giờ.\"}");
+            return ResponseEntity.ok(new MessageResponse("Tài khoản đã được kích hoạt thành công! Bạn có thể đăng nhập ngay bây giờ."));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
         }
@@ -124,7 +125,7 @@ public class AuthController {
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         try {
             authService.forgotPassword(request);
-            return ResponseEntity.ok().body("{\"message\": \"Mã OTP khôi phục mật khẩu đã được gửi đến email của bạn.\"}");
+            return ResponseEntity.ok(new MessageResponse("Mã OTP khôi phục mật khẩu đã được gửi đến email của bạn."));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
         }
@@ -137,7 +138,7 @@ public class AuthController {
     public ResponseEntity<?> verifyResetOtp(@Valid @RequestBody VerifyOtpRequest request) {
         try {
             authService.verifyResetOtp(request);
-            return ResponseEntity.ok().body("{\"message\": \"Mã OTP chính xác. Bạn có thể thiết lập mật khẩu mới.\"}");
+            return ResponseEntity.ok(new MessageResponse("Mã OTP chính xác. Bạn có thể thiết lập mật khẩu mới."));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
         }
@@ -150,7 +151,7 @@ public class AuthController {
     public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         try {
             authService.resetPassword(request);
-            return ResponseEntity.ok().body("{\"message\": \"Mật khẩu đã được cập nhật thành công.\"}");
+            return ResponseEntity.ok(new MessageResponse("Mật khẩu đã được cập nhật thành công."));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
         }
