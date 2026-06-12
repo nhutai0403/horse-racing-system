@@ -28,6 +28,20 @@ public class TournamentService {
         if (request.getMinBetAmount().compareTo(BigDecimal.ZERO) < 0) {
             throw new RuntimeException("Minimum bet amount must be positive or zero");
         }
+        if (request.getMaxSlots() == null || request.getMaxSlots() <= 0) {
+            throw new RuntimeException("Maximum slots must be a positive number");
+        }
+        if (request.getStartDate() != null && request.getEndDate() != null
+                && request.getStartDate().isAfter(request.getEndDate())) {
+            throw new RuntimeException("Start date must be before end date");
+        }
+        if (request.getStartDate() != null && request.getStartDate().isBefore(java.time.LocalDate.now())) {
+            throw new RuntimeException("Start date cannot be in the past");
+        }
+        if (request.getRegistrationDeadline() != null && request.getStartDate() != null
+                && request.getRegistrationDeadline().toLocalDate().isAfter(request.getStartDate())) {
+            throw new RuntimeException("Registration deadline must be before start date");
+        }
 
         BigDecimal totalPrize = request.getPrizeFirst()
                 .add(request.getPrizeSecond())

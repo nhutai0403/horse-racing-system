@@ -156,29 +156,33 @@ public class UpgradeRequestService {
         
         userRepository.save(user);
 
-        // Auto-create profiles
+        // Auto-create profiles (check for duplicates first)
         if (request.getRequestedRole() == Role.HORSE_OWNER) {
-            HorseOwnerProfile ownerProfile = HorseOwnerProfile.builder()
-                    .user(user)
-                    .stableName(request.getStableName())
-                    .stableAddress(request.getStableAddress())
-                    .phone(request.getPhoneNumber())
-                    .identityNumber(request.getIdentityNumber())
-                    .dateOfBirth(request.getDateOfBirth())
-                    .reputationStars(5.0)
-                    .approvalStatus("APPROVED")
-                    .build();
-            horseOwnerProfileRepository.save(ownerProfile);
+            if (horseOwnerProfileRepository.findByUserEmail(user.getEmail()).isEmpty()) {
+                HorseOwnerProfile ownerProfile = HorseOwnerProfile.builder()
+                        .user(user)
+                        .stableName(request.getStableName())
+                        .stableAddress(request.getStableAddress())
+                        .phone(request.getPhoneNumber())
+                        .identityNumber(request.getIdentityNumber())
+                        .dateOfBirth(request.getDateOfBirth())
+                        .reputationStars(5.0)
+                        .approvalStatus("APPROVED")
+                        .build();
+                horseOwnerProfileRepository.save(ownerProfile);
+            }
         } else if (request.getRequestedRole() == Role.JOCKEY) {
-            JockeyProfile jockeyProfile = JockeyProfile.builder()
-                    .user(user)
-                    .height(request.getHeight())
-                    .weight(request.getWeight())
-                    .licenseNumber(request.getLicenseNumber())
-                    .experienceYear(request.getExperienceYears())
-                    .approvalStatus("APPROVED")
-                    .build();
-            jockeyProfileRepository.save(jockeyProfile);
+            if (jockeyProfileRepository.findByUserEmail(user.getEmail()).isEmpty()) {
+                JockeyProfile jockeyProfile = JockeyProfile.builder()
+                        .user(user)
+                        .height(request.getHeight())
+                        .weight(request.getWeight())
+                        .licenseNumber(request.getLicenseNumber())
+                        .experienceYear(request.getExperienceYears())
+                        .approvalStatus("APPROVED")
+                        .build();
+                jockeyProfileRepository.save(jockeyProfile);
+            }
         }
 
         upgradeRequestRepository.save(request);
