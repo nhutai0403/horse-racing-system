@@ -25,13 +25,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -63,13 +65,13 @@ public class AuthService {
         User user = User.builder().username(request.getUsername()).email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .role(request.getRole() != null ? request.getRole() : Role.SPECTATOR)
+                .role(Role.SPECTATOR) // Always SPECTATOR on registration — role upgrades go through approval flow
                 .provider(AuthProvider.LOCAL).enabled(false).build();
 
         user = userRepository.save(user);
 
-        // Generate 6-digit OTP code
-        String token = String.format("%06d", new Random().nextInt(1000000));
+        // Generate 6-digit OTP code using SecureRandom
+        String token = String.format("%06d", SECURE_RANDOM.nextInt(1000000));
 
         VerificationToken verificationToken = VerificationToken.builder()
                 .token(token)
@@ -119,6 +121,11 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Explicit check: account must be verified via email
+        if (!user.isEnabled()) {
+            throw new RuntimeException("Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để xác thực.");
+        }
+
         String accessToken = jwtUtils.generateAccessToken(user);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
@@ -156,9 +163,11 @@ public class AuthService {
                 return userRepository.save(newUser);
             });
 
-            // If user exists with LOCAL provider, update to link Google account
+            // If user exists with LOCAL provider, link Google account and enable
             if (user.getProvider() == AuthProvider.LOCAL && user.getProviderId() == null) {
+                user.setProvider(AuthProvider.GOOGLE);
                 user.setProviderId(googleId);
+                user.setEnabled(true); // Google-verified email → auto-enable
                 userRepository.save(user);
             }
 
@@ -223,8 +232,8 @@ public class AuthService {
             throw new RuntimeException("Tài khoản này được đăng nhập bằng " + user.getProvider() + ". Không thể đặt lại mật khẩu.");
         }
 
-        // Generate 6-digit OTP code
-        String otp = String.format("%06d", new Random().nextInt(1000000));
+        // Generate 6-digit OTP code using SecureRandom
+        String otp = String.format("%06d", SECURE_RANDOM.nextInt(1000000));
 
         PasswordResetToken resetToken = passwordResetTokenRepository.findByUser(user)
                 .orElse(new PasswordResetToken());
