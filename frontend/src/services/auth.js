@@ -115,3 +115,23 @@ export async function googleLoginAPI(credential) {
     throw new Error(errMsg, { cause: error });
   }
 }
+
+export async function forgotPasswordAPI(email) {
+  try {
+    const response = await axiosClient.post('/auth/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    const errMsg = error.response?.data?.message || 'Failed to send OTP code. Please try again.';
+    throw new Error(errMsg, { cause: error });
+  }
+}
+
+export async function resetPasswordAPI({ email, otp, newPassword }) {
+  try {
+    const response = await axiosClient.post('/auth/reset-password', { email, otp, newPassword });
+    return response.data;
+  } catch (error) {
+    const errMsg = error.response?.data?.message || 'Failed to reset password. Please try again.';
+    throw new Error(errMsg, { cause: error });
+  }
+}
