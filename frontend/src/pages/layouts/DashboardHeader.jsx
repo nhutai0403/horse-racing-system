@@ -82,18 +82,6 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
 
         {/* Right Controls */}
         <div className="d-flex align-items-center gap-2 gap-sm-3">
-          {/* Search Bar - Desktop */}
-          <div className="header-search d-none d-md-block">
-            <span className="material-symbols-outlined header-search-icon">
-              search
-            </span>
-            <input
-              className="header-search-input"
-              placeholder="Search horses, races..."
-              type="text"
-            />
-          </div>
-
           {/* Notifications */}
           <button
             className="ho-btn-light position-relative"

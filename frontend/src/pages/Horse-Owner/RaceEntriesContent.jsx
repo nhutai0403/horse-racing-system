@@ -1,42 +1,52 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import DataCard from '../../components/DataCard';
+import StatusBadge from '../../components/StatusBadge';
+import { useHorseOwner } from './HorseOwnerContext';
 
 export default function RaceEntriesContent() {
+  const { horses = [], systemUsers = [], tournaments = [], setTournaments } = useHorseOwner();
   const [showModal, setShowModal] = useState(false);
   const [selectedRace, setSelectedRace] = useState(null);
   const [formData, setFormData] = useState({
-    horse: 'Midnight Runner',
-    jockey: 'L. Dettori',
+    horse: '',
+    jockey: '',
   });
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const races = [
-    {
-      name: 'Dubai World Cup',
-      track: 'Dirt • Fast',
-      prize: '$12,000,000',
-      date: 'Mar 30, 2026',
-    },
-    {
-      name: 'Royal Ascot',
-      track: 'Turf • Good',
-      prize: '£8,000,000',
-      date: 'Jun 18, 2026',
-    },
-    {
-      name: 'Kentucky Derby',
-      track: 'Dirt • Fast',
-      prize: '$3,000,000',
-      date: 'May 04, 2026',
-    },
-  ];
+  // Filter only READY horses
+  const readyHorses = horses.filter(h => h.status === 'READY');
+  // Filter only jockeys who are friends
+  const friendJockeys = systemUsers.filter(u => u.role === 'JOCKEY' && u.friendStatus === 'FRIEND');
 
   const handleRegisterClick = (race) => {
     setSelectedRace(race);
+    setFormData({
+      horse: readyHorses.length > 0 ? readyHorses[0].name : '',
+      jockey: friendJockeys.length > 0 ? friendJockeys[0].fullName : '',
+    });
     setShowModal(true);
   };
 
   const handleConfirm = () => {
-    alert(`Successfully registered ${formData.horse} with Jockey ${formData.jockey} for the ${selectedRace.name}!`);
+    if (!formData.horse || !formData.jockey) {
+      alert("Please select both a horse and a jockey.");
+      return;
+    }
+    
+    // Add horse to the registered list for this tournament
+    setTournaments(prevTournaments => 
+      prevTournaments.map(t => 
+        t.id === selectedRace.id 
+          ? { ...t, registeredHorses: [...(t.registeredHorses || []), formData.horse] }
+          : t
+      )
+    );
+
+    setSuccessMsg(`Successfully registered ${formData.horse} with Jockey ${formData.jockey} for the ${selectedRace.tournamentName}!`);
     setShowModal(false);
+    setShowSuccessModal(true);
   };
 
   return (
@@ -55,74 +65,92 @@ export default function RaceEntriesContent() {
 
       {/* Grid of Races */}
       <div className="row g-4 mb-4">
-        {races.map((race, i) => (
-          <div key={i} className="col-12 col-md-4">
-            <div className="glass-card glass-card-interactive d-flex flex-column h-100">
-              <div className="mb-3">
-                <h3 className="ho-font-epilogue fs-5 fw-bold mb-1" style={{ color: 'var(--ho-primary-dark)' }}>
-                  {race.name}
-                </h3>
-                <p className="ho-font-grotesk fw-bold text-uppercase m-0" style={{ color: 'var(--ho-accent-gold-text)', fontSize: '11px', letterSpacing: '0.05em' }}>
-                  {race.date}
-                </p>
-              </div>
-              <div className="d-flex flex-column gap-2 mb-4 flex-grow-1 text-secondary small">
-                <div className="d-flex justify-content-between py-1 border-bottom" style={{ borderColor: 'rgba(0,0,0,0.05)' }}>
-                  <span className="fw-bold text-dark">Track:</span>
-                  <span>{race.track}</span>
-                </div>
-                <div className="d-flex justify-content-between py-1 border-bottom" style={{ borderColor: 'rgba(0,0,0,0.05)' }}>
-                  <span className="fw-bold text-dark">Prize Pool:</span>
-                  <span className="fw-bold" style={{ color: 'var(--ho-primary-medium)' }}>{race.prize}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => handleRegisterClick(race)}
-                className="ho-btn ho-btn-gold-solid w-100 py-3"
+        {tournaments.map((race, i) => {
+          const userRegisteredHorses = horses.filter(h => race.registeredHorses?.includes(h.name));
+          const isRegistered = userRegisteredHorses.length > 0;
+          return (
+            <div key={race.id || i} className="col-12 col-md-4">
+              <DataCard 
+                title={race.tournamentName} 
+                subtitle={`${race.date} at ${race.time}`}
+                interactive={true}
               >
-                Register for Race
-              </button>
+                <div className="d-flex flex-column gap-2 mb-3">
+                  <div className="d-flex justify-content-between py-1 border-bottom border-light">
+                    <span className="fw-bold text-dark">Location:</span>
+                    <span className="text-end text-truncate ms-2" style={{ maxWidth: '150px' }}>{race.location}</span>
+                  </div>
+                  <div className="d-flex justify-content-between py-1 border-bottom border-light">
+                    <span className="fw-bold text-dark">Track:</span>
+                    <span>{race.trackType}</span>
+                  </div>
+                  <div className="d-flex justify-content-between py-1 border-bottom border-light">
+                    <span className="fw-bold text-dark">Prize Pool:</span>
+                    <span className="fw-bold" style={{ color: 'var(--ho-primary-medium)' }}>{race.prizePool}</span>
+                  </div>
+                  <div className="d-flex justify-content-between py-1 align-items-center">
+                    <span className="fw-bold text-dark">Status:</span>
+                    <StatusBadge status={isRegistered ? 'READY' : race.status} />
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => handleRegisterClick(race)}
+                  className={`ho-btn ${isRegistered ? 'ho-btn-dark-green' : 'ho-btn-gold-solid'} w-100 py-2 fw-bold`}
+                  disabled={isRegistered || race.status !== 'OPEN_FOR_REGISTER'}
+                >
+                  {isRegistered 
+                    ? `Registered: ${userRegisteredHorses.map(h => h.name).join(', ')}` 
+                    : race.status === 'OPEN_FOR_REGISTER' 
+                      ? 'Register for Race' 
+                      : 'Registration Closed'}
+                </button>
+              </DataCard>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Modal Dialog */}
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content-custom animate-scale-up">
+      {showModal && createPortal(
+        <div className="modal-overlay" style={{ zIndex: 1050 }} onClick={() => setShowModal(false)}>
+          <div className="modal-content-custom animate-scale-up" onClick={(e) => e.stopPropagation()}>
             <h3 className="ho-font-epilogue fs-4 fw-bold mb-4" style={{ color: 'var(--ho-primary-dark)' }}>
-              Register for {selectedRace?.name}
+              Register for {selectedRace?.tournamentName}
             </h3>
             
-            <div className="d-flex flex-column gap-3 mb-4">
+            <div className="d-flex flex-column gap-4 mb-4">
               {/* Select Horse */}
               <div>
                 <label className="ho-input-label ho-font-grotesk">
-                  Select Horse
+                  Select Horse <span className="text-secondary small fw-normal">(Only READY horses)</span>
                 </label>
                 <select
                   value={formData.horse}
                   onChange={(e) => setFormData({ ...formData, horse: e.target.value })}
-                  className="ho-form-input fw-semibold"
+                  className="ho-form-input fw-semibold text-dark"
                 >
-                  <option>Midnight Runner</option>
-                  <option>Silver Cloud</option>
+                  {readyHorses.length === 0 && <option value="">No ready horses available</option>}
+                  {readyHorses.map(h => (
+                    <option key={h.id} value={h.name}>{h.name} ({h.breed})</option>
+                  ))}
                 </select>
               </div>
 
               {/* Select Jockey */}
               <div>
                 <label className="ho-input-label ho-font-grotesk">
-                  Select Jockey
+                  Select Jockey <span className="text-secondary small fw-normal">(Only Friend Jockeys)</span>
                 </label>
                 <select
                   value={formData.jockey}
                   onChange={(e) => setFormData({ ...formData, jockey: e.target.value })}
-                  className="ho-form-input fw-semibold"
+                  className="ho-form-input fw-semibold text-dark"
                 >
-                  <option>L. Dettori</option>
-                  <option>R. Moore</option>
+                  {friendJockeys.length === 0 && <option value="">No friend jockeys available</option>}
+                  {friendJockeys.map(j => (
+                    <option key={j.id} value={j.fullName}>{j.fullName} (Win Rate: {j.winRate}%)</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -131,19 +159,50 @@ export default function RaceEntriesContent() {
             <div className="d-flex justify-content-end gap-3 align-items-center">
               <button
                 onClick={() => setShowModal(false)}
-                className="ho-btn-link text-uppercase tracking-wider small"
+                className="ho-btn-link text-uppercase tracking-wider small fw-bold"
+                style={{ textDecoration: 'none' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirm}
-                className="ho-btn ho-btn-gold-solid py-2 px-4"
+                className="ho-btn ho-btn-gold-solid py-2 px-4 fw-bold"
+                disabled={readyHorses.length === 0 || friendJockeys.length === 0}
               >
                 Confirm Registration
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+      {/* Registration Success Modal Dialog */}
+      {showSuccessModal && createPortal(
+        <div className="modal-overlay" style={{ zIndex: 1050 }} onClick={() => setShowSuccessModal(false)}>
+          <div className="modal-content-custom animate-scale-up text-center" style={{ maxWidth: '450px', padding: '2.5rem 2rem' }} onClick={(e) => e.stopPropagation()}>
+            <span className="material-symbols-outlined text-success mb-3" style={{ fontSize: '48px' }}>
+              check_circle
+            </span>
+            <h3 className="ho-font-epilogue fs-5 fw-bold mb-2" style={{ color: 'var(--ho-primary-dark)' }}>
+              Registration Successful
+            </h3>
+            <p className="text-secondary small fw-medium mb-4" style={{ lineHeight: '1.5' }}>
+              {successMsg}
+            </p>
+            
+            <div className="d-flex justify-content-center pt-2">
+              <button
+                type="button"
+                onClick={() => setShowSuccessModal(false)}
+                className="ho-btn ho-btn-gold-solid py-2 px-5 fw-bold text-uppercase"
+                style={{ fontSize: '12px', letterSpacing: '0.5px' }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

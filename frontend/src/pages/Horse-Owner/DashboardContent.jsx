@@ -1,8 +1,74 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useHorseOwner } from './HorseOwnerContext';
+import DataTable from '../../components/DataTable';
+import StatusBadge from '../../components/StatusBadge';
 
 export default function DashboardContent() {
   const navigate = useNavigate();
+  const { horses = [], transactions = [], tournaments = [] } = useHorseOwner();
+
+  // Format currency to VND
+  const formatVND = (value) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  };
+
+  // Calculate dynamic stats
+  const totalEarnings = transactions
+    .filter(t => t.type === 'WINNINGS')
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  const activeRosterCount = horses.length;
+  const readyCount = horses.filter(h => h.status === 'READY').length;
+  const trainingCount = horses.filter(h => h.status === 'TRAINING').length;
+  const sickCount = horses.filter(h => h.status === 'SICK').length;
+
+  // Sort horses by winRate for Top Performers
+  const topPerformers = [...horses].sort((a, b) => (b.winRate || 0) - (a.winRate || 0));
+
+  // Columns for Top Performers DataTable
+  const columns = [
+    {
+      key: 'name',
+      label: 'Horse',
+      render: (item) => {
+        const imgUrl = item.image || item.img || 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=500&auto=format&fit=crop&q=60';
+        return (
+          <div className="d-flex align-items-center">
+            <div className="rounded-circle overflow-hidden me-3 border" style={{ width: '40px', height: '40px', borderColor: '#c0c9c0', flexShrink: 0 }}>
+              <img
+                alt={item.name}
+                className="w-100 h-100 object-fit-cover"
+                src={imgUrl}
+              />
+            </div>
+            <span className="fw-bold" style={{ color: 'var(--ho-primary-dark)' }}>
+              {item.name}
+            </span>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (item) => <StatusBadge status={item.status} />
+    },
+    {
+      key: 'breed',
+      label: 'Breed',
+      render: (item) => <span className="text-secondary small">{item.breed}</span>
+    },
+    {
+      key: 'winRate',
+      label: 'Win Rate',
+      align: 'right',
+      render: (item) => (
+        <span className="fw-bold" style={{ color: 'var(--ho-primary-dark)' }}>
+          {item.winRate}%
+        </span>
+      )
+    }
+  ];
 
   return (
     <div className="container-fluid p-0 animate-fade-in" style={{ maxWidth: '1440px' }}>
@@ -16,28 +82,13 @@ export default function DashboardContent() {
             Overview of your elite assets and upcoming events.
           </p>
         </div>
-        <div className="d-flex gap-2 w-100 w-sm-auto">
-          <button
-            onClick={() => alert("Report exported successfully!")}
-            className="ho-btn ho-btn-gold-outline flex-grow-1 flex-sm-grow-0"
-          >
-            Export Report
-          </button>
-          <button
-            onClick={() => navigate('/owner/entries')}
-            className="ho-btn ho-btn-gold-solid flex-grow-1 flex-sm-grow-0 d-flex align-items-center justify-content-center gap-2"
-          >
-            <span className="material-symbols-outlined text-dark" style={{ fontSize: '18px' }}>add</span>
-            Enter Race
-          </button>
-        </div>
       </div>
 
       {/* Stats Cards Row */}
       <div className="row g-4 mb-4">
         {/* Earnings Card */}
         <div className="col-12 col-md-4">
-          <div className="glass-card glass-card-interactive position-relative overflow-hidden h-100">
+          <div className="glass-card glass-card-interactive position-relative overflow-hidden h-100" onClick={() => navigate('/owner/financials')}>
             <div className="position-absolute end-0 top-0 p-3 opacity-25">
               <span className="material-symbols-outlined" style={{ fontSize: '60px', color: 'var(--ho-accent-gold-text)' }}>trending_up</span>
             </div>
@@ -45,18 +96,18 @@ export default function DashboardContent() {
               Total Earnings (YTD)
             </h3>
             <p className="ho-font-epilogue fs-2 fw-extrabold m-0" style={{ color: 'var(--ho-primary-dark)' }}>
-              $1.24M
+              {formatVND(totalEarnings)}
             </p>
             <div className="mt-3 d-flex align-items-center small fw-semibold text-success">
               <span className="material-symbols-outlined me-1" style={{ fontSize: '16px' }}>arrow_upward</span>
-              <span>+12.5% vs last month</span>
+              <span>Active Revenue Streams</span>
             </div>
           </div>
         </div>
 
         {/* Active Roster Card */}
         <div className="col-12 col-md-4">
-          <div className="glass-card glass-card-interactive position-relative overflow-hidden h-100">
+          <div className="glass-card glass-card-interactive position-relative overflow-hidden h-100" onClick={() => navigate('/owner/stable')}>
             <div className="position-absolute end-0 top-0 p-3 opacity-25">
               <span className="material-symbols-outlined" style={{ fontSize: '60px', color: 'var(--ho-accent-gold-text)' }}>pets</span>
             </div>
@@ -64,41 +115,41 @@ export default function DashboardContent() {
               Active Roster
             </h3>
             <p className="ho-font-epilogue fs-2 fw-extrabold m-0" style={{ color: 'var(--ho-primary-dark)' }}>
-              14
+              {activeRosterCount}
             </p>
             <div className="mt-3 small text-secondary fw-semibold">
-              3 in training, 11 race-ready
+              {readyCount} ready • {trainingCount} in training • {sickCount} sick
             </div>
           </div>
         </div>
 
-        {/* Action Required Card */}
+        {/* Tournament Registration Redirect Card */}
         <div className="col-12 col-md-4">
-          <div className="glass-card h-100" style={{ backgroundColor: 'rgba(254, 214, 91, 0.12)', borderColor: 'var(--ho-accent-gold-hover)' }}>
-            <h3 className="ho-font-grotesk text-uppercase fw-bold mb-3 d-flex align-items-center" style={{ fontSize: '11px', color: 'var(--ho-accent-gold-text)', letterSpacing: '0.05em' }}>
-              <span className="material-symbols-outlined me-2 fs-5">warning</span>
-              Action Required
-            </h3>
-            <ul className="list-unstyled m-0 d-flex flex-column gap-2">
-              <li className="d-flex justify-content-between align-items-center small">
-                <span className="text-dark fw-semibold">Vet Approval: "Thunderbolt"</span>
-                <button
-                  onClick={() => alert("Redirecting to Vet approval logs")}
-                  className="ho-btn-link small"
-                >
-                  Review
-                </button>
-              </li>
-              <li className="d-flex justify-content-between align-items-center small">
-                <span className="text-dark fw-semibold">Fee Due: Dubai Cup</span>
-                <button
-                  onClick={() => alert("Processing payment for Dubai Cup")}
-                  className="ho-btn-link small"
-                >
-                  Pay Now
-                </button>
-              </li>
-            </ul>
+          <div className="glass-card glass-card-interactive h-100 d-flex flex-column justify-content-between position-relative overflow-hidden" 
+               style={{ cursor: 'pointer', border: '1px solid rgba(212, 175, 55, 0.4)' }}
+               onClick={() => navigate('/owner/entries')}>
+            <div className="position-absolute end-0 top-0 p-3 opacity-25">
+              <span className="material-symbols-outlined" style={{ fontSize: '60px', color: 'var(--ho-accent-gold-text)' }}>emoji_events</span>
+            </div>
+            <div>
+              <h3 className="ho-font-grotesk text-uppercase fw-bold mb-2 d-flex align-items-center" style={{ fontSize: '11px', color: 'var(--ho-accent-gold-text)', letterSpacing: '0.05em' }}>
+                <span className="material-symbols-outlined me-2 fs-5">emoji_events</span>
+                Race Registration
+              </h3>
+              <p className="text-dark fw-bold mb-2" style={{ fontSize: '14px' }}>
+                Đăng ký giải đấu mới
+              </p>
+              <p className="text-secondary small mb-3" style={{ lineHeight: '1.4' }}>
+                Các giải đấu lớn đang mở cổng đăng ký thi đấu. Nhấp vào đây để điều hướng nhanh đến bảng đăng ký giải đấu dành cho các chiến mã của bạn.
+              </p>
+            </div>
+            <button
+              className="ho-btn ho-btn-gold-solid w-100 py-2.5 d-flex align-items-center justify-content-center gap-2 mt-auto"
+              style={{ fontSize: '12.5px' }}
+            >
+              <span className="material-symbols-outlined text-dark" style={{ fontSize: '16px' }}>sports_score</span>
+              Đến Bảng Đăng Ký
+            </button>
           </div>
         </div>
       </div>
@@ -120,66 +171,7 @@ export default function DashboardContent() {
                 <span className="material-symbols-outlined ms-1" style={{ fontSize: '16px' }}>arrow_forward</span>
               </button>
             </div>
-            <div className="table-responsive">
-              <table className="table ho-table align-middle m-0">
-                <thead>
-                  <tr>
-                    <th scope="col" className="ps-2">Horse</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Next Race</th>
-                    <th scope="col" className="text-end pe-2">Win Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="ps-2">
-                      <div className="d-flex align-items-center">
-                        <div className="rounded-circle overflow-hidden me-3 border" style={{ width: '40px', height: '40px', borderColor: '#c0c9c0' }}>
-                          <img
-                            alt="Midnight Runner"
-                            className="w-100 h-100 object-fit-cover"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDX7HoMSdMb6JPWb7leEl52QM6KQJGuBPP2NbEP9D9Bm4nVtpQ9885-X0rie7N4lV-iVulVS_70IR-XGLFP9MIq_B9-3wDKM0PWmwkIA6APdv6fDmjXjxEHJsDWZGJecnubUw1EMiBzjR-HluVcLBxG6ruPF607Aq9b8MLfl1M-hZUusD0pS8k11SHJ4CMcq5cI3E94TXxU2t2rOL5O2gFSIpz3EXAhVDMtlDOe08Nm0OXnOaYJ-zDKsGm7JWLXRL1bPqRrwXED"
-                          />
-                        </div>
-                        <span className="fw-bold" style={{ color: 'var(--ho-primary-dark)' }}>
-                          Midnight Runner
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="badge-custom badge-ready">
-                        Race Ready
-                      </span>
-                    </td>
-                    <td className="text-secondary fw-semibold">Ascot (May 14)</td>
-                    <td className="text-end pe-2 fw-bold" style={{ color: 'var(--ho-primary-dark)' }}>68%</td>
-                  </tr>
-                  <tr>
-                    <td className="ps-2">
-                      <div className="d-flex align-items-center">
-                        <div className="rounded-circle overflow-hidden me-3 border" style={{ width: '40px', height: '40px', borderColor: '#c0c9c0' }}>
-                          <img
-                            alt="Silver Cloud"
-                            className="w-100 h-100 object-fit-cover"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyody69QQzixiJLWEKdQV0aaleOZAo4jb7ZhUVMIgEffv8-1JgwF6MbombNSSs-mAdSxs2agxSBNO4fTs3h3aFrBlRvjCIF6JbsJOLPxXVkUyVk4vxm6NUtz12AdgrpPM9s4FGYYpl3GkaLj9CXk0muXz_HwaijuAVr44O59NfquTTDLNpSYRY5e29u-eO1OztHyQkquE8yHRDwnvSzHgdMgmzqpk_4C9r1O5srY_eEJaIJFKSxt2B2fq1ocs_4rrpXVIzZALZ"
-                          />
-                        </div>
-                        <span className="fw-bold" style={{ color: 'var(--ho-primary-dark)' }}>
-                          Silver Cloud
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="badge-custom badge-training">
-                        In Training
-                      </span>
-                    </td>
-                    <td className="text-secondary fw-semibold">TBD</td>
-                    <td className="text-end pe-2 fw-bold" style={{ color: 'var(--ho-primary-dark)' }}>45%</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <DataTable columns={columns} data={topPerformers.slice(0, 3)} emptyMessage="No horses registered in stable yet." />
           </div>
         </div>
 
@@ -190,24 +182,19 @@ export default function DashboardContent() {
               Upcoming Events
             </h3>
             <div className="ho-timeline">
-              {/* Event 1 */}
-              <div className="ho-timeline-item">
-                <div className="ho-timeline-badge" />
-                <h4 className="fw-bold fs-7 mb-1">Dubai World Cup</h4>
-                <p className="text-secondary small m-0">Registration Closes</p>
-                <p className="ho-font-grotesk fw-bold tracking-wide uppercase m-0 mt-1" style={{ color: 'var(--ho-accent-gold-text)', fontSize: '10px' }}>
-                  Today, 17:00
-                </p>
-              </div>
-              {/* Event 2 */}
-              <div className="ho-timeline-item">
-                <div className="ho-timeline-badge ho-timeline-badge-dark" />
-                <h4 className="fw-bold fs-7 mb-1">Vet Inspection</h4>
-                <p className="text-secondary small m-0">Dr. Harrison for "Midnight Runner"</p>
-                <p className="ho-font-grotesk fw-bold tracking-wide uppercase m-0 mt-1" style={{ color: 'var(--ho-primary-dark)', fontSize: '10px' }}>
-                  Tomorrow, 09:00
-                </p>
-              </div>
+              {tournaments.slice(0, 3).map((t, idx) => (
+                <div key={t.id || idx} className="ho-timeline-item">
+                  <div className={`ho-timeline-badge ${idx > 0 ? 'ho-timeline-badge-dark' : ''}`} />
+                  <h4 className="fw-bold fs-7 mb-1">{t.tournamentName}</h4>
+                  <p className="text-secondary small m-0">{t.location}</p>
+                  <p className="ho-font-grotesk fw-bold tracking-wide uppercase m-0 mt-1" style={{ color: 'var(--ho-accent-gold-text)', fontSize: '10px' }}>
+                    {t.date} at {t.time}
+                  </p>
+                </div>
+              ))}
+              {tournaments.length === 0 && (
+                <div className="text-secondary small italic text-center py-4">No upcoming events scheduled.</div>
+              )}
             </div>
           </div>
         </div>
