@@ -12,11 +12,18 @@ export default function LoginForm() {
     password,
     loading,
     error,
+    isWaitingForGoogleOtp,
+    isCompletingGoogleProfile,
+    googleEmail,
+    googleDefaultName,
     handleIdentifierChange,
     handlePasswordChange,
     handleSubmit,
     handleGoogleSuccess,
     handleGoogleFailure,
+    handleVerifyGoogleOtp,
+    handleCompleteGoogleProfile,
+    cancelGoogleAuth,
   } = useLogin();
 
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -28,6 +35,17 @@ export default function LoginForm() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState(null);
   const [forgotSuccess, setForgotSuccess] = useState(null);
+
+  // States for Google Login custom flow
+  const [googleOtpInput, setGoogleOtpInput] = useState('');
+  const [googleUsernameInput, setGoogleUsernameInput] = useState('');
+  const [googleFullNameInput, setGoogleFullNameInput] = useState('');
+
+  // Initialize profile inputs when transitioning to profile completion step
+  if (isCompletingGoogleProfile && !googleUsernameInput && !googleFullNameInput && googleDefaultName) {
+    setGoogleUsernameInput(googleDefaultName.replace(/\s+/g, '').toLowerCase());
+    setGoogleFullNameInput(googleDefaultName);
+  }
 
   const resetForgotForm = () => {
     setForgotStep(1);
@@ -228,6 +246,134 @@ export default function LoginForm() {
             }}
           >
             Back to Login
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (isWaitingForGoogleOtp) {
+    return (
+      <div className="auth-form-card">
+        <h2 className="login-card-title">OTP Verification</h2>
+        {error && <div className="error-alert">{error}</div>}
+        
+        <p style={{
+          fontSize: '0.875rem',
+          color: 'var(--color-text-muted)',
+          marginBottom: '1.25rem',
+          textAlign: 'left',
+          lineHeight: '1.5',
+        }}>
+          A 6-digit OTP has been sent to <strong>{googleEmail}</strong>. Please enter it to continue.
+        </p>
+
+        <Input
+          type="text"
+          placeholder="6-Digit OTP Code"
+          value={googleOtpInput}
+          onChange={(e) => setGoogleOtpInput(e.target.value)}
+          disabled={loading}
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          }
+        />
+
+        <div className="submit-container" style={{ marginTop: '1.5rem' }}>
+          <Button onClick={() => handleVerifyGoogleOtp(googleOtpInput)} disabled={loading}>
+            {loading ? 'Verifying...' : 'Verify OTP'}
+          </Button>
+        </div>
+
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setGoogleOtpInput('');
+              cancelGoogleAuth();
+            }}
+            style={{
+              color: 'var(--color-primary)',
+              fontWeight: '700',
+              textDecoration: 'none',
+              fontSize: '0.875rem',
+            }}
+          >
+            Cancel & Back to Login
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (isCompletingGoogleProfile) {
+    return (
+      <div className="auth-form-card">
+        <h2 className="login-card-title">Complete Profile</h2>
+        {error && <div className="error-alert">{error}</div>}
+        
+        <p style={{
+          fontSize: '0.875rem',
+          color: 'var(--color-text-muted)',
+          marginBottom: '1.25rem',
+          textAlign: 'left',
+          lineHeight: '1.5',
+        }}>
+          Please confirm your details before completing the Google login.
+        </p>
+
+        <Input
+          type="text"
+          placeholder="Username"
+          value={googleUsernameInput}
+          onChange={(e) => setGoogleUsernameInput(e.target.value)}
+          disabled={loading}
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+            </svg>
+          }
+        />
+
+        <Input
+          type="text"
+          placeholder="Full Name"
+          value={googleFullNameInput}
+          onChange={(e) => setGoogleFullNameInput(e.target.value)}
+          disabled={loading}
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+            </svg>
+          }
+        />
+
+        <div className="submit-container" style={{ marginTop: '1.5rem' }}>
+          <Button onClick={() => handleCompleteGoogleProfile(googleUsernameInput, googleFullNameInput)} disabled={loading}>
+            {loading ? 'Processing...' : 'Complete Login'}
+          </Button>
+        </div>
+
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setGoogleUsernameInput('');
+              setGoogleFullNameInput('');
+              cancelGoogleAuth();
+            }}
+            style={{
+              color: 'var(--color-primary)',
+              fontWeight: '700',
+              textDecoration: 'none',
+              fontSize: '0.875rem',
+            }}
+          >
+            Cancel & Back to Login
           </a>
         </div>
       </div>

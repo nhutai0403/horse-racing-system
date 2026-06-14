@@ -90,6 +90,14 @@ export function useSignup() {
       return;
     }
 
+    // Check if email was already used for Google Login
+    const registeredEmailsStr = localStorage.getItem('google_registered_emails');
+    const registeredEmails = registeredEmailsStr ? JSON.parse(registeredEmailsStr) : [];
+    if (registeredEmails.includes(email.trim())) {
+      setError('This email is already associated with a Google Login account. Please use Google Login instead.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
