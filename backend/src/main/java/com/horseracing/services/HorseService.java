@@ -29,8 +29,13 @@ public class HorseService {
         HorseOwnerProfile ownerProfile = horseOwnerProfileRepository.findByUserEmail(ownerEmail)
                 .orElseThrow(() -> new RuntimeException("Horse owner profile not found"));
 
-        HorseBreed breed = horseBreedRepository.findById(request.getBreedId())
-                .orElseThrow(() -> new RuntimeException("Horse breed not found"));
+        HorseBreed breed = horseBreedRepository.findByBreedName(request.getBreedName())
+                .orElseGet(() -> {
+                    HorseBreed newBreed = HorseBreed.builder()
+                            .breedName(request.getBreedName())
+                            .build();
+                    return horseBreedRepository.save(newBreed);
+                });
 
         Horse horse = Horse.builder()
                 .owner(ownerProfile)

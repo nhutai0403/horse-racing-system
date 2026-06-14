@@ -15,8 +15,8 @@ public class CreateHorseRequest {
     @NotBlank(message = "Horse name is required")
     private String name;
 
-    @NotNull(message = "Breed ID is required")
-    private Integer breedId;
+    @NotBlank(message = "Breed name is required")
+    private String breedName;
 
     @NotNull(message = "Age is required")
     @Positive(message = "Age must be positive")

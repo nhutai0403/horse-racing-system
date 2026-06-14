@@ -20,7 +20,6 @@ public class RaceRegistrationService {
     private final HorseRepository horseRepository;
     private final JockeyProfileRepository jockeyProfileRepository;
     private final HorseOwnerProfileRepository horseOwnerProfileRepository;
-    private final JockeyAgreementRepository jockeyAgreementRepository;
     private final RaceParticipantRepository raceParticipantRepository;
 
     @Transactional
@@ -51,14 +50,6 @@ public class RaceRegistrationService {
 
         JockeyProfile jockey = jockeyProfileRepository.findById(request.getJockeyId())
                 .orElseThrow(() -> new RuntimeException("Jockey profile not found"));
-
-        // Verify jockey agreement/contract exists and is approved
-        JockeyAgreement agreement = jockeyAgreementRepository.findByOwnerIdAndJockeyId(owner.getId(), jockey.getId())
-                .orElseThrow(() -> new RuntimeException("No agreement exists between you and this jockey"));
-
-        if (!"Approved".equalsIgnoreCase(agreement.getStatus())) {
-            throw new RuntimeException("The agreement with this jockey has not been approved");
-        }
 
         // Verify horse or jockey is not already registered in this race
         boolean horseRegistered = raceRegistrationRepository.existsByRaceIdAndHorseIdAndStatusNot(

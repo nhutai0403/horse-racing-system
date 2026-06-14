@@ -37,8 +37,6 @@ public class RaceServiceTest {
     @Mock
     private JockeyProfileRepository jockeyProfileRepository;
     @Mock
-    private JockeyAgreementRepository jockeyAgreementRepository;
-    @Mock
     private RaceRegistrationRepository raceRegistrationRepository;
     @Mock
     private RaceParticipantRepository raceParticipantRepository;
