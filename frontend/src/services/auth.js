@@ -33,6 +33,16 @@ export async function signupAPI({ username, fullName, email, password, role = 'S
   }
 }
 
+export async function verifyAccountAPI(token) {
+  try {
+    const response = await axiosClient.get(`/auth/verify?token=${token}`);
+    return response.data;
+  } catch (error) {
+    const errMsg = error.response?.data?.message || 'Verification failed. Invalid or expired token.';
+    throw new Error(errMsg, { cause: error });
+  }
+}
+
 export async function logoutAPI(refreshToken) {
   try {
     const response = await axiosClient.post('/auth/logout', {
@@ -98,10 +108,15 @@ export async function sendGoogleOtpAPI(email) {
   return { success: true, message: 'OTP sent successfully' };
 }
 
-export async function verifyGoogleOtpAPI(email, otp) {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  if (otp === '123456') {
-    return { success: true };
+export async function completeGoogleProfileAPI(username, fullName) {
+  try {
+    const response = await axiosClient.post('/auth/google/complete-profile', {
+      username,
+      fullName,
+    });
+    return response.data;
+  } catch (error) {
+    const errMsg = error.response?.data?.message || 'Failed to complete profile.';
+    throw new Error(errMsg, { cause: error });
   }
-  throw new Error('Invalid OTP code. Please enter 123456 to pass.');
 }

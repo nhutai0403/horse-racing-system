@@ -69,11 +69,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex) {
+        log.error("Database constraint violation: {}", ex.getMessage());
+        // Return a generic error instead of the raw SQL query
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(409, "Dữ liệu đã tồn tại hoặc không hợp lệ. Vui lòng kiểm tra lại."));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
         log.error("Unhandled RuntimeException: {}", ex.getMessage(), ex);
+        // Do NOT expose ex.getMessage() to the frontend as it may contain sensitive SQL queries
         return ResponseEntity.badRequest()
-                .body(new ErrorResponse(400, ex.getMessage()));
+                .body(new ErrorResponse(400, "Có lỗi xảy ra trong quá trình xử lý yêu cầu."));
     }
 
     @ExceptionHandler(Exception.class)

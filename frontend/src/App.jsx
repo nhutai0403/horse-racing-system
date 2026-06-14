@@ -7,6 +7,7 @@ import Footer from './components/Footer/Footer';
 
 // Lazy load Page Components
 const AuthPage = lazy(() => import('./pages/AuthPage/AuthPage'));
+const VerifyAccountPage = lazy(() => import('./pages/AuthPage/VerifyAccountPage'));
 const Home = lazy(() => import('./pages/Home/Home'));
 const AdminPage = lazy(() => import('./pages/Admin/AdminPage'));
 const HorseOwnerPage = lazy(() => import('./pages/Horse-Owner/HorseOwnerPage'));
@@ -49,6 +50,8 @@ function App() {
             {/* Public Authentication Routes */}
             <Route path="/login" element={<AuthPage view="login" />} />
             <Route path="/signup" element={<AuthPage view="signup" />} />
+            <Route path="/verify-account" element={<VerifyAccountPage />} />
+            <Route path="/verify-email" element={<VerifyAccountPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
             {/* Standalone Horse Owner Dashboard Suite (Nested Routing delegated to page component) */}

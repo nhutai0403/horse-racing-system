@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
-import { loginAPI, googleLoginAPI, sendGoogleOtpAPI, verifyGoogleOtpAPI } from '../services/auth';
+import { loginAPI, googleLoginAPI } from '../services/auth';
 import { jwtDecode } from 'jwt-decode';
 
 export function useLogin() {
@@ -14,11 +14,9 @@ export function useLogin() {
   const [error, setError] = useState(null);
 
   // New states for Google Login flow
-  const [isWaitingForGoogleOtp, setIsWaitingForGoogleOtp] = useState(false);
   const [isCompletingGoogleProfile, setIsCompletingGoogleProfile] = useState(false);
-  const [googleCredential, setGoogleCredential] = useState(null);
-  const [googleEmail, setGoogleEmail] = useState('');
   const [googleDefaultName, setGoogleDefaultName] = useState('');
+  const [tempAuthData, setTempAuthData] = useState(null);
 
   const handleIdentifierChange = (e) => {
     setIdentifier(e.target.value);
@@ -80,31 +78,20 @@ export function useLogin() {
       const email = decoded.email;
       const name = decoded.name || email.split('@')[0];
 
-      // Trigger sending OTP
-      await sendGoogleOtpAPI(email);
-
-      // Save states and move to OTP step
-      setGoogleCredential(token);
-      setGoogleEmail(email);
-      setGoogleDefaultName(name);
-      setIsWaitingForGoogleOtp(true);
+      // Call actual googleLoginAPI to authenticate with backend immediately
+      const authData = await googleLoginAPI(token);
+      
+      if (authData.newUser) {
+        // First time Google Login -> show profile completion form
+        setTempAuthData(authData);
+        setGoogleDefaultName(name);
+        setIsCompletingGoogleProfile(true);
+      } else {
+        login(authData);
+        redirectByRole(authData.user.role);
+      }
     } catch (err) {
       setError(err.message || 'Failed to initiate Google login. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyGoogleOtp = async (otpCode) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await verifyGoogleOtpAPI(googleEmail, otpCode);
-      // Move to Profile Completion step
-      setIsWaitingForGoogleOtp(false);
-      setIsCompletingGoogleProfile(true);
-    } catch (err) {
-      setError(err.message || 'Invalid OTP. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -114,39 +101,42 @@ export function useLogin() {
     setLoading(true);
     setError(null);
     try {
-      // Call actual googleLoginAPI to authenticate with backend
-      const authData = await googleLoginAPI(googleCredential);
+      // Temporarily set the token in Axios manually or pass it in headers. 
+      // Actually, completeGoogleProfileAPI doesn't have token in params right now, 
+      // but wait: we can just login with authData to save token in localStorage, 
+      // then make the call, and then redirect.
+      login(tempAuthData);
       
-      // Override backend default username/fullname with user input
-      if (authData && authData.user) {
-        authData.user.username = username;
-        authData.user.fullName = fullName;
-      }
-
-      // Save Google email to localStorage to prevent local signup with this email
-      const registeredEmailsStr = localStorage.getItem('google_registered_emails');
-      const registeredEmails = registeredEmailsStr ? JSON.parse(registeredEmailsStr) : [];
-      if (!registeredEmails.includes(googleEmail)) {
-        registeredEmails.push(googleEmail);
-        localStorage.setItem('google_registered_emails', JSON.stringify(registeredEmails));
-      }
-
-      login(authData);
-      redirectByRole(authData.user.role);
+      // Now that we're logged in, the Axios interceptor will attach the token
+      import('../services/auth').then(async ({ completeGoogleProfileAPI }) => {
+          try {
+              const updatedUser = await completeGoogleProfileAPI(username, fullName);
+              // Update user context with new username and fullname
+              const newAuthData = { ...tempAuthData, user: updatedUser };
+              login(newAuthData); // update context
+              setIsCompletingGoogleProfile(false);
+              redirectByRole(newAuthData.user.role);
+          } catch(err) {
+              setError(err.message || 'Failed to complete profile. Please try again.');
+              setLoading(false);
+          }
+      });
+      return; // Return here, let the promise chain finish the loading state
     } catch (err) {
       setError(err.message || 'Failed to complete profile. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
 
   const cancelGoogleAuth = () => {
-    setIsWaitingForGoogleOtp(false);
     setIsCompletingGoogleProfile(false);
-    setGoogleCredential(null);
-    setGoogleEmail('');
     setGoogleDefaultName('');
+    setTempAuthData(null);
     setError(null);
+    // Logout since we temporarily logged them in
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
   };
 
   const handleGoogleFailure = () => {
@@ -158,16 +148,13 @@ export function useLogin() {
     password,
     loading,
     error,
-    isWaitingForGoogleOtp,
     isCompletingGoogleProfile,
-    googleEmail,
     googleDefaultName,
     handleIdentifierChange,
     handlePasswordChange,
     handleSubmit,
     handleGoogleSuccess,
     handleGoogleFailure,
-    handleVerifyGoogleOtp,
     handleCompleteGoogleProfile,
     cancelGoogleAuth,
     redirectByRole,

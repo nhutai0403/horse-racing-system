@@ -55,8 +55,14 @@ public class AuthService {
      */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email is already registered");
+        java.util.Optional<User> existingUserOpt = userRepository.findByEmail(request.getEmail());
+        if (existingUserOpt.isPresent()) {
+            User existingUser = existingUserOpt.get();
+            if (existingUser.getProvider() == AuthProvider.GOOGLE) {
+                throw new RuntimeException("Email này đã được đăng ký qua Google. Vui lòng chọn đăng nhập bằng Google.");
+            } else {
+                throw new RuntimeException("Email này đã được đăng ký. Vui lòng đăng nhập.");
+            }
         }
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username is already taken");
@@ -155,31 +161,62 @@ public class AuthService {
             String name = (String) payload.get("name");
             String googleId = payload.getSubject();
 
-            User user = userRepository.findByEmail(email).orElseGet(() -> {
+            java.util.Optional<User> existingUserOpt = userRepository.findByEmail(email);
+            if (existingUserOpt.isPresent()) {
+                User user = existingUserOpt.get();
+                if (user.getProvider() != AuthProvider.GOOGLE) {
+                    throw new RuntimeException("Email này đã được đăng ký bằng tài khoản thường. Vui lòng đăng nhập bằng mật khẩu.");
+                }
+
+                String accessToken = jwtUtils.generateAccessToken(user);
+                RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+                AuthResponse authResponse = new AuthResponse(accessToken, refreshToken.getToken(), UserResponse.fromEntity(user));
+                authResponse.setNewUser(false);
+                return authResponse;
+            } else {
                 User newUser = User.builder().username(email).email(email)
                         .password(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
                         .fullName(name != null ? name : email).role(Role.SPECTATOR)
                         .provider(AuthProvider.GOOGLE).providerId(googleId).enabled(true).build();
-                return userRepository.save(newUser);
-            });
+                newUser = userRepository.save(newUser);
 
-            // If user exists with LOCAL provider, link Google account and enable
-            if (user.getProvider() == AuthProvider.LOCAL && user.getProviderId() == null) {
-                user.setProvider(AuthProvider.GOOGLE);
-                user.setProviderId(googleId);
-                user.setEnabled(true); // Google-verified email → auto-enable
-                userRepository.save(user);
+                String accessToken = jwtUtils.generateAccessToken(newUser);
+                RefreshToken refreshToken = refreshTokenService.createRefreshToken(newUser);
+
+                AuthResponse authResponse = new AuthResponse(accessToken, refreshToken.getToken(), UserResponse.fromEntity(newUser));
+                authResponse.setNewUser(true);
+                return authResponse;
             }
-
-            String accessToken = jwtUtils.generateAccessToken(user);
-            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-
-            return new AuthResponse(accessToken, refreshToken.getToken(),
-                    UserResponse.fromEntity(user));
 
         } catch (Exception e) {
             throw new RuntimeException("Google authentication failed: " + e.getMessage());
         }
+    }
+
+    /**
+     * Update profile details for a newly created Google account.
+     */
+    @Transactional
+    public UserResponse completeGoogleProfile(String email, com.horseracing.dto.request.CompleteProfileRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (user.getProvider() != AuthProvider.GOOGLE) {
+            throw new RuntimeException("Chỉ tài khoản Google mới có thể cập nhật profile qua API này.");
+        }
+
+        // Only allow changing username if it hasn't been explicitly set (it currently defaults to email)
+        // or just allow it if it's the first time
+        if (userRepository.existsByUsername(request.getUsername()) && !user.getUsername().equals(request.getUsername())) {
+            throw new RuntimeException("Username is already taken");
+        }
+
+        user.setUsername(request.getUsername());
+        user.setFullName(request.getFullName());
+        userRepository.save(user);
+
+        return UserResponse.fromEntity(user);
     }
 
     /**

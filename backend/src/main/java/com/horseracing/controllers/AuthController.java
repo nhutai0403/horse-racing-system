@@ -44,7 +44,7 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ErrorResponse(401, "Invalid email or password"));
+                    .body(new ErrorResponse(401, "Login failed: " + e.getMessage() + " | Class: " + e.getClass().getSimpleName()));
         }
     }
 
@@ -60,6 +60,22 @@ public class AuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                     new ErrorResponse(401, "Google authentication failed: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Complete profile for newly created Google account
+     */
+    @PostMapping("/google/complete-profile")
+    public ResponseEntity<?> completeGoogleProfile(
+            @Valid @RequestBody com.horseracing.dto.request.CompleteProfileRequest request,
+            Authentication authentication) {
+        try {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            UserResponse response = authService.completeGoogleProfile(userDetails.getUsername(), request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
         }
     }
 

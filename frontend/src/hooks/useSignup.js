@@ -102,7 +102,7 @@ export function useSignup() {
     setError(null);
 
     try {
-      const authData = await signupAPI({
+      await signupAPI({
         username: username.trim(),
         fullName: name.trim(),
         email: email.trim(),
@@ -110,12 +110,8 @@ export function useSignup() {
         role,
       });
       
-      login(authData);
-      if (role === 'HORSE_OWNER') navigate('/owner');
-      else if (role === 'JOCKEY') navigate('/jockey');
-      else if (role === 'ADMIN') navigate('/admin');
-      else if (role === 'RACE_REFEREE') navigate('/referee');
-      else navigate('/spectator');
+      alert('Đăng ký thành công! Vui lòng kiểm tra email của bạn để lấy mã OTP và kích hoạt tài khoản.');
+      navigate(`/verify-account?email=${encodeURIComponent(email.trim())}`);
     } catch (err) {
       setError(err.message || 'An error occurred during sign up. Please try again.');
     } finally {
