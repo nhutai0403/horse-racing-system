@@ -1058,6 +1058,72 @@ ALTER TABLE [dbo].[users]  WITH CHECK ADD CHECK  (([provider]='GOOGLE' OR [provi
 GO
 ALTER TABLE [dbo].[users]  WITH CHECK ADD CHECK  (([role]='ADMIN' OR [role]='RACE_REFEREE' OR [role]='JOCKEY' OR [role]='HORSE_OWNER' OR [role]='SPECTATOR'))
 GO
+-- ==========================================
+-- TEST DATA FOR FE TESTING
+-- ==========================================
+USE [HorseRacingDB]
+GO
+
+-- 1. Insert Roles
+INSERT INTO [dbo].[roles] ([role_name], [description]) VALUES
+('ADMIN', 'System Administrator'),
+('SPECTATOR', 'Normal User'),
+('HORSE_OWNER', 'Horse Owner'),
+('JOCKEY', 'Jockey'),
+('RACE_REFEREE', 'Race Referee');
+GO
+
+-- 2. Insert Users (Password: 123456)
+INSERT INTO [dbo].[users] ([username], [email], [password], [full_name], [phone], [provider], [role], [enabled]) VALUES
+('owner1', 'owner1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test Owner 1', '0123456789', 'LOCAL', 'HORSE_OWNER', 1),
+('jockey1', 'jockey1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test Jockey 1', '0987654321', 'LOCAL', 'JOCKEY', 1),
+('jockey2', 'jockey2@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test Jockey 2', '0987654322', 'LOCAL', 'JOCKEY', 1);
+GO
+
+-- 3. Insert Owner & Jockey Profiles
+INSERT INTO [dbo].[horse_owner_profiles] ([user_id], [stable_name], [approval_status], [reputation_stars]) VALUES
+((SELECT id FROM [users] WHERE username='owner1'), 'Lucky Stable', 'APPROVED', 5.0);
+GO
+
+INSERT INTO [dbo].[jockey_profiles] ([user_id], [approval_status], [win_rate], [experience_year], [ranking_score]) VALUES
+((SELECT id FROM [users] WHERE username='jockey1'), 'APPROVED', 45.5, 5, 1200),
+((SELECT id FROM [users] WHERE username='jockey2'), 'APPROVED', 30.0, 2, 800);
+GO
+
+-- 4. Insert Horse Breeds
+INSERT INTO [dbo].[horse_breeds] ([breed_name]) VALUES
+('Thoroughbred'), ('Arabian'), ('Quarter Horse'), ('Appaloosa');
+GO
+
+-- 5. Insert Horses
+INSERT INTO [dbo].[horses] ([owner_id], [breed_id], [name], [age], [gender], [status]) VALUES
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner1')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Lightning Bolt', 4, 'MALE', 'ACTIVE'),
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner1')), (SELECT id FROM [horse_breeds] WHERE breed_name='Arabian'), 'Desert Wind', 3, 'FEMALE', 'ACTIVE');
+GO
+
+-- 6. Insert User Connections (owner1 is friends with jockey1)
+INSERT INTO [dbo].[user_connections] ([requester_id], [recipient_id], [status], [created_at]) VALUES
+((SELECT id FROM [users] WHERE username='owner1'), (SELECT id FROM [users] WHERE username='jockey1'), 'ACCEPTED', GETDATE());
+GO
+
+-- 7. Insert Race Tracks
+INSERT INTO [dbo].[race_tracks] ([name], [location], [surface_condition]) VALUES
+('Grand National Track', 'City Center', 'Good');
+GO
+
+-- 8. Insert Tournaments
+INSERT INTO [dbo].[tournaments] ([tournament_name], [tournament_status], [start_date], [end_date]) VALUES
+('Spring Championship 2026', 'Upcoming', '2026-07-01', '2026-07-15');
+GO
+
+-- 9. Insert Races
+INSERT INTO [dbo].[races] ([race_name], [tournament_id], [race_track_id], [race_date], [race_time], [race_round], [max_horses], [distance], [status]) VALUES
+('Qualifier Round 1', 
+ (SELECT id FROM [tournaments] WHERE tournament_name='Spring Championship 2026'), 
+ (SELECT id FROM [race_tracks] WHERE name='Grand National Track'), 
+ '2026-07-01', '14:00:00', 1, 10, 1200, 'Upcoming');
+GO
+
 USE [master]
 GO
 ALTER DATABASE [HorseRacingDB] SET  READ_WRITE 
