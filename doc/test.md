@@ -1,53 +1,105 @@
-# Hướng dẫn test luồng tính năng của Owner và Jockey
+# Hướng dẫn test luồng tính năng Frontend
 
-Sau khi Frontend đã tích hợp gọi API xong, bạn có thể sử dụng các tài khoản test đã được tạo sẵn trong cơ sở dữ liệu (`HorseRacingDB.sql`) để kiểm tra các luồng nghiệp vụ thay vì phải tạo mới từ đầu.
+Tất cả các dữ liệu dưới đây đã được khởi tạo sẵn trong Database (`HorseRacingDB.sql`). Chỉ cần khởi động lại DB (chạy init script) là có thể dùng ngay.
 
-## 1. Thông tin tài khoản Test
+## 1. Danh sách tài khoản Test
 
-> **Lưu ý về Mật khẩu:** 
-> - Mật khẩu chung cho các tài khoản test bên dưới là: `123456`.
-> - Mặc dù Backend có validate mật khẩu phải chứa chữ hoa và ký tự đặc biệt (ví dụ: `Password@123`), nhưng API **Login** không check lại rule này (chỉ check khi **Register**). Do các tài khoản này được insert trực tiếp vào DB nên bạn hoàn toàn có thể dùng `123456` để đăng nhập bình thường.
-> - Nếu bạn tạo mới một tài khoản từ trang Đăng ký (Register), bạn **bắt buộc** phải nhập mật khẩu đúng chuẩn (VD: `Password@123`).
+> **Lưu ý:**
+> - Tài khoản **Admin** mặc định được tạo từ source code Backend chứ không nằm trong file SQL (chỉ có 1 tài khoản).
+> - Mật khẩu chung cho tất cả các tài khoản là: **`123456`** (riêng Admin là `Admin@12345`).
 
-| Role | Username | Email | Mật khẩu | Mô tả |
-| :--- | :--- | :--- | :--- | :--- |
-| **HORSE_OWNER** | `owner1` | `owner1@test.com` | `123456` | Đã có sẵn 2 con ngựa, đã kết bạn với `jockey1` |
-| **JOCKEY** | `jockey1` | `jockey1@test.com` | `123456` | Jockey có nhiều kinh nghiệm, bạn bè với `owner1` |
-| **JOCKEY** | `jockey2` | `jockey2@test.com` | `123456` | Jockey mới, chưa kết bạn với `owner1` |
+### 🔑 ADMIN
+- `admin@gmail.com` -- `Admin@12345`
 
-## 2. Các luồng (Flows) cần test
+### 🔑 SPECTATOR
+- `spectator1@test.com` -- `123456`
+- `spectator2@test.com` -- `123456`
+- `spectator3@test.com` -- `123456`
+- `spectator4@test.com` -- `123456`
+- `spectator5@test.com` -- `123456`
+- `spectator6@test.com` -- `123456`
+- `spectator7@test.com` -- `123456`
+- `spectator8@test.com` -- `123456`
+- `spectator9@test.com` -- `123456`
+- `spectator10@test.com` -- `123456`
 
-### A. Luồng quản lý ngựa (Stable / Horses)
-1. Đăng nhập bằng tài khoản `owner1` / `123456`.
-2. Truy cập trang **Stable / Danh sách ngựa** (Route FE tương ứng).
-3. **Mong đợi:** FE sẽ gọi API `GET /api/owner/horses` và hiển thị ra 2 con ngựa có sẵn: "Lightning Bolt" (Thoroughbred) và "Desert Wind" (Arabian).
-4. Thực hiện thêm mới ngựa qua form (FE gọi API `POST /api/owner/horses` với `breedId` từ 1-4). Kiểm tra xem ngựa mới có hiện ra trong danh sách không.
+### 🔑 HORSE OWNER
+- `owner1@test.com` -- `123456`
+- `owner2@test.com` -- `123456`
+- `owner3@test.com` -- `123456`
+- `owner4@test.com` -- `123456`
+- `owner5@test.com` -- `123456`
+- `owner6@test.com` -- `123456`
+- `owner7@test.com` -- `123456`
+- `owner8@test.com` -- `123456`
+- `owner9@test.com` -- `123456`
+- `owner10@test.com` -- `123456`
 
-### B. Luồng quản lý hồ sơ (Profile)
-1. Đăng nhập bằng `owner1`.
-2. Truy cập trang **Profile**.
-3. **Mong đợi:** FE gọi API `GET /api/owner/profile`. Thông tin `stableName` sẽ là "Lucky Stable", trạng thái "APPROVED".
-4. Thử cập nhật các thông tin khác bằng API `PUT /api/owner/profile`.
+### 🔑 JOCKEY
+- `jockey1@test.com` -- `123456`
+- `jockey2@test.com` -- `123456`
+- `jockey3@test.com` -- `123456`
+- `jockey4@test.com` -- `123456`
+- `jockey5@test.com` -- `123456`
+- `jockey6@test.com` -- `123456`
+- `jockey7@test.com` -- `123456`
+- `jockey8@test.com` -- `123456`
+- `jockey9@test.com` -- `123456`
+- `jockey10@test.com` -- `123456`
 
-### C. Luồng kết nối Bạn bè (Connections)
-1. Đăng nhập bằng `owner1`.
-2. Truy cập trang **Connections / Friends**.
-3. **Mong đợi:**
-   - Khi gọi API `GET /api/connections/friends`, danh sách bạn bè sẽ hiện ra `jockey1` (vì đã kết nối trong DB).
-   - Khi gọi API `GET /api/connections/directory?role=JOCKEY`, bạn sẽ thấy cả `jockey2`.
-4. Gửi lời mời kết bạn tới `jockey2` (API `POST /api/connections/request`).
-5. Thoát tài khoản `owner1`, đăng nhập vào tài khoản `jockey2`.
-6. Tại tài khoản `jockey2`, kiểm tra danh sách lời mời và **Accept** lời mời từ `owner1` (API `PUT /api/connections/request/{id}/respond?action=ACCEPT`).
-
-### D. Luồng đăng ký đua (Race Registrations)
-1. Đăng nhập bằng `owner1`.
-2. Truy cập trang **Race Entries / Đăng ký thi đấu**.
-3. Hệ thống sẽ có sẵn giải đấu "Spring Championship 2026" và vòng đua "Qualifier Round 1".
-4. Chọn đăng ký tham gia vòng đua này:
-   - Chọn ngựa "Lightning Bolt".
-   - Chọn Jockey cưỡi là `jockey1` (nằm trong danh sách bạn bè).
-   - Nhập tỷ lệ ăn chia (Share percent) cho Jockey (ví dụ: 10%) và Owner (90%).
-5. **Mong đợi:** FE gọi API `POST /api/owner/race-registrations` thành công, lưu đăng ký vào trạng thái 'Registered'.
+### 🔑 RACE REFEREE
+- `referee1@test.com` -- `123456`
+- `referee2@test.com` -- `123456`
+- `referee3@test.com` -- `123456`
+- `referee4@test.com` -- `123456`
+- `referee5@test.com` -- `123456`
+- `referee6@test.com` -- `123456`
+- `referee7@test.com` -- `123456`
+- `referee8@test.com` -- `123456`
+- `referee9@test.com` -- `123456`
+- `referee10@test.com` -- `123456`
 
 ---
-*Lưu ý: Nếu bạn xóa và tạo lại Database, các dữ liệu test này sẽ tự động được Insert lại thông qua file `HorseRacingDB.sql`.*
+
+## 2. Dữ liệu đính kèm sẵn
+
+- **10 Owner** đã được duyệt Profile (`APPROVED`), mỗi Owner sở hữu sẵn **1 con ngựa** (ví dụ `owner1` sở hữu `Horse 1`, `owner10` sở hữu `Horse 10`). Tổng có 10 con ngựa.
+- **10 Jockey** đã được duyệt Profile (`APPROVED`), có sẵn các chỉ số win rate, kinh nghiệm khác nhau.
+- **Bạn bè:** `owner1` và `jockey1` đã kết bạn thành công với nhau.
+
+---
+
+## 3. Thông tin Giải đấu (Tournaments)
+
+Hệ thống có sẵn **4 Giải đấu** đại diện cho 4 trạng thái:
+1. `Spring Championship 2026` - **Open Registration** (Có sẵn 1 vòng đua *Qualifier Round 1*)
+2. `Summer Cup 2026` - **Registration Closed**
+3. `Winter Classic 2025` - **Ongoing**
+4. `End of Year Event 2026` - **Completed**
+
+---
+
+## 4. Gợi ý Test API (Dành cho FE)
+
+### A. Quản lý ngựa (Bởi Owner)
+Đăng nhập tài khoản `owner1`, vào quản lý ngựa (Stable):
+- **Danh sách ngựa:** `GET /api/owner/horses` (Sẽ thấy `Horse 1`).
+- **Thêm ngựa mới:** `POST /api/owner/horses`
+- **Sửa ngựa:** `PUT /api/owner/horses/{id}`
+- **Xóa ngựa:** `DELETE /api/owner/horses/{id}`
+
+### B. Quản lý Profile (Bởi Owner)
+- **Xem Profile:** `GET /api/owner/profile`
+- **Cập nhật Profile:** `PUT /api/owner/profile`
+
+### C. Quản lý kết nối / Bạn bè
+- **Danh sách bạn bè:** `GET /api/connections/friends` (Sẽ thấy `jockey1` nếu dùng `owner1`).
+- **Danh bạ hệ thống:** `GET /api/connections/directory?role=JOCKEY`
+- **Kết bạn mới:** `POST /api/connections/request`
+
+### D. Đăng ký đua (Race Registration)
+- **Đăng ký đua:** `POST /api/owner/race-registrations`
+  - Chọn giải *Spring Championship 2026* (Open Registration) -> Vòng *Qualifier Round 1*.
+  - Chọn ngựa *Horse 1*.
+  - Chọn *jockey1* làm người cưỡi.
+  - Điền tỷ lệ ăn chia (VD: Owner 90%, Jockey 10%).
