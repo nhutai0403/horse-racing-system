@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useHorseOwner } from './HorseOwnerContext';
 
 const presetAvatars = [
@@ -233,6 +233,21 @@ export default function ProfileContent() {
                 </div>
               </div>
 
+              {/* Description / Bio moved to the top, right below the image uploader */}
+              <div>
+                <label className="ho-input-label ho-font-grotesk">
+                  Description / Bio
+                </label>
+                <textarea
+                  value={formData.description || ''}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="ho-form-input text-dark"
+                  rows="3"
+                  placeholder="Enter a brief description about your stable..."
+                  style={{ resize: 'none' }}
+                />
+              </div>
+
               <div className="row g-3">
                 <div className="col-12 col-sm-6">
                   <label className="ho-input-label ho-font-grotesk">
@@ -274,31 +289,18 @@ export default function ProfileContent() {
                 <span className="text-secondary mt-1 d-block" style={{ fontSize: '10px' }}>Email address cannot be changed (tied to login session).</span>
               </div>
 
-              <div className="row g-3">
-                <div className="col-12 col-sm-6">
-                  <label className="ho-input-label ho-font-grotesk">
-                    Identity Card / Passport
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.identityNumber}
-                    onChange={(e) => setFormData({ ...formData, identityNumber: e.target.value })}
-                    className="ho-form-input text-dark"
-                    required
-                  />
-                </div>
-                <div className="col-12 col-sm-6">
-                  <label className="ho-input-label ho-font-grotesk">
-                    Date of Birth
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                    className="ho-form-input text-dark"
-                    required
-                  />
-                </div>
+              {/* Identity Card / Passport deleted, Date of Birth is full width */}
+              <div>
+                <label className="ho-input-label ho-font-grotesk">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                  className="ho-form-input text-dark"
+                  required
+                />
               </div>
 
               <div className="border-top pt-3 mt-3">

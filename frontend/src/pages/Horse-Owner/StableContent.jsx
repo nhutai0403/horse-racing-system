@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useHorseOwner } from './HorseOwnerContext';
+import StatusBadge from '../../components/StatusBadge';
+import MetricBar from '../../components/MetricBar';
 
 export default function StableContent() {
   const { horses = [], setHorses } = useHorseOwner();
@@ -7,23 +10,122 @@ export default function StableContent() {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [newHorseData, setNewHorseData] = useState({
     name: '',
+    breed: '',
     age: '',
-    gender: 'Gelding',
-    sire: '',
-    dam: '',
-    status: 'Race Ready',
-    speed: 50,
-    stamina: 50,
-    gatePerformance: 50,
+    gender: 'Male',
+    status: 'READY',
+    image: '',
   });
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editHorseData, setEditHorseData] = useState({
+    id: '',
+    name: '',
+    breed: '',
+    age: '',
+    gender: 'Male',
+    status: 'READY',
+    image: '',
+  });
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [horseToDelete, setHorseToDelete] = useState(null);
 
   const activeHorseId = selectedHorseId || horses[0]?.id;
   const selectedHorse = horses.find((h) => h.id === activeHorseId) || horses[0];
+
+  const handleEditClick = (horse) => {
+    setEditHorseData({
+      id: horse.id,
+      name: horse.name,
+      breed: horse.breed,
+      age: horse.age,
+      gender: horse.gender,
+      status: horse.status,
+      image: horse.image || horse.img || '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewHorseData((prev) => ({ ...prev, image: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEditImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditHorseData((prev) => ({ ...prev, image: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    if (!editHorseData.name.trim()) {
+      alert('Please enter a horse name.');
+      return;
+    }
+    if (!editHorseData.breed.trim()) {
+      alert('Please enter a breed.');
+      return;
+    }
+    const ageNum = parseInt(editHorseData.age);
+    if (isNaN(ageNum) || ageNum <= 0) {
+      alert('Please enter a valid age.');
+      return;
+    }
+
+    setHorses((prev) =>
+      prev.map((h) =>
+        h.id === editHorseData.id
+          ? {
+              ...h,
+              name: editHorseData.name.trim(),
+              breed: editHorseData.breed.trim(),
+              age: ageNum,
+              gender: editHorseData.gender,
+              status: editHorseData.status,
+              image: editHorseData.image || ''
+            }
+          : h
+      )
+    );
+    setShowEditModal(false);
+  };
+
+  const handleDeleteClick = (horse) => {
+    setHorseToDelete(horse);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (horseToDelete) {
+      const remainingHorses = horses.filter((h) => h.id !== horseToDelete.id);
+      setHorses(remainingHorses);
+      setSelectedHorseId(remainingHorses[0]?.id || null);
+      setShowDeleteModal(false);
+      setHorseToDelete(null);
+    }
+  };
 
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
     if (!newHorseData.name.trim()) {
       alert('Please enter a horse name.');
+      return;
+    }
+    if (!newHorseData.breed.trim()) {
+      alert('Please enter a breed.');
       return;
     }
     const ageNum = parseInt(newHorseData.age);
@@ -36,16 +138,22 @@ export default function StableContent() {
     const newHorse = {
       id: newId,
       name: newHorseData.name.trim(),
+      breed: newHorseData.breed.trim(),
       age: ageNum,
       gender: newHorseData.gender,
-      sire: newHorseData.sire.trim() || 'Unknown',
-      dam: newHorseData.dam.trim() || 'Unknown',
+      sire: 'Unknown',
+      dam: 'Unknown',
       status: newHorseData.status,
-      image: 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=500&auto=format&fit=crop&q=60',
+      matchesPlayed: 0,
+      winRate: 0,
+      image: newHorseData.image || '',
+      top1Rate: 0,
+      top2Rate: 0,
+      top3Rate: 0,
       metrics: {
-        speed: parseInt(newHorseData.speed) || 50,
-        stamina: parseInt(newHorseData.stamina) || 50,
-        gatePerformance: parseInt(newHorseData.gatePerformance) || 50,
+        speed: 50,
+        stamina: 50,
+        gatePerformance: 50,
       },
       medicalLogs: [
         {
@@ -63,32 +171,22 @@ export default function StableContent() {
     // Reset and close
     setNewHorseData({
       name: '',
+      breed: '',
       age: '',
-      gender: 'Gelding',
-      sire: '',
-      dam: '',
-      status: 'Race Ready',
-      speed: 50,
-      stamina: 50,
-      gatePerformance: 50,
+      gender: 'Male',
+      status: 'READY',
+      image: '',
     });
     setShowRegisterModal(false);
   };
 
-  const horseImg = selectedHorse?.image || selectedHorse?.img || 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=500&auto=format&fit=crop&q=60';
-  const detailsText = selectedHorse
-    ? `${selectedHorse.age}yo ${selectedHorse.gender} • Sire: ${selectedHorse.sire || 'Unknown'} • Dam: ${selectedHorse.dam || 'Unknown'}`
-    : '';
-
   const horseMetrics = selectedHorse
     ? [
-        { label: 'Speed', val: selectedHorse.metrics?.speed || 0, color: 'var(--ho-primary-dark)' },
-        { label: 'Stamina', val: selectedHorse.metrics?.stamina || 0, color: 'var(--ho-accent-gold-text)' },
-        { label: 'Gate Performance', val: selectedHorse.metrics?.gatePerformance || 0, color: 'var(--ho-primary-medium)' }
+        { label: 'Top 1 Rate', val: selectedHorse.top1Rate ?? selectedHorse.winRate ?? 0, color: 'var(--ho-primary-dark)', suffix: '%' },
+        { label: 'Top 2 Rate', val: selectedHorse.top2Rate ?? 0, color: 'var(--ho-accent-gold-text)', suffix: '%' },
+        { label: 'Top 3 Rate', val: selectedHorse.top3Rate ?? 0, color: 'var(--ho-primary-medium)', suffix: '%' }
       ]
     : [];
-
-  const logs = selectedHorse?.medicalLogs || selectedHorse?.medical || [];
 
   return (
     <div className="container-fluid p-0 animate-fade-in" style={{ maxWidth: '1440px' }}>
@@ -102,8 +200,8 @@ export default function StableContent() {
               </h2>
               <button
                 onClick={() => setShowRegisterModal(true)}
-                className="ho-btn ho-btn-gold-solid py-1.5 px-3 d-flex align-items-center gap-1"
-                style={{ fontSize: '11px' }}
+                className="ho-btn ho-btn-gold-solid py-1 px-3 d-flex align-items-center gap-1"
+                style={{ fontSize: '12px' }}
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
                 Add Horse
@@ -113,7 +211,6 @@ export default function StableContent() {
             <div className="d-flex flex-column gap-2 flex-grow-1">
               {horses.map((horse) => {
                 const isSelected = horse.id === activeHorseId;
-                const imgUrl = horse.image || horse.img || 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=500&auto=format&fit=crop&q=60';
                 return (
                   <div
                     key={horse.id}
@@ -125,20 +222,50 @@ export default function StableContent() {
                       transition: 'background-color 0.2s ease, border-color 0.2s ease'
                     }}
                   >
-                    <div className="rounded-circle overflow-hidden me-3 border" style={{ width: '48px', height: '48px', borderColor: '#c0c9c0', flexShrink: 0 }}>
-                      <img
-                        src={imgUrl}
-                        alt={horse.name}
-                        className="w-100 h-100 object-fit-cover"
-                      />
+                    <div className="rounded-circle overflow-hidden me-3 border d-flex align-items-center justify-content-center bg-light text-secondary text-center shadow-sm" style={{ width: '48px', height: '48px', borderColor: '#c0c9c0', flexShrink: 0 }}>
+                      {horse.image || horse.img ? (
+                        <img
+                          src={horse.image || horse.img}
+                          alt={horse.name}
+                          className="w-100 h-100 object-fit-cover"
+                        />
+                      ) : (
+                        <div className="d-flex flex-column align-items-center justify-content-center" style={{ lineHeight: 1.1 }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>image</span>
+                          <span style={{ fontSize: '7px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.2px' }}>No Image</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-grow-1">
-                      <h4 className="fw-bold m-0" style={{ color: 'var(--ho-primary-dark)', fontSize: '14px' }}>{horse.name}</h4>
-                      <span className={`badge-custom mt-1 ${
-                        horse.status === 'Race Ready' ? 'badge-ready' : horse.status === 'In Training' ? 'badge-training' : 'badge-recovery'
-                      }`}>
-                        {horse.status}
-                      </span>
+                    <div className="flex-grow-1 d-flex justify-content-between align-items-center gap-2">
+                      <div>
+                        <h4 className="fw-bold m-0 mb-1" style={{ color: 'var(--ho-primary-dark)', fontSize: '15px' }}>{horse.name}</h4>
+                        <div className="text-secondary small fw-semibold" style={{ fontSize: '11px' }}>
+                          {horse.breed} • {horse.matchesPlayed} Matches
+                        </div>
+                      </div>
+                      <div className="d-flex align-items-center gap-2">
+                        <StatusBadge status={horse.status} iconOnly={true} />
+                        
+                        {/* Compact & Elegant CRUD icons */}
+                        <div className="d-flex gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => handleEditClick(horse)}
+                            className="p-1 btn btn-link text-decoration-none border-0 bg-transparent hover-scale"
+                            style={{ outline: 'none' }}
+                            title="Edit Horse"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--ho-accent-gold-text)' }}>edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(horse)}
+                            className="p-1 btn btn-link text-decoration-none border-0 bg-transparent hover-scale"
+                            style={{ outline: 'none' }}
+                            title="Delete Horse"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--ho-error-text)' }}>delete</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
@@ -153,77 +280,52 @@ export default function StableContent() {
             <div className="glass-card h-100 overflow-y-auto">
               {/* Header */}
               <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 border-bottom pb-4 mb-4" style={{ borderColor: 'var(--ho-border-muted)' }}>
-                <div>
-                  <h2 className="ho-font-epilogue fs-3 fw-bold mb-1" style={{ color: 'var(--ho-primary-dark)' }}>
-                    {selectedHorse.name}
-                  </h2>
-                  <p className="text-secondary ho-font-grotesk fw-bold text-uppercase m-0" style={{ fontSize: '11px', letterSpacing: '0.05em' }}>
-                    {detailsText}
-                  </p>
-                </div>
-                <button
-                  onClick={() => alert(`Assigning Jockey to ${selectedHorse.name}`)}
-                  className="ho-btn ho-btn-gold-outline d-flex align-items-center gap-2"
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>
-                  Assign Jockey
-                </button>
-              </div>
-
-              {/* Metrics & Logs */}
-              <div className="d-flex flex-column gap-4">
-                {/* Performance Gauges */}
-                <div>
-                  <h3 className="ho-font-epilogue fs-6 fw-bold mb-3" style={{ color: 'var(--ho-primary-dark)' }}>
-                    Performance Metrics
-                  </h3>
-                  <div className="d-flex flex-column gap-3">
-                    {horseMetrics.map((metric, i) => (
-                      <div key={i}>
-                        <div className="d-flex justify-content-between small fw-bold mb-1">
-                          <span>{metric.label}</span>
-                          <span>{metric.val}/100</span>
-                        </div>
-                        <div className="progress" style={{ height: '8px', backgroundColor: '#f0eded' }}>
-                          <div
-                            className="progress-bar"
-                            role="progressbar"
-                            style={{
-                              width: `${metric.val}%`,
-                              backgroundColor: metric.color
-                            }}
-                            aria-valuenow={metric.val}
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                          />
-                        </div>
+                <div className="d-flex gap-4 align-items-center">
+                  <div className="rounded overflow-hidden border shadow-sm d-flex align-items-center justify-content-center bg-light text-secondary text-center" style={{ width: '90px', height: '90px', borderColor: '#c0c9c0', flexShrink: 0 }}>
+                    {selectedHorse.image || selectedHorse.img ? (
+                      <img
+                        src={selectedHorse.image || selectedHorse.img}
+                        alt={selectedHorse.name}
+                        className="w-100 h-100 object-fit-cover"
+                      />
+                    ) : (
+                      <div className="d-flex flex-column align-items-center justify-content-center">
+                        <span className="material-symbols-outlined mb-1" style={{ fontSize: '28px' }}>image</span>
+                        <span className="fw-bold" style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>No Image</span>
                       </div>
-                    ))}
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="ho-font-epilogue fs-3 fw-bold mb-2 d-flex align-items-center gap-3" style={{ color: 'var(--ho-primary-dark)' }}>
+                      {selectedHorse.name}
+                      <StatusBadge status={selectedHorse.status} />
+                    </h2>
+                    <div className="text-secondary ho-font-grotesk fw-bold d-flex flex-wrap gap-3" style={{ fontSize: '12px' }}>
+                      <span><span className="text-dark">Breed:</span> {selectedHorse.breed}</span>
+                      <span><span className="text-dark">Age:</span> {selectedHorse.age}yo {selectedHorse.gender}</span>
+                      <span><span className="text-dark">Matches:</span> {selectedHorse.matchesPlayed}</span>
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Medical Logs */}
-                <div>
-                  <h3 className="ho-font-epilogue fs-6 fw-bold mb-3" style={{ color: 'var(--ho-primary-dark)' }}>
-                    Medical Logs
+              {/* Performance Metrics */}
+              <div className="row g-4">
+                <div className="col-12">
+                  <h3 className="ho-font-epilogue fs-6 fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: 'var(--ho-primary-dark)' }}>
+                    <span className="material-symbols-outlined fs-5">speed</span>
+                    Performance Metrics
                   </h3>
-                  <div className="border rounded p-3 d-flex flex-column gap-2" style={{ backgroundColor: 'var(--ho-bg-cream)', borderColor: 'var(--ho-border-muted)' }}>
-                    {logs.length > 0 ? (
-                      logs.map((log, i) => (
-                        <div
-                          key={log.id || i}
-                          className="d-flex justify-content-between align-items-center small pb-2 border-bottom"
-                          style={{ borderColor: 'rgba(0,0,0,0.05)' }}
-                        >
-                          <span className="text-dark fw-bold">{log.desc}</span>
-                          <span className="text-secondary fw-semibold">
-                            {log.date}{log.status ? ` - ${log.status}` : ''}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-secondary small italic py-2 text-center">No medical records available.</div>
-                    )}
+                  <div className="border rounded p-4" style={{ backgroundColor: '#fcfdfc', borderColor: 'var(--ho-border-muted)' }}>
+                    {horseMetrics.map((metric, i) => (
+                      <MetricBar 
+                        key={i} 
+                        label={metric.label} 
+                        value={metric.val} 
+                        color={metric.color} 
+                        suffix={metric.suffix}
+                      />
+                    ))}
                   </div>
                 </div>
               </div>
@@ -237,15 +339,54 @@ export default function StableContent() {
       </div>
 
       {/* Registration Modal Dialog */}
-      {showRegisterModal && (
-        <div className="modal-overlay">
-          <div className="modal-content-custom animate-scale-up" style={{ maxWidth: '550px' }}>
+      {showRegisterModal && createPortal(
+        <div className="modal-overlay" style={{ zIndex: 1050 }} onClick={() => setShowRegisterModal(false)}>
+          <div className="modal-content-custom animate-scale-up" style={{ maxWidth: '550px' }} onClick={(e) => e.stopPropagation()}>
             <h3 className="ho-font-epilogue fs-4 fw-bold mb-4" style={{ color: 'var(--ho-primary-dark)' }}>
               Add New Horse
             </h3>
             
             <form onSubmit={handleRegisterSubmit}>
-              <div className="d-flex flex-column gap-3 mb-4" style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '5px' }}>
+              <div className="d-flex flex-column gap-3 mb-4" style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px' }}>
+                {/* Horse Image */}
+                <div className="d-flex flex-column align-items-center mb-2">
+                  <label className="ho-input-label ho-font-grotesk text-center w-100 mb-2">Horse Image</label>
+                  <div className="d-flex flex-column align-items-center gap-2">
+                    <div className="rounded-circle overflow-hidden border bg-light d-flex flex-column align-items-center justify-content-center text-center shadow-sm" style={{ width: '80px', height: '80px', borderColor: 'var(--ho-border-muted)', flexShrink: 0 }}>
+                      {newHorseData.image ? (
+                        <img src={newHorseData.image} alt="Preview" className="w-100 h-100 object-fit-cover" />
+                      ) : (
+                        <div className="d-flex flex-column align-items-center justify-content-center text-secondary">
+                          <span className="material-symbols-outlined mb-1" style={{ fontSize: '24px' }}>image</span>
+                          <span className="fw-bold" style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>No Image</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      <label htmlFor="add-horse-image" className="ho-btn ho-btn-gold-solid py-1 px-3 m-0 text-center cursor-pointer" style={{ fontSize: '11px' }}>
+                        Upload Image
+                      </label>
+                      <input
+                        id="add-horse-image"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="d-none"
+                      />
+                      {newHorseData.image && (
+                        <button
+                          type="button"
+                          onClick={() => setNewHorseData(prev => ({ ...prev, image: '' }))}
+                          className="btn btn-link text-danger p-0 text-decoration-none small fw-bold"
+                          style={{ fontSize: '11px' }}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Horse Name */}
                 <div>
                   <label className="ho-input-label ho-font-grotesk">Horse Name</label>
@@ -259,8 +400,19 @@ export default function StableContent() {
                   />
                 </div>
 
-                {/* Age & Gender */}
+                {/* Breed & Age */}
                 <div className="row g-3">
+                  <div className="col-6">
+                    <label className="ho-input-label ho-font-grotesk">Breed</label>
+                    <input
+                      type="text"
+                      required
+                      value={newHorseData.breed}
+                      onChange={(e) => setNewHorseData({ ...newHorseData, breed: e.target.value })}
+                      className="ho-form-input text-dark"
+                      placeholder="e.g. Thoroughbred"
+                    />
+                  </div>
                   <div className="col-6">
                     <label className="ho-input-label ho-font-grotesk">Age (Years)</label>
                     <input
@@ -274,6 +426,10 @@ export default function StableContent() {
                       placeholder="e.g. 5"
                     />
                   </div>
+                </div>
+
+                {/* Gender & Status */}
+                <div className="row g-3">
                   <div className="col-6">
                     <label className="ho-input-label ho-font-grotesk">Gender</label>
                     <select
@@ -281,109 +437,22 @@ export default function StableContent() {
                       onChange={(e) => setNewHorseData({ ...newHorseData, gender: e.target.value })}
                       className="ho-form-input text-dark fw-bold"
                     >
-                      <option value="Gelding">Gelding</option>
-                      <option value="Colt">Colt</option>
-                      <option value="Stallion">Stallion</option>
-                      <option value="Mare">Mare</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
                     </select>
                   </div>
-                </div>
-
-                {/* Sire & Dam */}
-                <div className="row g-3">
                   <div className="col-6">
-                    <label className="ho-input-label ho-font-grotesk">Sire (Father)</label>
-                    <input
-                      type="text"
-                      value={newHorseData.sire}
-                      onChange={(e) => setNewHorseData({ ...newHorseData, sire: e.target.value })}
-                      className="ho-form-input text-dark"
-                      placeholder="e.g. Northern Dancer"
-                    />
-                  </div>
-                  <div className="col-6">
-                    <label className="ho-input-label ho-font-grotesk">Dam (Mother)</label>
-                    <input
-                      type="text"
-                      value={newHorseData.dam}
-                      onChange={(e) => setNewHorseData({ ...newHorseData, dam: e.target.value })}
-                      className="ho-form-input text-dark"
-                      placeholder="e.g. Wind Runner"
-                    />
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className="ho-input-label ho-font-grotesk">Status</label>
-                  <select
-                    value={newHorseData.status}
-                    onChange={(e) => setNewHorseData({ ...newHorseData, status: e.target.value })}
-                    className="ho-form-input text-dark fw-bold"
-                  >
-                    <option value="Race Ready">Race Ready</option>
-                    <option value="In Training">In Training</option>
-                    <option value="Recovery">Recovery</option>
-                  </select>
-                </div>
-
-                {/* Performance Metrics */}
-                <div className="border-top pt-3 mt-2">
-                  <h4 className="ho-font-epilogue fs-6 fw-bold mb-3" style={{ color: 'var(--ho-primary-dark)' }}>
-                    Initial Performance Ratings
-                  </h4>
-                  
-                  <div className="d-flex flex-column gap-3">
-                    {/* Speed */}
-                    <div>
-                      <div className="d-flex justify-content-between small fw-bold mb-1">
-                        <span>Speed</span>
-                        <span>{newHorseData.speed}/100</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="1"
-                        max="100"
-                        value={newHorseData.speed}
-                        onChange={(e) => setNewHorseData({ ...newHorseData, speed: e.target.value })}
-                        className="form-range"
-                        style={{ accentColor: 'var(--ho-primary-dark)' }}
-                      />
-                    </div>
-
-                    {/* Stamina */}
-                    <div>
-                      <div className="d-flex justify-content-between small fw-bold mb-1">
-                        <span>Stamina</span>
-                        <span>{newHorseData.stamina}/100</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="1"
-                        max="100"
-                        value={newHorseData.stamina}
-                        onChange={(e) => setNewHorseData({ ...newHorseData, stamina: e.target.value })}
-                        className="form-range"
-                        style={{ accentColor: 'var(--ho-accent-gold-text)' }}
-                      />
-                    </div>
-
-                    {/* Gate Performance */}
-                    <div>
-                      <div className="d-flex justify-content-between small fw-bold mb-1">
-                        <span>Gate Performance</span>
-                        <span>{newHorseData.gatePerformance}/100</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="1"
-                        max="100"
-                        value={newHorseData.gatePerformance}
-                        onChange={(e) => setNewHorseData({ ...newHorseData, gatePerformance: e.target.value })}
-                        className="form-range"
-                        style={{ accentColor: 'var(--ho-primary-medium)' }}
-                      />
-                    </div>
+                    <label className="ho-input-label ho-font-grotesk">Initial Status</label>
+                    <select
+                      value={newHorseData.status}
+                      onChange={(e) => setNewHorseData({ ...newHorseData, status: e.target.value })}
+                      className="ho-form-input text-dark fw-bold"
+                    >
+                      <option value="READY">Ready</option>
+                      <option value="TRAINING">In Training</option>
+                      <option value="SICK">Sick</option>
+                      <option value="RECOVERY">Recovery</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -393,20 +462,199 @@ export default function StableContent() {
                 <button
                   type="button"
                   onClick={() => setShowRegisterModal(false)}
-                  className="ho-btn-link text-uppercase tracking-wider small"
+                  className="ho-btn-link text-uppercase tracking-wider small fw-bold"
+                  style={{ textDecoration: 'none' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="ho-btn ho-btn-gold-solid py-2 px-4"
+                  className="ho-btn ho-btn-gold-solid py-2 px-4 fw-bold"
                 >
                   Add Horse
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Edit Modal Dialog */}
+      {showEditModal && createPortal(
+        <div className="modal-overlay" style={{ zIndex: 1050 }} onClick={() => setShowEditModal(false)}>
+          <div className="modal-content-custom animate-scale-up" style={{ maxWidth: '550px' }} onClick={(e) => e.stopPropagation()}>
+            <h3 className="ho-font-epilogue fs-4 fw-bold mb-4" style={{ color: 'var(--ho-primary-dark)' }}>
+              Edit Horse Details
+            </h3>
+            
+            <form onSubmit={handleEditSubmit}>
+              <div className="d-flex flex-column gap-3 mb-4" style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px' }}>
+                {/* Horse Image */}
+                <div className="d-flex flex-column align-items-center mb-2">
+                  <label className="ho-input-label ho-font-grotesk text-center w-100 mb-2">Horse Image</label>
+                  <div className="d-flex flex-column align-items-center gap-2">
+                    <div className="rounded-circle overflow-hidden border bg-light d-flex flex-column align-items-center justify-content-center text-center shadow-sm" style={{ width: '80px', height: '80px', borderColor: 'var(--ho-border-muted)', flexShrink: 0 }}>
+                      {editHorseData.image ? (
+                        <img src={editHorseData.image} alt="Preview" className="w-100 h-100 object-fit-cover" />
+                      ) : (
+                        <div className="d-flex flex-column align-items-center justify-content-center text-secondary">
+                          <span className="material-symbols-outlined mb-1" style={{ fontSize: '24px' }}>image</span>
+                          <span className="fw-bold" style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>No Image</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      <label htmlFor="edit-horse-image" className="ho-btn ho-btn-gold-solid py-1 px-3 m-0 text-center cursor-pointer" style={{ fontSize: '11px' }}>
+                        Upload Image
+                      </label>
+                      <input
+                        id="edit-horse-image"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleEditImageChange}
+                        className="d-none"
+                      />
+                      {editHorseData.image && (
+                        <button
+                          type="button"
+                          onClick={() => setEditHorseData(prev => ({ ...prev, image: '' }))}
+                          className="btn btn-link text-danger p-0 text-decoration-none small fw-bold"
+                          style={{ fontSize: '11px' }}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Horse Name */}
+                <div>
+                  <label className="ho-input-label ho-font-grotesk">Horse Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editHorseData.name}
+                    onChange={(e) => setEditHorseData({ ...editHorseData, name: e.target.value })}
+                    className="ho-form-input text-dark"
+                    placeholder="e.g. Pegasus Gold"
+                  />
+                </div>
+
+                {/* Breed & Age */}
+                <div className="row g-3">
+                  <div className="col-6">
+                    <label className="ho-input-label ho-font-grotesk">Breed</label>
+                    <input
+                      type="text"
+                      required
+                      value={editHorseData.breed}
+                      onChange={(e) => setEditHorseData({ ...editHorseData, breed: e.target.value })}
+                      className="ho-form-input text-dark"
+                      placeholder="e.g. Thoroughbred"
+                    />
+                  </div>
+                  <div className="col-6">
+                    <label className="ho-input-label ho-font-grotesk">Age (Years)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max="30"
+                      value={editHorseData.age}
+                      onChange={(e) => setEditHorseData({ ...editHorseData, age: e.target.value })}
+                      className="ho-form-input text-dark"
+                      placeholder="e.g. 5"
+                    />
+                  </div>
+                </div>
+
+                {/* Gender & Status */}
+                <div className="row g-3">
+                  <div className="col-6">
+                    <label className="ho-input-label ho-font-grotesk">Gender</label>
+                    <select
+                      value={editHorseData.gender}
+                      onChange={(e) => setEditHorseData({ ...editHorseData, gender: e.target.value })}
+                      className="ho-form-input text-dark fw-bold"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                  <div className="col-6">
+                    <label className="ho-input-label ho-font-grotesk">Status</label>
+                    <select
+                      value={editHorseData.status}
+                      onChange={(e) => setEditHorseData({ ...editHorseData, status: e.target.value })}
+                      className="ho-form-input text-dark fw-bold"
+                    >
+                      <option value="READY">Ready</option>
+                      <option value="TRAINING">In Training</option>
+                      <option value="SICK">Sick</option>
+                      <option value="RECOVERY">Recovery</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="d-flex justify-content-end gap-3 align-items-center border-top pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="ho-btn-link text-uppercase tracking-wider small fw-bold"
+                  style={{ textDecoration: 'none' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="ho-btn ho-btn-gold-solid py-2 px-4 fw-bold"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+      {/* Delete Confirmation Modal Dialog */}
+      {showDeleteModal && createPortal(
+        <div className="modal-overlay" style={{ zIndex: 1050 }} onClick={() => setShowDeleteModal(false)}>
+          <div className="modal-content-custom animate-scale-up text-center" style={{ maxWidth: '420px', padding: '2.5rem 2rem' }} onClick={(e) => e.stopPropagation()}>
+            <span className="material-symbols-outlined text-danger mb-3" style={{ fontSize: '48px' }}>
+              warning
+            </span>
+            <h3 className="ho-font-epilogue fs-5 fw-bold mb-2" style={{ color: 'var(--ho-primary-dark)' }}>
+              Delete Horse
+            </h3>
+            <p className="text-secondary small fw-medium mb-4" style={{ lineHeight: '1.5' }}>
+              Are you sure you want to delete <strong style={{ color: 'var(--ho-primary-dark)' }}>{horseToDelete?.name}</strong> from the roster? This action cannot be undone.
+            </p>
+            
+            <div className="d-flex justify-content-center gap-3 align-items-center border-top pt-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="ho-btn-link text-uppercase tracking-wider small fw-bold"
+                style={{ textDecoration: 'none' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="ho-btn ho-btn-outline-danger py-2 px-4 fw-bold"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

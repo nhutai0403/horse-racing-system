@@ -1,10 +1,93 @@
-import React from 'react';
+import { useHorseOwner } from './HorseOwnerContext';
+import DataTable from '../../components/DataTable';
 
 export default function AnalyticsContent() {
-  const leaderboard = [
-    { pos: 1, name: 'Midnight Runner', pts: '2,450', trend: 'up' },
-    { pos: 2, name: 'Golden Arrow', pts: '2,100', trend: 'down' },
-    { pos: 3, name: 'Storm Weaver', pts: '1,850', trend: 'up' },
+  const { horses = [], raceHistory = [] } = useHorseOwner();
+
+  // Calculate dynamic stats
+  const totalRaces = horses.reduce((sum, h) => sum + (h.matchesPlayed || 0), 0);
+  const avgWinRate = horses.length 
+    ? Math.round(horses.reduce((sum, h) => sum + (h.winRate || 0), 0) / horses.length) 
+    : 0;
+  const totalWins = horses.reduce((sum, h) => sum + Math.round((h.matchesPlayed || 0) * (h.winRate || 0) / 100), 0);
+
+  // Create dynamic leaderboard by sorting horses by calculated points
+  const sortedLeaderboard = [...horses]
+    .map(h => ({
+      name: h.name,
+      pts: (h.matchesPlayed || 0) * (h.winRate || 0) * 1.5 + 100, // custom point formula
+      trend: h.winRate >= 50 ? 'up' : 'down',
+      status: h.status
+    }))
+    .sort((a, b) => b.pts - a.pts);
+
+  // Format currency to VND
+  const formatVND = (value) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  };
+
+  // Columns for Race History DataTable
+  const columns = [
+    {
+      key: 'date',
+      label: 'Date',
+    },
+    {
+      key: 'tournament',
+      label: 'Tournament & Round',
+      render: (item) => (
+        <div>
+          <div className="fw-bold text-dark">{item.tournament}</div>
+          <div className="text-secondary small">{item.raceRound}</div>
+        </div>
+      )
+    },
+    {
+      key: 'horseName',
+      label: 'Horse',
+      render: (item) => <span className="fw-bold" style={{ color: 'var(--ho-primary-dark)' }}>{item.horseName}</span>
+    },
+    {
+      key: 'jockeyName',
+      label: 'Jockey',
+    },
+    {
+      key: 'placement',
+      label: 'Placement',
+      align: 'center',
+      render: (item) => {
+        const placementColors = {
+          1: { bg: 'rgba(212, 175, 55, 0.15)', text: '#d4af37', label: '1st Place' },
+          2: { bg: 'rgba(192, 192, 192, 0.15)', text: '#8a8a8a', label: '2nd Place' },
+          3: { bg: 'rgba(205, 127, 50, 0.15)', text: '#cd7f32', label: '3rd Place' }
+        };
+        const placementInfo = placementColors[item.placement] || { bg: 'rgba(108, 117, 125, 0.15)', text: '#6c757d', label: `${item.placement}th` };
+        
+        return (
+          <span 
+            className="px-2 py-1 rounded-pill fw-bold text-xs" 
+            style={{ backgroundColor: placementInfo.bg, color: placementInfo.text, fontSize: '11px' }}
+          >
+            {placementInfo.label}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'prizeMoney',
+      label: 'Prize Money',
+      align: 'right',
+      render: (item) => (
+        <span className="fw-bold text-success">
+          +{formatVND(item.prizeMoney)}
+        </span>
+      )
+    },
+    {
+      key: 'revenueShare',
+      label: 'Revenue Share',
+      render: (item) => <span className="small text-secondary">{item.revenueShare}</span>
+    }
   ];
 
   return (
@@ -18,10 +101,10 @@ export default function AnalyticsContent() {
         <div className="col-12 col-md-4">
           <div className="glass-card text-center">
             <h3 className="ho-font-grotesk text-uppercase fw-bold text-secondary mb-2" style={{ fontSize: '11px', letterSpacing: '0.05em' }}>
-              Total Races
+              Total Races (Stable)
             </h3>
             <p className="ho-font-epilogue fs-1 fw-extrabold m-0" style={{ color: 'var(--ho-primary-dark)' }}>
-              142
+              {totalRaces}
             </p>
           </div>
         </div>
@@ -29,10 +112,10 @@ export default function AnalyticsContent() {
         <div className="col-12 col-md-4">
           <div className="glass-card text-center">
             <h3 className="ho-font-grotesk text-uppercase fw-bold text-secondary mb-2" style={{ fontSize: '11px', letterSpacing: '0.05em' }}>
-              Overall Win Rate
+              Average Win Rate
             </h3>
             <p className="ho-font-epilogue fs-1 fw-extrabold m-0" style={{ color: 'var(--ho-primary-dark)' }}>
-              68%
+              {avgWinRate}%
             </p>
           </div>
         </div>
@@ -40,17 +123,17 @@ export default function AnalyticsContent() {
         <div className="col-12 col-md-4">
           <div className="glass-card text-center">
             <h3 className="ho-font-grotesk text-uppercase fw-bold text-secondary mb-2" style={{ fontSize: '11px', letterSpacing: '0.05em' }}>
-              Podium Finishes
+              Estimated Win Count
             </h3>
             <p className="ho-font-epilogue fs-1 fw-extrabold m-0" style={{ color: 'var(--ho-accent-gold-text)' }}>
-              115
+              {totalWins}
             </p>
           </div>
         </div>
       </div>
 
       {/* Main Grid: Trend Line and Leaderboard */}
-      <div className="row g-4">
+      <div className="row g-4 mb-4">
         {/* Win Rate YTD Trend (SVG Chart) */}
         <div className="col-12 col-lg-6">
           <div className="glass-card h-100">
@@ -93,12 +176,12 @@ export default function AnalyticsContent() {
         <div className="col-12 col-lg-6">
           <div className="glass-card h-100">
             <h3 className="ho-font-epilogue fs-5 fw-bold mb-4" style={{ color: 'var(--ho-primary-dark)' }}>
-              Season Leaderboard
+              Stable Leaderboard
             </h3>
             <div className="d-flex flex-column gap-3">
-              {leaderboard.map((item) => (
+              {sortedLeaderboard.map((item, index) => (
                 <div
-                  key={item.pos}
+                  key={index}
                   className="d-flex align-items-center justify-content-between p-3 border rounded"
                   style={{ backgroundColor: 'var(--ho-bg-cream)', borderColor: 'var(--ho-border-muted)' }}
                 >
@@ -108,19 +191,24 @@ export default function AnalyticsContent() {
                       style={{
                         width: '32px',
                         height: '32px',
-                        backgroundColor: item.pos === 1 ? 'var(--ho-accent-gold-hover)' : '#e5e2e1',
-                        color: item.pos === 1 ? 'var(--ho-accent-gold-text)' : 'var(--ho-text-muted)'
+                        backgroundColor: index === 0 ? 'var(--ho-accent-gold-hover)' : '#e5e2e1',
+                        color: index === 0 ? 'var(--ho-accent-gold-text)' : 'var(--ho-text-muted)'
                       }}
                     >
-                      {item.pos}
+                      {index + 1}
                     </span>
-                    <span className="fw-bold fs-7" style={{ color: 'var(--ho-primary-dark)' }}>
-                      {item.name}
-                    </span>
+                    <div>
+                      <span className="fw-bold fs-7 d-block" style={{ color: 'var(--ho-primary-dark)' }}>
+                        {item.name}
+                      </span>
+                      <span className="text-secondary" style={{ fontSize: '10px' }}>
+                        Status: <span className="fw-bold">{item.status}</span>
+                      </span>
+                    </div>
                   </div>
                   <div className="d-flex align-items-center">
                     <span className="fw-bold text-dark fs-7 me-2">
-                      {item.pts} pts
+                      {Math.round(item.pts)} pts
                     </span>
                     <span
                       className="material-symbols-outlined"
@@ -137,6 +225,14 @@ export default function AnalyticsContent() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Race History Table (using DataTable component) */}
+      <div className="glass-card">
+        <h3 className="ho-font-epilogue fs-5 fw-bold mb-4" style={{ color: 'var(--ho-primary-dark)' }}>
+          Recent Race Results
+        </h3>
+        <DataTable columns={columns} data={raceHistory} emptyMessage="No race results available for this stable yet." />
       </div>
     </div>
   );
