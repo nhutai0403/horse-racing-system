@@ -1101,6 +1101,263 @@ INSERT INTO [dbo].[horses] ([owner_id], [breed_id], [name], [age], [gender], [st
 ((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner1')), (SELECT id FROM [horse_breeds] WHERE breed_name='Arabian'), 'Desert Wind', 3, 'FEMALE', 'ACTIVE');
 GO
 
+ALTER TABLE [dbo].[betting_transactions]  WITH CHECK ADD FOREIGN KEY([wallet_transaction_id])
+REFERENCES [dbo].[wallet_transactions] ([id])
+GO
+ALTER TABLE [dbo].[chat_messages]  WITH CHECK ADD FOREIGN KEY([room_id])
+REFERENCES [dbo].[chat_rooms] ([id])
+GO
+ALTER TABLE [dbo].[chat_messages]  WITH CHECK ADD FOREIGN KEY([sender_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[chat_rooms]  WITH CHECK ADD FOREIGN KEY([race_id])
+REFERENCES [dbo].[races] ([id])
+GO
+ALTER TABLE [dbo].[horse_owner_profiles]  WITH CHECK ADD FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[horses]  WITH CHECK ADD FOREIGN KEY([breed_id])
+REFERENCES [dbo].[horse_breeds] ([id])
+GO
+ALTER TABLE [dbo].[horses]  WITH CHECK ADD FOREIGN KEY([owner_id])
+REFERENCES [dbo].[horse_owner_profiles] ([id])
+GO
+ALTER TABLE [dbo].[jockey_agreements]  WITH CHECK ADD  CONSTRAINT [FK_jockey_agreements_jockey] FOREIGN KEY([jockey_id])
+REFERENCES [dbo].[jockey_profiles] ([id])
+GO
+ALTER TABLE [dbo].[jockey_agreements] CHECK CONSTRAINT [FK_jockey_agreements_jockey]
+GO
+ALTER TABLE [dbo].[jockey_agreements]  WITH CHECK ADD  CONSTRAINT [FK_jockey_agreements_owner] FOREIGN KEY([owner_id])
+REFERENCES [dbo].[horse_owner_profiles] ([id])
+GO
+ALTER TABLE [dbo].[jockey_agreements] CHECK CONSTRAINT [FK_jockey_agreements_owner]
+GO
+ALTER TABLE [dbo].[jockey_profiles]  WITH CHECK ADD FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[notifications]  WITH CHECK ADD FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[password_reset_tokens]  WITH CHECK ADD  CONSTRAINT [FKk3ndxg5xp6v7wd4gjyusp15gq] FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[password_reset_tokens] CHECK CONSTRAINT [FKk3ndxg5xp6v7wd4gjyusp15gq]
+GO
+ALTER TABLE [dbo].[prize_distributions]  WITH CHECK ADD FOREIGN KEY([participant_id])
+REFERENCES [dbo].[race_participants] ([id])
+GO
+ALTER TABLE [dbo].[race_participants]  WITH CHECK ADD FOREIGN KEY([horse_id])
+REFERENCES [dbo].[horses] ([id])
+GO
+ALTER TABLE [dbo].[race_participants]  WITH CHECK ADD FOREIGN KEY([jockey_id])
+REFERENCES [dbo].[jockey_profiles] ([id])
+GO
+ALTER TABLE [dbo].[race_participants]  WITH CHECK ADD FOREIGN KEY([race_id])
+REFERENCES [dbo].[races] ([id])
+GO
+ALTER TABLE [dbo].[race_registrations]  WITH CHECK ADD  CONSTRAINT [FK_race_registrations_horse] FOREIGN KEY([horse_id])
+REFERENCES [dbo].[horses] ([id])
+GO
+ALTER TABLE [dbo].[race_registrations] CHECK CONSTRAINT [FK_race_registrations_horse]
+GO
+ALTER TABLE [dbo].[race_registrations]  WITH CHECK ADD  CONSTRAINT [FK_race_registrations_jockey] FOREIGN KEY([jockey_id])
+REFERENCES [dbo].[jockey_profiles] ([id])
+GO
+ALTER TABLE [dbo].[race_registrations] CHECK CONSTRAINT [FK_race_registrations_jockey]
+GO
+ALTER TABLE [dbo].[race_registrations]  WITH CHECK ADD  CONSTRAINT [FK_race_registrations_owner] FOREIGN KEY([owner_id])
+REFERENCES [dbo].[horse_owner_profiles] ([id])
+GO
+ALTER TABLE [dbo].[race_registrations] CHECK CONSTRAINT [FK_race_registrations_owner]
+GO
+ALTER TABLE [dbo].[race_registrations]  WITH CHECK ADD  CONSTRAINT [FK_race_registrations_race] FOREIGN KEY([race_id])
+REFERENCES [dbo].[races] ([id])
+GO
+ALTER TABLE [dbo].[race_registrations] CHECK CONSTRAINT [FK_race_registrations_race]
+GO
+ALTER TABLE [dbo].[race_simulations]  WITH CHECK ADD FOREIGN KEY([race_id])
+REFERENCES [dbo].[races] ([id])
+GO
+ALTER TABLE [dbo].[race_simulations]  WITH CHECK ADD  CONSTRAINT [FK_simulation_race] FOREIGN KEY([race_id])
+REFERENCES [dbo].[races] ([id])
+GO
+ALTER TABLE [dbo].[race_simulations] CHECK CONSTRAINT [FK_simulation_race]
+GO
+ALTER TABLE [dbo].[races]  WITH CHECK ADD FOREIGN KEY([race_track_id])
+REFERENCES [dbo].[race_tracks] ([id])
+GO
+ALTER TABLE [dbo].[races]  WITH CHECK ADD FOREIGN KEY([tournament_id])
+REFERENCES [dbo].[tournaments] ([id])
+GO
+ALTER TABLE [dbo].[referee_flags]  WITH CHECK ADD FOREIGN KEY([horse_id])
+REFERENCES [dbo].[horses] ([id])
+GO
+ALTER TABLE [dbo].[referee_flags]  WITH CHECK ADD FOREIGN KEY([referee_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[referee_flags]  WITH CHECK ADD FOREIGN KEY([simulation_id])
+REFERENCES [dbo].[race_simulations] ([id])
+GO
+ALTER TABLE [dbo].[refresh_tokens]  WITH CHECK ADD  CONSTRAINT [FK1lih5y2npsf8u5o3vhdb9y0os] FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[refresh_tokens] CHECK CONSTRAINT [FK1lih5y2npsf8u5o3vhdb9y0os]
+GO
+ALTER TABLE [dbo].[role_upgrade_requests]  WITH CHECK ADD FOREIGN KEY([requested_role_id])
+REFERENCES [dbo].[roles] ([id])
+GO
+ALTER TABLE [dbo].[role_upgrade_requests]  WITH CHECK ADD FOREIGN KEY([reviewed_by])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[role_upgrade_requests]  WITH CHECK ADD FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[simulation_horse_states]  WITH CHECK ADD FOREIGN KEY([horse_id])
+REFERENCES [dbo].[horses] ([id])
+GO
+ALTER TABLE [dbo].[simulation_horse_states]  WITH CHECK ADD FOREIGN KEY([simulation_id])
+REFERENCES [dbo].[race_simulations] ([id])
+GO
+ALTER TABLE [dbo].[upgrade_request_documents]  WITH CHECK ADD  CONSTRAINT [FKffj0otohe52eiahcbcg5hwgqp] FOREIGN KEY([upgrade_request_id])
+REFERENCES [dbo].[upgrade_requests] ([id])
+GO
+ALTER TABLE [dbo].[upgrade_request_documents] CHECK CONSTRAINT [FKffj0otohe52eiahcbcg5hwgqp]
+GO
+ALTER TABLE [dbo].[upgrade_requests]  WITH CHECK ADD  CONSTRAINT [FK4k81tfrqofqiyecqios0uowox] FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[upgrade_requests] CHECK CONSTRAINT [FK4k81tfrqofqiyecqios0uowox]
+GO
+ALTER TABLE [dbo].[user_connections]  WITH CHECK ADD FOREIGN KEY([recipient_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[user_connections]  WITH CHECK ADD FOREIGN KEY([requester_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[verification_tokens]  WITH CHECK ADD  CONSTRAINT [FK54y8mqsnq1rtyf581sfmrbp4f] FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[verification_tokens] CHECK CONSTRAINT [FK54y8mqsnq1rtyf581sfmrbp4f]
+GO
+ALTER TABLE [dbo].[wallet_transactions]  WITH CHECK ADD FOREIGN KEY([wallet_id])
+REFERENCES [dbo].[wallets] ([id])
+GO
+ALTER TABLE [dbo].[wallets]  WITH CHECK ADD FOREIGN KEY([user_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[upgrade_requests]  WITH CHECK ADD CHECK  (([requested_role]='ADMIN' OR [requested_role]='RACE_REFEREE' OR [requested_role]='JOCKEY' OR [requested_role]='HORSE_OWNER' OR [requested_role]='SPECTATOR'))
+GO
+ALTER TABLE [dbo].[upgrade_requests]  WITH CHECK ADD CHECK  (([status]='REJECTED' OR [status]='APPROVED' OR [status]='PENDING'))
+GO
+ALTER TABLE [dbo].[users]  WITH CHECK ADD CHECK  (([provider]='GOOGLE' OR [provider]='LOCAL'))
+GO
+ALTER TABLE [dbo].[users]  WITH CHECK ADD CHECK  (([role]='ADMIN' OR [role]='RACE_REFEREE' OR [role]='JOCKEY' OR [role]='HORSE_OWNER' OR [role]='SPECTATOR'))
+GO
+-- ==========================================
+-- TEST DATA FOR FE TESTING
+-- ==========================================
+USE [HorseRacingDB]
+GO
+
+-- 1. Insert Roles
+INSERT INTO [dbo].[roles] ([role_name], [description]) VALUES
+('ADMIN', 'System Administrator'),
+('SPECTATOR', 'Normal User'),
+('HORSE_OWNER', 'Horse Owner'),
+('JOCKEY', 'Jockey'),
+('RACE_REFEREE', 'Race Referee');
+GO
+
+-- 2. Insert Users (Password: 123456)
+INSERT INTO [dbo].[users] ([username], [email], [password], [full_name], [phone], [provider], [role], [enabled]) VALUES
+('spectator1', 'spectator1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 1', '0123400011', 'LOCAL', 'SPECTATOR', 1),
+('spectator2', 'spectator2@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 2', '0123400012', 'LOCAL', 'SPECTATOR', 1),
+('spectator3', 'spectator3@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 3', '0123400013', 'LOCAL', 'SPECTATOR', 1),
+('spectator4', 'spectator4@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 4', '0123400014', 'LOCAL', 'SPECTATOR', 1),
+('spectator5', 'spectator5@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 5', '0123400015', 'LOCAL', 'SPECTATOR', 1),
+('spectator6', 'spectator6@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 6', '0123400016', 'LOCAL', 'SPECTATOR', 1),
+('spectator7', 'spectator7@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 7', '0123400017', 'LOCAL', 'SPECTATOR', 1),
+('spectator8', 'spectator8@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 8', '0123400018', 'LOCAL', 'SPECTATOR', 1),
+('spectator9', 'spectator9@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 9', '0123400019', 'LOCAL', 'SPECTATOR', 1),
+('spectator10', 'spectator10@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 10', '0123400020', 'LOCAL', 'SPECTATOR', 1),
+('owner1', 'owner1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 1', '0123400021', 'LOCAL', 'HORSE_OWNER', 1),
+('owner2', 'owner2@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 2', '0123400022', 'LOCAL', 'HORSE_OWNER', 1),
+('owner3', 'owner3@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 3', '0123400023', 'LOCAL', 'HORSE_OWNER', 1),
+('owner4', 'owner4@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 4', '0123400024', 'LOCAL', 'HORSE_OWNER', 1),
+('owner5', 'owner5@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 5', '0123400025', 'LOCAL', 'HORSE_OWNER', 1),
+('owner6', 'owner6@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 6', '0123400026', 'LOCAL', 'HORSE_OWNER', 1),
+('owner7', 'owner7@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 7', '0123400027', 'LOCAL', 'HORSE_OWNER', 1),
+('owner8', 'owner8@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 8', '0123400028', 'LOCAL', 'HORSE_OWNER', 1),
+('owner9', 'owner9@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 9', '0123400029', 'LOCAL', 'HORSE_OWNER', 1),
+('owner10', 'owner10@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 10', '0123400030', 'LOCAL', 'HORSE_OWNER', 1),
+('jockey1', 'jockey1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 1', '0123400031', 'LOCAL', 'JOCKEY', 1),
+('jockey2', 'jockey2@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 2', '0123400032', 'LOCAL', 'JOCKEY', 1),
+('jockey3', 'jockey3@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 3', '0123400033', 'LOCAL', 'JOCKEY', 1),
+('jockey4', 'jockey4@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 4', '0123400034', 'LOCAL', 'JOCKEY', 1),
+('jockey5', 'jockey5@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 5', '0123400035', 'LOCAL', 'JOCKEY', 1),
+('jockey6', 'jockey6@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 6', '0123400036', 'LOCAL', 'JOCKEY', 1),
+('jockey7', 'jockey7@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 7', '0123400037', 'LOCAL', 'JOCKEY', 1),
+('jockey8', 'jockey8@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 8', '0123400038', 'LOCAL', 'JOCKEY', 1),
+('jockey9', 'jockey9@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 9', '0123400039', 'LOCAL', 'JOCKEY', 1),
+('jockey10', 'jockey10@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 10', '0123400040', 'LOCAL', 'JOCKEY', 1),
+('referee1', 'referee1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 1', '0123400041', 'LOCAL', 'RACE_REFEREE', 1),
+('referee2', 'referee2@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 2', '0123400042', 'LOCAL', 'RACE_REFEREE', 1),
+('referee3', 'referee3@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 3', '0123400043', 'LOCAL', 'RACE_REFEREE', 1),
+('referee4', 'referee4@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 4', '0123400044', 'LOCAL', 'RACE_REFEREE', 1),
+('referee5', 'referee5@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 5', '0123400045', 'LOCAL', 'RACE_REFEREE', 1),
+('referee6', 'referee6@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 6', '0123400046', 'LOCAL', 'RACE_REFEREE', 1),
+('referee7', 'referee7@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 7', '0123400047', 'LOCAL', 'RACE_REFEREE', 1),
+('referee8', 'referee8@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 8', '0123400048', 'LOCAL', 'RACE_REFEREE', 1),
+('referee9', 'referee9@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 9', '0123400049', 'LOCAL', 'RACE_REFEREE', 1),
+('referee10', 'referee10@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 10', '0123400050', 'LOCAL', 'RACE_REFEREE', 1);
+GO
+
+-- 3. Insert Owner & Jockey Profiles
+INSERT INTO [dbo].[horse_owner_profiles] ([user_id], [stable_name], [approval_status], [reputation_stars]) VALUES
+((SELECT id FROM [users] WHERE username='owner1'), 'Stable 1', 'APPROVED', 5.0),
+((SELECT id FROM [users] WHERE username='owner2'), 'Stable 2', 'APPROVED', 5.0),
+((SELECT id FROM [users] WHERE username='owner3'), 'Stable 3', 'APPROVED', 5.0),
+((SELECT id FROM [users] WHERE username='owner4'), 'Stable 4', 'APPROVED', 5.0),
+((SELECT id FROM [users] WHERE username='owner5'), 'Stable 5', 'APPROVED', 5.0),
+((SELECT id FROM [users] WHERE username='owner6'), 'Stable 6', 'APPROVED', 5.0),
+((SELECT id FROM [users] WHERE username='owner7'), 'Stable 7', 'APPROVED', 5.0),
+((SELECT id FROM [users] WHERE username='owner8'), 'Stable 8', 'APPROVED', 5.0),
+((SELECT id FROM [users] WHERE username='owner9'), 'Stable 9', 'APPROVED', 5.0),
+((SELECT id FROM [users] WHERE username='owner10'), 'Stable 10', 'APPROVED', 5.0);
+GO
+
+INSERT INTO [dbo].[jockey_profiles] ([user_id], [approval_status], [win_rate], [experience_year], [ranking_score]) VALUES
+((SELECT id FROM [users] WHERE username='jockey1'), 'APPROVED', 31.0, 1, 1010),
+((SELECT id FROM [users] WHERE username='jockey2'), 'APPROVED', 32.0, 2, 1020),
+((SELECT id FROM [users] WHERE username='jockey3'), 'APPROVED', 33.0, 3, 1030),
+((SELECT id FROM [users] WHERE username='jockey4'), 'APPROVED', 34.0, 4, 1040),
+((SELECT id FROM [users] WHERE username='jockey5'), 'APPROVED', 35.0, 5, 1050),
+((SELECT id FROM [users] WHERE username='jockey6'), 'APPROVED', 36.0, 6, 1060),
+((SELECT id FROM [users] WHERE username='jockey7'), 'APPROVED', 37.0, 7, 1070),
+((SELECT id FROM [users] WHERE username='jockey8'), 'APPROVED', 38.0, 8, 1080),
+((SELECT id FROM [users] WHERE username='jockey9'), 'APPROVED', 39.0, 9, 1090),
+((SELECT id FROM [users] WHERE username='jockey10'), 'APPROVED', 40.0, 10, 1100);
+GO
+
+-- 4. Insert Horse Breeds
+INSERT INTO [dbo].[horse_breeds] ([breed_name]) VALUES
+('Thoroughbred'), ('Arabian'), ('Quarter Horse'), ('Appaloosa');
+GO
+
+-- 5. Insert Horses
+INSERT INTO [dbo].[horses] ([owner_id], [breed_id], [name], [age], [gender], [status]) VALUES
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner1')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Horse 1', 4, 'MALE', 'ACTIVE'),
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner2')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Horse 2', 4, 'MALE', 'ACTIVE'),
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner3')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Horse 3', 4, 'MALE', 'ACTIVE'),
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner4')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Horse 4', 4, 'MALE', 'ACTIVE'),
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner5')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Horse 5', 4, 'MALE', 'ACTIVE'),
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner6')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Horse 6', 4, 'MALE', 'ACTIVE'),
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner7')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Horse 7', 4, 'MALE', 'ACTIVE'),
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner8')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Horse 8', 4, 'MALE', 'ACTIVE'),
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner9')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Horse 9', 4, 'MALE', 'ACTIVE'),
+((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner10')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Horse 10', 4, 'MALE', 'ACTIVE');
+GO
+
 -- 6. Insert User Connections (owner1 is friends with jockey1)
 INSERT INTO [dbo].[user_connections] ([requester_id], [recipient_id], [status], [created_at]) VALUES
 ((SELECT id FROM [users] WHERE username='owner1'), (SELECT id FROM [users] WHERE username='jockey1'), 'ACCEPTED', GETDATE());
@@ -1113,7 +1370,10 @@ GO
 
 -- 8. Insert Tournaments
 INSERT INTO [dbo].[tournaments] ([tournament_name], [tournament_status], [start_date], [end_date]) VALUES
-('Spring Championship 2026', 'Upcoming', '2026-07-01', '2026-07-15');
+('Spring Championship 2026', 'Open Registration', '2026-07-01', '2026-07-15'),
+('Summer Cup 2026', 'Registration Closed', '2026-08-01', '2026-08-15'),
+('Winter Classic 2025', 'Ongoing', '2025-12-01', '2025-12-15'),
+('End of Year Event 2026', 'Completed', '2026-10-01', '2026-10-15');
 GO
 
 -- 9. Insert Races

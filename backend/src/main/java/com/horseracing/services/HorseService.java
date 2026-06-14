@@ -60,6 +60,53 @@ public class HorseService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public HorseResponse updateHorse(String ownerEmail, Long horseId, com.horseracing.dto.request.UpdateHorseRequest request) {
+        HorseOwnerProfile ownerProfile = horseOwnerProfileRepository.findByUserEmail(ownerEmail)
+                .orElseThrow(() -> new RuntimeException("Horse owner profile not found"));
+        
+        Horse horse = horseRepository.findById(horseId)
+                .orElseThrow(() -> new RuntimeException("Horse not found"));
+
+        if (!horse.getOwner().getId().equals(ownerProfile.getId())) {
+            throw new RuntimeException("You do not have permission to update this horse");
+        }
+
+        if (request.getBreedName() != null) {
+            HorseBreed breed = horseBreedRepository.findByBreedName(request.getBreedName())
+                    .orElseGet(() -> {
+                        HorseBreed newBreed = HorseBreed.builder()
+                                .breedName(request.getBreedName())
+                                .build();
+                        return horseBreedRepository.save(newBreed);
+                    });
+            horse.setBreed(breed);
+        }
+
+        if (request.getName() != null) horse.setName(request.getName());
+        if (request.getAge() != null) horse.setAge(request.getAge());
+        if (request.getGender() != null) horse.setGender(request.getGender());
+        if (request.getImageUrl() != null) horse.setImageUrl(request.getImageUrl());
+
+        horse = horseRepository.save(horse);
+        return toHorseResponse(horse);
+    }
+
+    @Transactional
+    public void deleteHorse(String ownerEmail, Long horseId) {
+        HorseOwnerProfile ownerProfile = horseOwnerProfileRepository.findByUserEmail(ownerEmail)
+                .orElseThrow(() -> new RuntimeException("Horse owner profile not found"));
+        
+        Horse horse = horseRepository.findById(horseId)
+                .orElseThrow(() -> new RuntimeException("Horse not found"));
+
+        if (!horse.getOwner().getId().equals(ownerProfile.getId())) {
+            throw new RuntimeException("You do not have permission to delete this horse");
+        }
+
+        horseRepository.delete(horse);
+    }
+
     private HorseResponse toHorseResponse(Horse horse) {
         List<RaceParticipant> participations = raceParticipantRepository.findByHorseId(horse.getId());
         int totalRaces = 0;

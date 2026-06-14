@@ -48,6 +48,28 @@ public class OwnerController {
         }
     }
 
+    @PutMapping("/horses/{id}")
+    public ResponseEntity<?> updateHorse(@PathVariable Long id, @Valid @RequestBody com.horseracing.dto.request.UpdateHorseRequest request, Authentication authentication) {
+        try {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            HorseResponse response = horseService.updateHorse(userDetails.getUsername(), id, request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/horses/{id}")
+    public ResponseEntity<?> deleteHorse(@PathVariable Long id, Authentication authentication) {
+        try {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            horseService.deleteHorse(userDetails.getUsername(), id);
+            return ResponseEntity.ok(new MessageResponse("Horse deleted successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
+        }
+    }
+
     @PostMapping("/race-registrations")
     public ResponseEntity<?> submitRegistration(@Valid @RequestBody RegisterRaceRequest request, Authentication authentication) {
         try {
