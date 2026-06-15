@@ -51,6 +51,16 @@ public class Tournament {
     private String tournamentStatus = "Upcoming";
 
     // New Fields requested by user:
+    @Column(name = "image_url", length = 1000)
+    private String imageUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "referee_id")
+    private User referee;
+
+    @Column(name = "entry_fee", precision = 38, scale = 2)
+    private BigDecimal entryFee;
+
     @Column(name = "prize_first", precision = 38, scale = 2)
     private BigDecimal prizeFirst;
 

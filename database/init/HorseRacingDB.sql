@@ -610,6 +610,9 @@ CREATE TABLE [dbo].[tournaments](
 	[prize_first] [numeric](38, 2) NULL,
 	[prize_second] [numeric](38, 2) NULL,
 	[prize_third] [numeric](38, 2) NULL,
+	[image_url] [nvarchar](1000) NULL,
+	[referee_id] [int] NULL,
+	[entry_fee] [numeric](38, 2) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[id] ASC
@@ -1245,6 +1248,11 @@ GO
 ALTER TABLE [dbo].[wallets]  WITH CHECK ADD FOREIGN KEY([user_id])
 REFERENCES [dbo].[users] ([id])
 GO
+ALTER TABLE [dbo].[tournaments]  WITH CHECK ADD  CONSTRAINT [FK_tournaments_referee] FOREIGN KEY([referee_id])
+REFERENCES [dbo].[users] ([id])
+GO
+ALTER TABLE [dbo].[tournaments] CHECK CONSTRAINT [FK_tournaments_referee]
+GO
 ALTER TABLE [dbo].[upgrade_requests]  WITH CHECK ADD CHECK  (([requested_role]='ADMIN' OR [requested_role]='RACE_REFEREE' OR [requested_role]='JOCKEY' OR [requested_role]='HORSE_OWNER' OR [requested_role]='SPECTATOR'))
 GO
 ALTER TABLE [dbo].[upgrade_requests]  WITH CHECK ADD CHECK  (([status]='REJECTED' OR [status]='APPROVED' OR [status]='PENDING'))
@@ -1369,11 +1377,11 @@ INSERT INTO [dbo].[race_tracks] ([name], [location], [surface_condition]) VALUES
 GO
 
 -- 8. Insert Tournaments
-INSERT INTO [dbo].[tournaments] ([tournament_name], [tournament_status], [start_date], [end_date]) VALUES
-('Spring Championship 2026', 'Open Registration', '2026-07-01', '2026-07-15'),
-('Summer Cup 2026', 'Registration Closed', '2026-08-01', '2026-08-15'),
-('Winter Classic 2025', 'Ongoing', '2025-12-01', '2025-12-15'),
-('End of Year Event 2026', 'Completed', '2026-10-01', '2026-10-15');
+INSERT INTO [dbo].[tournaments] ([tournament_name], [tournament_status], [start_date], [end_date], [image_url], [referee_id], [entry_fee]) VALUES
+('Spring Championship 2026', 'Open Registration', '2026-07-01', '2026-07-15', 'https://example.com/tournament1.jpg', (SELECT id FROM [users] WHERE username='referee1'), 100.00),
+('Summer Cup 2026', 'Registration Closed', '2026-08-01', '2026-08-15', 'https://example.com/tournament2.jpg', (SELECT id FROM [users] WHERE username='referee2'), 150.00),
+('Winter Classic 2025', 'Ongoing', '2025-12-01', '2025-12-15', 'https://example.com/tournament3.jpg', (SELECT id FROM [users] WHERE username='referee3'), 200.00),
+('End of Year Event 2026', 'Completed', '2026-10-01', '2026-10-15', 'https://example.com/tournament4.jpg', (SELECT id FROM [users] WHERE username='referee4'), 50.00);
 GO
 
 -- 9. Insert Races
