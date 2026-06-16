@@ -75,8 +75,8 @@ export function useSignup() {
       setError('Please enter your password.');
       return;
     }
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
       return;
     }
     // BE password pattern validation: at least 1 uppercase and 1 special char

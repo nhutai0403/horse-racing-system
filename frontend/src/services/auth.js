@@ -4,7 +4,53 @@ import axiosClient from '../api/axiosClient';
  * Authentication Service connecting to Spring Boot Backend
  */
 
+const isMockMode = () => {
+  return true; // Force mock mode for offline testing
+};
+
 export async function loginAPI(email, password) {
+  if (isMockMode()) {
+    // Determine role from email
+    let role = 'SPECTATOR';
+    let fullName = 'Test Spectator';
+    let username = 'spectator1';
+
+    const normalizedEmail = email.toLowerCase();
+    if (normalizedEmail.includes('referee')) {
+      role = 'RACE_REFEREE';
+      fullName = 'Test Race Referee';
+      username = 'referee1';
+    } else if (normalizedEmail.includes('owner')) {
+      role = 'HORSE_OWNER';
+      fullName = 'Test Horse Owner';
+      username = 'owner1';
+    } else if (normalizedEmail.includes('jockey')) {
+      role = 'JOCKEY';
+      fullName = 'Test Jockey';
+      username = 'jockey1';
+    } else if (normalizedEmail.includes('admin')) {
+      role = 'ADMIN';
+      fullName = 'Test Admin';
+      username = 'admin1';
+    }
+
+    // Mock response matching the real backend AuthResponse
+    return {
+      accessToken: 'mock-access-token-jwt-placeholder',
+      refreshToken: 'mock-refresh-token-uuid-placeholder',
+      user: {
+        id: 999,
+        username,
+        fullName,
+        email,
+        phoneNumber: '0123456789',
+        provider: 'LOCAL',
+        role,
+        enabled: true
+      }
+    };
+  }
+
   try {
     const response = await axiosClient.post('/auth/login', {
       email,
@@ -56,6 +102,21 @@ export async function logoutAPI(refreshToken) {
 }
 
 export async function getProfileAPI() {
+  if (isMockMode()) {
+    const savedUser = localStorage.getItem('horse_racing_user');
+    if (savedUser) return JSON.parse(savedUser);
+    return {
+      id: 999,
+      username: 'spectator1',
+      fullName: 'Test Spectator',
+      email: 'spectator1@test.com',
+      phoneNumber: '0123456789',
+      provider: 'LOCAL',
+      role: 'SPECTATOR',
+      enabled: true
+    };
+  }
+
   try {
     const response = await axiosClient.get('/auth/me');
     return response.data; // UserResponse
