@@ -3,6 +3,19 @@ import { getProfileAPI } from '../../services/auth';
 import { getFriendsAPI } from '../../services/connections';
 import { getTournamentsAPI, getTournamentRacesAPI, getRaceParticipantsAPI } from '../../services/races';
 import {
+  getJockeyProfileAPI,
+  updateJockeyProfileAPI,
+  getJockeyInvitationsAPI,
+  respondToJockeyInvitationAPI,
+  getJockeyScheduleAPI,
+  getJockeyHistoryAPI,
+  getJockeyLeaderboardAPI
+} from '../../services/jockey';
+import {
+  getWalletBalanceAPI,
+  getTransactionHistoryAPI
+} from '../../services/wallet';
+import {
   initialJockeyProfile,
   initialJockeyInvitations,
   initialJockeyTransactions,
@@ -20,41 +33,43 @@ export function JockeyProvider({ children }) {
   const [transactions, setTransactions] = useState([]);
   const [raceHistory, setRaceHistory] = useState([]);
   const [leaderboard, setLeaderboard] = useState(initialJockeysLeaderboard);
+  const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchJockeyData = async () => {
     try {
       setLoading(true);
 
-      // 1. Load Profile
-      let baseUser = null;
+      // 1. Load Profile & Wallet Balance via APIs
+      let jockeyProfile = initialJockeyProfile;
       try {
-        baseUser = await getProfileAPI();
+        jockeyProfile = await getJockeyProfileAPI();
       } catch (err) {
-        console.warn('Standard API profile fetch failed, using fallback authentication session user details.');
+        console.error('Failed to load jockey profile:', err);
       }
 
-      const savedProfile = localStorage.getItem('jockey_profile');
-      let mergedProfile = savedProfile ? JSON.parse(savedProfile) : initialJockeyProfile;
+      let walletBalance = 0;
+      try {
+        const balanceData = await getWalletBalanceAPI();
+        walletBalance = balanceData.balance;
+      } catch (err) {
+        console.error('Failed to load jockey wallet balance:', err);
+      }
 
-      if (baseUser) {
-        mergedProfile = {
-          ...mergedProfile,
-          fullName: baseUser.fullName || mergedProfile.fullName,
-          email: baseUser.email || mergedProfile.email,
-          phoneNumber: baseUser.phone || mergedProfile.phoneNumber,
-        };
-      }
-      
-      const savedBalance = localStorage.getItem('jockey_wallet_balance');
-      if (savedBalance) {
-        mergedProfile.walletBalance = parseFloat(savedBalance);
-      } else {
-        localStorage.setItem('jockey_wallet_balance', mergedProfile.walletBalance.toString());
-      }
+      const mergedProfile = {
+        ...initialJockeyProfile,
+        ...jockeyProfile,
+        fullName: jockeyProfile.fullName || jockeyProfile.user?.fullName || initialJockeyProfile.fullName,
+        email: jockeyProfile.email || jockeyProfile.user?.email || initialJockeyProfile.email,
+        phoneNumber: jockeyProfile.phone || jockeyProfile.phoneNumber || jockeyProfile.user?.phone || initialJockeyProfile.phoneNumber,
+        experienceYears: jockeyProfile.experienceYear || jockeyProfile.experienceYears || initialJockeyProfile.experienceYears,
+        walletBalance: walletBalance,
+        avatar: jockeyProfile.avatarUrl || jockeyProfile.user?.avatarUrl || initialJockeyProfile.avatar
+      };
 
       setProfile(mergedProfile);
       localStorage.setItem('jockey_profile', JSON.stringify(mergedProfile));
+      localStorage.setItem('jockey_wallet_balance', walletBalance.toString());
 
       // 2. Load Friends (via existing connections API)
       try {
@@ -102,54 +117,100 @@ export function JockeyProvider({ children }) {
         console.error('Failed to load public tournaments:', err);
       }
 
-      // 4. Load Invitations (Ride offers)
-      const savedInvitations = localStorage.getItem('jockey_invitations');
-      let loadedInvs = null;
-      if (savedInvitations) {
-        try {
-          const parsed = JSON.parse(savedInvitations);
-          if (parsed && parsed.length > 0 && typeof parsed[0].ownerId === 'string') {
-            loadedInvs = null; // Stale data format, trigger reload
-          } else {
-            loadedInvs = parsed;
-          }
-        } catch (e) {
-          loadedInvs = null;
-        }
-      }
-
-      if (loadedInvs) {
-        setInvitations(loadedInvs);
-      } else {
-        setInvitations(initialJockeyInvitations);
-        localStorage.setItem('jockey_invitations', JSON.stringify(initialJockeyInvitations));
+      // 4. Load Invitations
+      try {
+        const invs = await getJockeyInvitationsAPI();
+        const mappedInvs = invs.map(inv => ({
+          id: inv.id,
+          ownerId: inv.ownerId,
+          ownerName: inv.ownerName,
+          stableName: 'Trang trại liên kết',
+          horseName: inv.horseName,
+          horseBreed: 'Thoroughbred',
+          tournamentId: inv.raceId,
+          tournamentName: inv.raceName,
+          raceDate: inv.createdAt ? inv.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+          raceTime: '15:00',
+          prizePool: '10,000,000 VND',
+          jockeyShare: inv.jockeySharePercent,
+          ownerShare: inv.ownerSharePercent,
+          status: inv.status === 'PENDING_JOCKEY' ? 'PENDING' : inv.status,
+          notes: `Được mời làm kỵ sĩ cưỡi chiến mã ${inv.horseName} tham dự vòng đua ${inv.raceName}.`
+        }));
+        setInvitations(mappedInvs);
+      } catch (err) {
+        console.error('Failed to load invitations:', err);
       }
 
       // 5. Load Transactions
-      const savedTransactions = localStorage.getItem('jockey_transactions');
-      if (savedTransactions) {
-        setTransactions(JSON.parse(savedTransactions));
-      } else {
-        setTransactions(initialJockeyTransactions);
-        localStorage.setItem('jockey_transactions', JSON.stringify(initialJockeyTransactions));
+      try {
+        const txs = await getTransactionHistoryAPI();
+        setTransactions(txs);
+      } catch (err) {
+        console.error('Failed to load transaction history:', err);
       }
 
       // 6. Load Race History
-      const savedHistory = localStorage.getItem('jockey_race_history');
-      if (savedHistory) {
-        setRaceHistory(JSON.parse(savedHistory));
-      } else {
-        setRaceHistory(initialJockeyRaceHistory);
-        localStorage.setItem('jockey_race_history', JSON.stringify(initialJockeyRaceHistory));
+      try {
+        const historyData = await getJockeyHistoryAPI();
+        const historyList = historyData.map(h => ({
+          id: h.participantId || h.id,
+          date: h.raceDate || h.date,
+          tournament: h.raceName || h.tournament,
+          raceRound: 'Vòng chung kết',
+          horseName: h.horseName,
+          ownerName: 'Chủ ngựa liên kết',
+          placement: h.finalRank || h.placement,
+          finishTime: h.finishTime ? (typeof h.finishTime === 'number' ? `${Math.floor(h.finishTime / 60)}m ${h.finishTime % 60}s` : h.finishTime) : 'N/A',
+          prizeMoney: h.prizeMoney,
+          payout: h.prizeMoney,
+          sharePercent: 30
+        }));
+        setRaceHistory(historyList);
+        localStorage.setItem('jockey_race_history', JSON.stringify(historyList));
+      } catch (err) {
+        console.error('Failed to load race history:', err);
       }
 
       // 7. Load Leaderboard
-      const savedLeaderboard = localStorage.getItem('jockey_leaderboard');
-      if (savedLeaderboard) {
-        setLeaderboard(JSON.parse(savedLeaderboard));
-      } else {
-        setLeaderboard(initialJockeysLeaderboard);
-        localStorage.setItem('jockey_leaderboard', JSON.stringify(initialJockeysLeaderboard));
+      try {
+        const leaderboardData = await getJockeyLeaderboardAPI();
+        const lbList = leaderboardData.map((l, index) => ({
+          rank: l.rank || index + 1,
+          fullName: l.jockeyName || l.fullName,
+          winRate: l.winRate,
+          rankingScore: l.rankingScore,
+          experienceYears: l.experienceYear || l.experienceYears,
+          isCurrentUser: l.jockeyId === mergedProfile.id || l.jockeyName === mergedProfile.fullName,
+          avatar: l.avatarUrl || l.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'
+        }));
+        setLeaderboard(lbList);
+        localStorage.setItem('jockey_leaderboard', JSON.stringify(lbList));
+      } catch (err) {
+        console.error('Failed to load leaderboard:', err);
+      }
+
+      // 8. Load Schedule
+      try {
+        const scheduleData = await getJockeyScheduleAPI();
+        const scheduleList = scheduleData.map(s => ({
+          id: s.participantId || s.id,
+          ownerName: s.ownerName || 'Chủ ngựa liên kết',
+          stableName: s.stableName || 'Stable',
+          horseName: s.horseName,
+          horseBreed: s.horseBreed || 'Thoroughbred',
+          tournamentName: s.raceName || s.tournamentName,
+          raceDate: s.raceDate,
+          raceTime: s.startTime || s.raceTime,
+          prizePool: s.prizePool || 'Tiền thưởng giải',
+          jockeyShare: s.jockeyShare || 30,
+          status: s.participantStatus || s.status || 'ACCEPTED',
+          gateNumber: s.gateNumber
+        }));
+        setSchedule(scheduleList);
+        localStorage.setItem('jockey_accepted_races', JSON.stringify(scheduleList));
+      } catch (err) {
+        console.error('Failed to load schedule:', err);
       }
 
     } catch (error) {
@@ -171,30 +232,19 @@ export function JockeyProvider({ children }) {
     }
   };
 
-  const handleRespondToInvitation = (invitationId, response) => {
-    // response: 'ACCEPTED' or 'REJECTED'
-    const updatedInvs = invitations.map(inv => 
-      inv.id === invitationId ? { ...inv, status: response } : inv
-    );
-    setInvitations(updatedInvs);
-    localStorage.setItem('jockey_invitations', JSON.stringify(updatedInvs));
-    window.dispatchEvent(new Event('jockey_invitations_updated'));
-
-    // If accepted, we can add it to the schedule locally or simulate it
-    if (response === 'ACCEPTED') {
-      const invitation = invitations.find(inv => inv.id === invitationId);
-      if (invitation) {
-        // Create an entry in schedule (simulated through local state/storage)
-        const savedSchedule = localStorage.getItem('jockey_accepted_races') || '[]';
-        const scheduleList = JSON.parse(savedSchedule);
-        if (!scheduleList.some(s => s.id === invitation.id)) {
-          scheduleList.push({
-            ...invitation,
-            acceptedAt: new Date().toISOString()
-          });
-          localStorage.setItem('jockey_accepted_races', JSON.stringify(scheduleList));
-        }
-      }
+  const handleRespondToInvitation = async (invitationId, response) => {
+    try {
+      await respondToJockeyInvitationAPI(invitationId, response);
+      
+      const updatedInvs = invitations.map(inv => 
+        inv.id === invitationId ? { ...inv, status: response } : inv
+      );
+      setInvitations(updatedInvs);
+      
+      // Reload schedule and other data
+      await fetchJockeyData();
+    } catch (err) {
+      console.error('Failed to respond to invitation:', err);
     }
   };
 
@@ -214,52 +264,6 @@ export function JockeyProvider({ children }) {
     });
   };
 
-  // Get active schedule (races that Jockey accepted, plus potential future race participant lists from API)
-  const getJockeySchedule = () => {
-    const savedSchedule = localStorage.getItem('jockey_accepted_races') || '[]';
-    let acceptedRaces = [];
-    try {
-      acceptedRaces = JSON.parse(savedSchedule);
-      if (acceptedRaces && acceptedRaces.length > 0 && typeof acceptedRaces[0].ownerId === 'string') {
-        acceptedRaces = [];
-        localStorage.setItem('jockey_accepted_races', '[]');
-      }
-    } catch (e) {
-      acceptedRaces = [];
-    }
-
-    // Merge with any real approved races from backend where this jockey is enrolled
-    const apiRegistered = tournaments.filter(t => 
-      t.participants && t.participants.some(p => p.jockeyName === profile.fullName)
-    ).map(t => {
-      const part = t.participants.find(p => p.jockeyName === profile.fullName);
-      return {
-        id: `API_${t.id}`,
-        ownerName: part.ownerName || 'N/A',
-        stableName: 'Associated Stable',
-        horseName: part.horseName,
-        horseBreed: part.horseBreed || 'Thoroughbred',
-        tournamentName: `${t.tournamentName} - ${t.raceName}`,
-        raceDate: t.date,
-        raceTime: t.time,
-        prizePool: t.prizePool,
-        jockeyShare: 30, // Default mock percent
-        status: 'ACCEPTED',
-        gateNumber: part.gateNumber
-      };
-    });
-
-    // Remove duplicates
-    const combined = [...acceptedRaces];
-    apiRegistered.forEach(apiR => {
-      if (!combined.some(c => c.tournamentName === apiR.tournamentName)) {
-        combined.push(apiR);
-      }
-    });
-
-    return combined;
-  };
-
   const value = {
     profile,
     setProfile: updateProfile,
@@ -274,7 +278,7 @@ export function JockeyProvider({ children }) {
     loading,
     refreshData: fetchJockeyData,
     respondToInvitation: handleRespondToInvitation,
-    schedule: getJockeySchedule()
+    schedule: schedule
   };
 
   return (
