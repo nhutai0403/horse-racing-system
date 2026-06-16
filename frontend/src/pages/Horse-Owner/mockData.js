@@ -1,12 +1,12 @@
 // Mock Database for Horse Owner Frontend
 
 export const initialOwnerProfile = {
-  fullName: "Lam Hoang Kiet",
+  fullName: "",
   email: "kietlh@prestigeturf.com",
   phoneNumber: "0901234567",
   identityNumber: "079096001234",
   dateOfBirth: "1988-11-24",
-  stableName: "Royal Stable",
+  stableName: "",
   stableAddress: "Binh Duong Boulevard, Thu Dau Mot, Binh Duong",
   description: "Royal Stable chuyên cung cấp các giống ngựa thuần chủng xuất sắc nhất thế giới, định hình tương lai của đua ngựa chuyên nghiệp.",
   walletBalance: 1250000000, // in VND

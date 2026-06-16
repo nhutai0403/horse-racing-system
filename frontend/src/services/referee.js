@@ -1,7 +1,7 @@
 import axiosClient from '../api/axiosClient';
 
 const isMockMode = () => {
-  return true; // Force mock mode
+  return false; // Force mock mode for offline testing
 };
 
 // LocalStorage Helper Keys
