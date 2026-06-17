@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useJockey } from './JockeyContext';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
+import { updateJockeyProfileAPI } from '../../services/jockey';
+import { depositAPI, withdrawAPI } from '../../services/wallet';
 
 export default function JockeyProfileContent() {
   const { profile, setProfile, transactions, setTransactions } = useJockey();
@@ -30,21 +32,28 @@ export default function JockeyProfileContent() {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
   };
 
-  const handleProfileSubmit = (e) => {
+  const handleProfileSubmit = async (e) => {
     e.preventDefault();
     if (!formData.fullName.trim()) {
       alert("Vui lòng điền đầy đủ Họ và tên.");
       return;
     }
 
-    setProfile({
-      ...profile,
-      ...formData
-    });
-    alert("Cập nhật hồ sơ kỵ sĩ thành công!");
+    try {
+      const updated = await updateJockeyProfileAPI(formData);
+      setProfile({
+        ...profile,
+        ...updated,
+        experienceYears: updated.experienceYear || updated.experienceYears || profile.experienceYears,
+        avatar: updated.avatarUrl || updated.avatar || profile.avatar
+      });
+      alert("Cập nhật hồ sơ kỵ sĩ thành công!");
+    } catch (err) {
+      alert("Cập nhật hồ sơ thất bại: " + err.message);
+    }
   };
 
-  const handleWalletAction = (actionType) => {
+  const handleWalletAction = async (actionType) => {
     const numericAmt = parseFloat(amount);
     if (isNaN(numericAmt) || numericAmt <= 0) {
       alert("Vui lòng nhập số tiền hợp lệ.");
@@ -56,30 +65,47 @@ export default function JockeyProfileContent() {
       return;
     }
 
-    const updatedBalance = actionType === 'WITHDRAW' 
-      ? profile.walletBalance - numericAmt 
-      : profile.walletBalance + numericAmt;
-
-    const newTx = {
-      id: `TXJ_${Date.now()}`,
-      date: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      type: actionType === 'WITHDRAW' ? 'WITHDRAWAL' : 'DEPOSIT',
-      event: actionType === 'WITHDRAW' 
-        ? `Rút tiền về ngân hàng: ${profile.bankAccount || 'Tài khoản mặc định'}`
-        : 'Nạp tiền vào ví từ tài khoản liên kết',
-      amount: actionType === 'WITHDRAW' ? -numericAmt : numericAmt
-    };
-
-    // Update profile balance
-    setProfile({
-      ...profile,
-      walletBalance: updatedBalance
-    });
-
-    // Append transaction
-    setTransactions(prev => [newTx, ...prev]);
-    setAmount('');
-    alert(actionType === 'WITHDRAW' ? 'Rút tiền thành công!' : 'Nạp tiền vào ví thành công!');
+    try {
+      if (actionType === 'DEPOSIT') {
+        const res = await depositAPI(numericAmt);
+        if (res.checkoutUrl) {
+          // Chuyển hướng đến cổng thanh toán PayOS thực tế
+          window.location.href = res.checkoutUrl;
+        } else {
+          setProfile(prev => ({
+            ...prev,
+            walletBalance: prev.walletBalance + numericAmt
+          }));
+          const newTx = {
+            id: `TXJ_${Date.now()}`,
+            date: new Date().toISOString().replace('T', ' ').slice(0, 19),
+            type: 'DEPOSIT',
+            event: 'Nạp tiền vào ví từ tài khoản liên kết (Giả lập)',
+            amount: numericAmt
+          };
+          setTransactions(prev => [newTx, ...prev]);
+          alert('Nạp tiền giả lập thành công!');
+        }
+      } else {
+        await withdrawAPI(numericAmt);
+        setProfile(prev => ({
+          ...prev,
+          walletBalance: prev.walletBalance - numericAmt
+        }));
+        const newTx = {
+          id: `TXJ_${Date.now()}`,
+          date: new Date().toISOString().replace('T', ' ').slice(0, 19),
+          type: 'WITHDRAWAL',
+          event: `Yêu cầu rút tiền về tài khoản ngân hàng liên kết`,
+          amount: -numericAmt
+        };
+        setTransactions(prev => [newTx, ...prev]);
+        alert('Gửi yêu cầu rút tiền thành công, vui lòng chờ Admin duyệt!');
+      }
+      setAmount('');
+    } catch (err) {
+      alert('Giao dịch ví thất bại: ' + err.message);
+    }
   };
 
   const transactionColumns = [

@@ -1,14 +1,18 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { getOwnerProfileAPI, getMyHorsesAPI } from '../../services/owner';
 import { getFriendsAPI } from '../../services/connections';
-import { getTournamentsAPI, getTournamentRacesAPI, getRaceParticipantsAPI } from '../../services/races';
+import {
+  getTournamentsAPI,
+  getTournamentRacesAPI,
+  getRaceParticipantsAPI,
+} from '../../services/races';
 import {
   initialOwnerProfile,
   initialHorses,
   initialSystemUsers,
   initialTournaments,
   initialTransactions,
-  initialRaceHistory
+  initialRaceHistory,
 } from './mockData';
 
 const HorseOwnerContext = createContext();
@@ -25,7 +29,7 @@ export function HorseOwnerProvider({ children }) {
   const fetchOwnerData = async () => {
     try {
       setLoading(true);
-      
+
       // 1. Fetch Profile
       let profileData = null;
       try {
@@ -52,7 +56,7 @@ export function HorseOwnerProvider({ children }) {
           avatar: profileData.avatarUrl || '',
           avatarZoom: 1,
           avatarOffsetX: 0,
-          avatarOffsetY: 0
+          avatarOffsetY: 0,
         });
       }
 
@@ -60,21 +64,23 @@ export function HorseOwnerProvider({ children }) {
       let horsesData = [];
       try {
         horsesData = await getMyHorsesAPI();
-        setHorses(horsesData.map(h => ({
-          id: h.id,
-          name: h.name,
-          breed: h.breedName,
-          age: h.age,
-          gender: h.gender,
-          status: h.status || 'READY',
-          matchesPlayed: h.totalRaces || 0,
-          winRate: Math.round(h.top1Rate || 0),
-          image: h.imageUrl || '',
-          top1Rate: Math.round(h.top1Rate || 0),
-          top2Rate: Math.round(h.top2Rate || 0),
-          top3Rate: Math.round(h.top3Rate || 0),
-          metrics: { speed: 85, stamina: 80, gatePerformance: 90 }
-        })));
+        setHorses(
+          horsesData.map((h) => ({
+            id: h.id,
+            name: h.name,
+            breed: h.breedName,
+            age: h.age,
+            gender: h.gender,
+            status: h.status || 'READY',
+            matchesPlayed: h.totalRaces || 0,
+            winRate: Math.round(h.top1Rate || 0),
+            image: h.imageUrl || '',
+            top1Rate: Math.round(h.top1Rate || 0),
+            top2Rate: Math.round(h.top2Rate || 0),
+            top3Rate: Math.round(h.top3Rate || 0),
+            metrics: { speed: 85, stamina: 80, gatePerformance: 90 },
+          })),
+        );
       } catch (err) {
         console.error(err);
       }
@@ -83,18 +89,20 @@ export function HorseOwnerProvider({ children }) {
       let friendsData = [];
       try {
         friendsData = await getFriendsAPI();
-        setSystemUsers(friendsData.map(f => ({
-          id: f.userId,
-          fullName: f.fullName,
-          email: f.email,
-          phoneNumber: f.phone,
-          role: f.role,
-          friendStatus: f.friendStatus || 'FRIEND',
-          avatar: f.avatar,
-          experienceYears: f.experienceYears || 5,
-          winRate: 50,
-          matchesPlayed: 100
-        })));
+        setSystemUsers(
+          friendsData.map((f) => ({
+            id: f.userId,
+            fullName: f.fullName,
+            email: f.email,
+            phoneNumber: f.phone,
+            role: f.role,
+            friendStatus: f.friendStatus || 'FRIEND',
+            avatar: f.avatar,
+            experienceYears: f.experienceYears || 5,
+            winRate: 50,
+            matchesPlayed: 100,
+          })),
+        );
       } catch (err) {
         console.error(err);
       }
@@ -114,19 +122,16 @@ export function HorseOwnerProvider({ children }) {
             }
 
             const registeredHorsesList = participants
-              .filter(p => horsesData.some(myH => myH.id === p.horseId))
-              .map(p => p.horseName);
+              .filter((p) => horsesData.some((myH) => myH.id === p.horseId))
+              .map((p) => p.horseName);
 
             const savedLocal = localStorage.getItem('owner_registered_races') || '[]';
             const localList = JSON.parse(savedLocal);
             const localRegistered = localList
-              .filter(l => l.raceId === r.id)
-              .map(l => l.horseName);
+              .filter((l) => l.raceId === r.id)
+              .map((l) => l.horseName);
 
-            const registeredHorsesSet = new Set([
-              ...registeredHorsesList,
-              ...localRegistered
-            ]);
+            const registeredHorsesSet = new Set([...registeredHorsesList, ...localRegistered]);
 
             allRaces.push({
               id: r.id,
@@ -137,7 +142,7 @@ export function HorseOwnerProvider({ children }) {
               trackType: `${r.surfaceType || 'Dirt'} • Dist: ${r.distance || 1200}m`,
               prizePool: `${t.totalPrize ? t.totalPrize.toLocaleString() : '1,000,000'} VND`,
               status: r.status || 'OPEN_FOR_REGISTER',
-              registeredHorses: Array.from(registeredHorsesSet)
+              registeredHorses: Array.from(registeredHorsesSet),
             });
           }
         }
@@ -163,7 +168,6 @@ export function HorseOwnerProvider({ children }) {
         setRaceHistory(initialRaceHistory);
         localStorage.setItem('owner_race_history', JSON.stringify(initialRaceHistory));
       }
-
     } catch (error) {
       console.error('Lỗi khi tải dữ liệu chủ ngựa:', error);
     } finally {
@@ -183,7 +187,7 @@ export function HorseOwnerProvider({ children }) {
   };
 
   const updateTransactionsState = (updater) => {
-    setTransactions(prev => {
+    setTransactions((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
       localStorage.setItem('owner_transactions', JSON.stringify(next));
       return next;
@@ -191,7 +195,7 @@ export function HorseOwnerProvider({ children }) {
   };
 
   const updateRaceHistoryState = (updater) => {
-    setRaceHistory(prev => {
+    setRaceHistory((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
       localStorage.setItem('owner_race_history', JSON.stringify(next));
       return next;
@@ -212,14 +216,10 @@ export function HorseOwnerProvider({ children }) {
     raceHistory,
     setRaceHistory: updateRaceHistoryState,
     loading,
-    refreshData: fetchOwnerData
+    refreshData: fetchOwnerData,
   };
 
-  return (
-    <HorseOwnerContext.Provider value={value}>
-      {children}
-    </HorseOwnerContext.Provider>
-  );
+  return <HorseOwnerContext.Provider value={value}>{children}</HorseOwnerContext.Provider>;
 }
 
 export function useHorseOwner() {
