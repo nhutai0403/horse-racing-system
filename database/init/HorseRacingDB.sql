@@ -1078,11 +1078,11 @@ INSERT INTO [dbo].[roles] ([role_name], [description]) VALUES
 ('RACE_REFEREE', 'Race Referee');
 GO
 
--- 2. Insert Users (Password: 123456)
+-- 2. Insert Users (Password: Password123!)
 INSERT INTO [dbo].[users] ([username], [email], [password], [full_name], [phone], [provider], [role], [enabled]) VALUES
-('owner1', 'owner1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test Owner 1', '0123456789', 'LOCAL', 'HORSE_OWNER', 1),
-('jockey1', 'jockey1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test Jockey 1', '0987654321', 'LOCAL', 'JOCKEY', 1),
-('jockey2', 'jockey2@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test Jockey 2', '0987654322', 'LOCAL', 'JOCKEY', 1);
+('owner1', 'owner1@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test Owner 1', '0123456789', 'LOCAL', 'HORSE_OWNER', 1),
+('jockey1', 'jockey1@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test Jockey 1', '0987654321', 'LOCAL', 'JOCKEY', 1),
+('jockey2', 'jockey2@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test Jockey 2', '0987654322', 'LOCAL', 'JOCKEY', 1);
 GO
 
 -- 3. Insert Owner & Jockey Profiles
@@ -1278,48 +1278,48 @@ INSERT INTO [dbo].[roles] ([role_name], [description]) VALUES
 ('RACE_REFEREE', 'Race Referee');
 GO
 
--- 2. Insert Users (Password: 123456)
+-- 2. Insert Users (Password: Password123!)
 INSERT INTO [dbo].[users] ([username], [email], [password], [full_name], [phone], [provider], [role], [enabled]) VALUES
-('spectator1', 'spectator1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 1', '0123400011', 'LOCAL', 'SPECTATOR', 1),
-('spectator2', 'spectator2@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 2', '0123400012', 'LOCAL', 'SPECTATOR', 1),
-('spectator3', 'spectator3@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 3', '0123400013', 'LOCAL', 'SPECTATOR', 1),
-('spectator4', 'spectator4@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 4', '0123400014', 'LOCAL', 'SPECTATOR', 1),
-('spectator5', 'spectator5@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 5', '0123400015', 'LOCAL', 'SPECTATOR', 1),
-('spectator6', 'spectator6@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 6', '0123400016', 'LOCAL', 'SPECTATOR', 1),
-('spectator7', 'spectator7@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 7', '0123400017', 'LOCAL', 'SPECTATOR', 1),
-('spectator8', 'spectator8@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 8', '0123400018', 'LOCAL', 'SPECTATOR', 1),
-('spectator9', 'spectator9@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 9', '0123400019', 'LOCAL', 'SPECTATOR', 1),
-('spectator10', 'spectator10@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test SPECTATOR 10', '0123400020', 'LOCAL', 'SPECTATOR', 1),
-('owner1', 'owner1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 1', '0123400021', 'LOCAL', 'HORSE_OWNER', 1),
-('owner2', 'owner2@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 2', '0123400022', 'LOCAL', 'HORSE_OWNER', 1),
-('owner3', 'owner3@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 3', '0123400023', 'LOCAL', 'HORSE_OWNER', 1),
-('owner4', 'owner4@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 4', '0123400024', 'LOCAL', 'HORSE_OWNER', 1),
-('owner5', 'owner5@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 5', '0123400025', 'LOCAL', 'HORSE_OWNER', 1),
-('owner6', 'owner6@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 6', '0123400026', 'LOCAL', 'HORSE_OWNER', 1),
-('owner7', 'owner7@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 7', '0123400027', 'LOCAL', 'HORSE_OWNER', 1),
-('owner8', 'owner8@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 8', '0123400028', 'LOCAL', 'HORSE_OWNER', 1),
-('owner9', 'owner9@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 9', '0123400029', 'LOCAL', 'HORSE_OWNER', 1),
-('owner10', 'owner10@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test HORSE_OWNER 10', '0123400030', 'LOCAL', 'HORSE_OWNER', 1),
-('jockey1', 'jockey1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 1', '0123400031', 'LOCAL', 'JOCKEY', 1),
-('jockey2', 'jockey2@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 2', '0123400032', 'LOCAL', 'JOCKEY', 1),
-('jockey3', 'jockey3@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 3', '0123400033', 'LOCAL', 'JOCKEY', 1),
-('jockey4', 'jockey4@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 4', '0123400034', 'LOCAL', 'JOCKEY', 1),
-('jockey5', 'jockey5@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 5', '0123400035', 'LOCAL', 'JOCKEY', 1),
-('jockey6', 'jockey6@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 6', '0123400036', 'LOCAL', 'JOCKEY', 1),
-('jockey7', 'jockey7@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 7', '0123400037', 'LOCAL', 'JOCKEY', 1),
-('jockey8', 'jockey8@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 8', '0123400038', 'LOCAL', 'JOCKEY', 1),
-('jockey9', 'jockey9@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 9', '0123400039', 'LOCAL', 'JOCKEY', 1),
-('jockey10', 'jockey10@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test JOCKEY 10', '0123400040', 'LOCAL', 'JOCKEY', 1),
-('referee1', 'referee1@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 1', '0123400041', 'LOCAL', 'RACE_REFEREE', 1),
-('referee2', 'referee2@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 2', '0123400042', 'LOCAL', 'RACE_REFEREE', 1),
-('referee3', 'referee3@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 3', '0123400043', 'LOCAL', 'RACE_REFEREE', 1),
-('referee4', 'referee4@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 4', '0123400044', 'LOCAL', 'RACE_REFEREE', 1),
-('referee5', 'referee5@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 5', '0123400045', 'LOCAL', 'RACE_REFEREE', 1),
-('referee6', 'referee6@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 6', '0123400046', 'LOCAL', 'RACE_REFEREE', 1),
-('referee7', 'referee7@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 7', '0123400047', 'LOCAL', 'RACE_REFEREE', 1),
-('referee8', 'referee8@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 8', '0123400048', 'LOCAL', 'RACE_REFEREE', 1),
-('referee9', 'referee9@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 9', '0123400049', 'LOCAL', 'RACE_REFEREE', 1),
-('referee10', 'referee10@test.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', 'Test RACE_REFEREE 10', '0123400050', 'LOCAL', 'RACE_REFEREE', 1);
+('spectator1', 'spectator1@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test SPECTATOR 1', '0123400011', 'LOCAL', 'SPECTATOR', 1),
+('spectator2', 'spectator2@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test SPECTATOR 2', '0123400012', 'LOCAL', 'SPECTATOR', 1),
+('spectator3', 'spectator3@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test SPECTATOR 3', '0123400013', 'LOCAL', 'SPECTATOR', 1),
+('spectator4', 'spectator4@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test SPECTATOR 4', '0123400014', 'LOCAL', 'SPECTATOR', 1),
+('spectator5', 'spectator5@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test SPECTATOR 5', '0123400015', 'LOCAL', 'SPECTATOR', 1),
+('spectator6', 'spectator6@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test SPECTATOR 6', '0123400016', 'LOCAL', 'SPECTATOR', 1),
+('spectator7', 'spectator7@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test SPECTATOR 7', '0123400017', 'LOCAL', 'SPECTATOR', 1),
+('spectator8', 'spectator8@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test SPECTATOR 8', '0123400018', 'LOCAL', 'SPECTATOR', 1),
+('spectator9', 'spectator9@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test SPECTATOR 9', '0123400019', 'LOCAL', 'SPECTATOR', 1),
+('spectator10', 'spectator10@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test SPECTATOR 10', '0123400020', 'LOCAL', 'SPECTATOR', 1),
+('owner1', 'owner1@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test HORSE_OWNER 1', '0123400021', 'LOCAL', 'HORSE_OWNER', 1),
+('owner2', 'owner2@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test HORSE_OWNER 2', '0123400022', 'LOCAL', 'HORSE_OWNER', 1),
+('owner3', 'owner3@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test HORSE_OWNER 3', '0123400023', 'LOCAL', 'HORSE_OWNER', 1),
+('owner4', 'owner4@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test HORSE_OWNER 4', '0123400024', 'LOCAL', 'HORSE_OWNER', 1),
+('owner5', 'owner5@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test HORSE_OWNER 5', '0123400025', 'LOCAL', 'HORSE_OWNER', 1),
+('owner6', 'owner6@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test HORSE_OWNER 6', '0123400026', 'LOCAL', 'HORSE_OWNER', 1),
+('owner7', 'owner7@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test HORSE_OWNER 7', '0123400027', 'LOCAL', 'HORSE_OWNER', 1),
+('owner8', 'owner8@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test HORSE_OWNER 8', '0123400028', 'LOCAL', 'HORSE_OWNER', 1),
+('owner9', 'owner9@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test HORSE_OWNER 9', '0123400029', 'LOCAL', 'HORSE_OWNER', 1),
+('owner10', 'owner10@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test HORSE_OWNER 10', '0123400030', 'LOCAL', 'HORSE_OWNER', 1),
+('jockey1', 'jockey1@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test JOCKEY 1', '0123400031', 'LOCAL', 'JOCKEY', 1),
+('jockey2', 'jockey2@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test JOCKEY 2', '0123400032', 'LOCAL', 'JOCKEY', 1),
+('jockey3', 'jockey3@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test JOCKEY 3', '0123400033', 'LOCAL', 'JOCKEY', 1),
+('jockey4', 'jockey4@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test JOCKEY 4', '0123400034', 'LOCAL', 'JOCKEY', 1),
+('jockey5', 'jockey5@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test JOCKEY 5', '0123400035', 'LOCAL', 'JOCKEY', 1),
+('jockey6', 'jockey6@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test JOCKEY 6', '0123400036', 'LOCAL', 'JOCKEY', 1),
+('jockey7', 'jockey7@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test JOCKEY 7', '0123400037', 'LOCAL', 'JOCKEY', 1),
+('jockey8', 'jockey8@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test JOCKEY 8', '0123400038', 'LOCAL', 'JOCKEY', 1),
+('jockey9', 'jockey9@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test JOCKEY 9', '0123400039', 'LOCAL', 'JOCKEY', 1),
+('jockey10', 'jockey10@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test JOCKEY 10', '0123400040', 'LOCAL', 'JOCKEY', 1),
+('referee1', 'referee1@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test RACE_REFEREE 1', '0123400041', 'LOCAL', 'RACE_REFEREE', 1),
+('referee2', 'referee2@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test RACE_REFEREE 2', '0123400042', 'LOCAL', 'RACE_REFEREE', 1),
+('referee3', 'referee3@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test RACE_REFEREE 3', '0123400043', 'LOCAL', 'RACE_REFEREE', 1),
+('referee4', 'referee4@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test RACE_REFEREE 4', '0123400044', 'LOCAL', 'RACE_REFEREE', 1),
+('referee5', 'referee5@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test RACE_REFEREE 5', '0123400045', 'LOCAL', 'RACE_REFEREE', 1),
+('referee6', 'referee6@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test RACE_REFEREE 6', '0123400046', 'LOCAL', 'RACE_REFEREE', 1),
+('referee7', 'referee7@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test RACE_REFEREE 7', '0123400047', 'LOCAL', 'RACE_REFEREE', 1),
+('referee8', 'referee8@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test RACE_REFEREE 8', '0123400048', 'LOCAL', 'RACE_REFEREE', 1),
+('referee9', 'referee9@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test RACE_REFEREE 9', '0123400049', 'LOCAL', 'RACE_REFEREE', 1),
+('referee10', 'referee10@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test RACE_REFEREE 10', '0123400050', 'LOCAL', 'RACE_REFEREE', 1);
 GO
 
 -- 3. Insert Owner & Jockey Profiles

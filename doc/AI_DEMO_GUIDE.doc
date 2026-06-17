@@ -1,0 +1,129 @@
+================================================================================
+          HƯỚNG DẪN DEMO HỆ THỐNG TRỢ LÝ AI & XUẤT BÁO CÁO THỐNG KÊ
+================================================================================
+
+--------------------------------------------------------------------------------
+I. TỔNG QUAN VỀ KHẢ NĂNG CỦA AI HIỆN TẠI (WHAT AI CAN DO)
+--------------------------------------------------------------------------------
+
+Hệ thống Trợ lý AI hiện tại không chỉ trả lời câu hỏi thông thường, mà đóng vai trò là
+một Trợ lý ảo Thông minh có khả năng tương tác sâu với hệ thống:
+
+1. TỰ ĐỘNG NHẬN DIỆN VAI TRÒ (ROLE-AWARENESS):
+   - AI tự động nhận biết người dùng đang giao tiếp thuộc vai trò nào:
+
+2. ĐỒNG BỘ LỊCH SỬ CHAT THÔNG MINH (DB SAVING):
+   - Lưu trữ tối đa 50 tin nhắn đối thoại gần nhất vào database thật cho mỗi tài khoản.
+   - Tự động dọn dẹp các tin nhắn cũ hơn để tiết kiệm tài nguyên lưu trữ.
+   - Khi đăng nhập trên bất kỳ thiết bị nào, lịch sử chat cũ sẽ tự động hiển thị lại.
+   - Riêng vai trò GUEST (Khách vãng lai) sẽ KHÔNG lưu vào cơ sở dữ liệu để bảo mật.
+
+3. TỰ ĐỘNG KÍCH HOẠT HÀNH ĐỘNG TRÊN MÀN HÌNH (AUTOMATED ACTIONS):
+   - AI phân tích câu hỏi của người dùng và trả về lệnh điều hướng màn hình (NAVIGATE)
+     đến các trang tính năng cụ thể hoặc nút tải báo cáo giao dịch (DOWNLOAD_FILE).
+   - Giúp nâng cao trải nghiệm người dùng, giúp họ tìm kiếm tính năng nhanh chóng.
+
+4. SINH DỮ LIỆU BIỂU ĐỒ TRỰC QUAN (INLINE CHARTS):
+   - Khi người dùng hỏi về thống kê tài chính, AI sẽ tự động sinh dữ liệu biểu đồ
+     dạng JSON. Khung chat ở Frontend sẽ bắt cấu trúc này để vẽ biểu đồ cột/tròn cực kỳ đẹp mắt.
+
+5. XUẤT BÁO CÁO THẬT (REAL PDF/EXCEL EXPORTER):
+   - Tích hợp API bảo mật xuất báo cáo giao dịch tiền nạp/tiền cược của người dùng ra
+     file PDF (định dạng sạch sẽ) và Excel (.xlsx tự động căn chỉnh độ rộng cột).
+
+--------------------------------------------------------------------------------
+II. KỊCH BẢN DEMO CHI TIẾT (DEMO SCENARIOS & EXAMPLES)
+--------------------------------------------------------------------------------
+
+Để thuyết trình tốt nhất, bạn nên mở giao diện thử nghiệm tạm thời:
+Tệp tin: [ai-report-test-client.html] ở thư mục gốc của dự án.
+Và thực hiện demo theo 2 kịch bản phân vai dưới đây:
+
+================================================================================
+KỊCH BẢN 1: DEMO VỚI VAI TRÒ GUEST (KHÁCH VÃNG LAI - CHƯA ĐĂNG NHẬP)
+================================================================================
+- Trạng thái ban đầu: Chưa đăng nhập hệ thống (Nút Trạng thái báo GUEST màu đỏ).
+- Câu hỏi nhập vào:
+  "Hệ thống này có những tính năng gì và tôi muốn đặt cược thì làm thế nào?"
+
+- Phản hồi của AI (Mong đợi):
+  AI sẽ giới thiệu tổng quan hệ thống đua ngựa và giải thích rằng để đặt cược thì khách
+  phải đăng ký tài khoản. Đồng thời, AI trả về mã hành động:
+  {
+    "type": "NAVIGATE",
+    "payload": "/login"
+  }
+
+- Hiển thị trên màn hình demo:
+  Khung chat sẽ xuất hiện thông báo mô phỏng:
+  "🚀 [CLIENT SIMULATION] Đang tự động chuyển hướng màn hình đến đường dẫn: /login"
+  -> Cho hội đồng thấy hệ thống tự động đưa khách đến trang đăng nhập khi họ có nhu cầu cược.
+
+================================================================================
+KỊCH BẢN 2: DEMO VỚI VAI TRÒ SPECTATOR (NGƯỜI XEM - ĐÃ ĐĂNG NHẬP)
+================================================================================
+- Trạng thái ban đầu: Nhập email "spectator1@gmail.com", mật khẩu "123456" và ấn Đăng nhập.
+- Câu hỏi nhập vào 2.1:
+  "Tôi muốn tải báo cáo lịch sử giao dịch ví tiền của mình."
+
+- Phản hồi của AI (Mong đợi):
+  AI xác định người dùng đã đăng nhập, chào hỏi bằng tên thật và cung cấp nút tải xuống.
+  Đồng thời AI trả về mã hành động:
+  {
+    "type": "DOWNLOAD_FILE",
+    "payload": {
+      "url": "/api/v1/reports/pdf/wallet-transactions",
+      "label": "Tải báo cáo lịch sử giao dịch (PDF)"
+    }
+  }
+
+- Hiển thị trên màn hình demo:
+  Trong bong bóng chat của AI sẽ xuất hiện một nút bấm màu xanh lá cây tiêu đề:
+  "📥 Tải báo cáo lịch sử giao dịch (PDF)".
+  Bạn hãy click vào nút này -> File PDF thật sẽ được tải về máy tính và hiển thị lịch sử giao dịch ví.
+
+- Câu hỏi nhập vào 2.2:
+  "Thống kê lịch sử nạp tiền của tôi bằng biểu đồ"
+
+- Phản hồi của AI (Mong đợi):
+  AI trả về phân tích và khối JSON dữ liệu biểu đồ dạng:
+  {
+    "text": "Dưới đây là thống kê nạp tiền...",
+    "chart": {
+      "type": "BAR",
+      "title": "Thống kê nạp tiền",
+      "data": [
+        {"label": "Tháng 5", "value": 500000},
+        {"label": "Tháng 6", "value": 1200000}
+      ]
+    }
+  }
+
+- Hiển thị trên màn hình demo:
+  Một biểu đồ cột tuyệt đẹp sẽ tự động vẽ ngay bên dưới tin nhắn của AI. Các cột màu xanh lá
+  sẽ có hiệu ứng chuyển động tương ứng với tỷ lệ phần trăm số tiền.
+
+--------------------------------------------------------------------------------
+III. ĐỊA CHỈ API CẦN NHỚ ĐỂ TRÌNH BÀY PHẦN BACKEND (BE)
+--------------------------------------------------------------------------------
+
+Khi hội đồng hỏi về kỹ thuật viết API ở Backend như thế nào, bạn hãy mở các tệp tin này:
+
+1. Xử lý AI:
+   - File Service: [AiChatService.java]
+     Nơi xử lý cấu trúc prompt động, phân chia role, gọi Gemini API và dọn dẹp lịch sử chat.
+   - File Controller: [AiChatController.java]
+     Nơi định nghĩa các endpoint:
+     + POST `/api/v1/chat`: Nhận tin nhắn chat, kiểm tra token.
+     + GET `/api/v1/chat/history`: Tải lại cuộc đối thoại.
+     + DELETE `/api/v1/chat/history`: Xóa cuộc đối thoại.
+
+2. Xuất báo cáo thống kê:
+   - File Controller: [ReportExportController.java]
+     Định nghĩa API xuất báo cáo:
+     + GET `/api/v1/reports/pdf/wallet-transactions`: Xuất PDF bằng OpenPDF.
+     + GET `/api/v1/reports/excel/wallet-transactions`: Xuất Excel bằng Apache POI.
+
+Tất cả các API này đã được chạy biên dịch thử nghiệm thành công 100% (BUILD SUCCESS) và đã được
+cập nhật cơ sở dữ liệu thật trên máy tính của bạn.
+================================================================================

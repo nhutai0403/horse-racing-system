@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant & Report Exporter - Developer Sandbox</title>
+    <!-- Tailwind CSS for modern, premium aesthetics -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top right, #0a1f14, #020c08);
+            color: #f3f4f6;
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(10, 30, 20, 0.45);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+        }
+        .glow-green {
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.2);
+        }
+        .chat-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .chat-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.4);
+            border-radius: 3px;
+        }
+        .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(16, 185, 129, 0.6);
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8 border-b border-emerald-900/40 pb-6">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-emerald-400">AI Assistant & Report Sandbox</h1>
+                <p class="text-gray-400 text-sm mt-1">Công cụ chạy thử nghiệm API dành cho nhà phát triển hệ thống Đua ngựa</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-500/20">
+                    <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    API Active
+                </span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left Panel: Authentication & Downloads -->
+            <div class="lg:col-span-4 flex flex-col gap-6">
+                <!-- Auth Box -->
+                <div class="glass p-6 rounded-2xl glow-green">
+                    <h2 class="text-lg font-bold text-emerald-400 mb-4 flex items-center gap-2">
+                        🔑 Xác thực Người Dùng
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 uppercase mb-1">Email Đăng Nhập</label>
+                            <input type="email" id="email" value="spectator1@gmail.com" class="w-full bg-black/40 border border-emerald-900/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 uppercase mb-1">Mật khẩu</label>
+                            <input type="password" id="password" value="123456" class="w-full bg-black/40 border border-emerald-900/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="flex gap-2 pt-2">
+                            <button onclick="login()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm py-2 px-4 rounded-lg transition-colors">
+                                Đăng Nhập
+                            </button>
+                            <button onclick="logout()" class="bg-red-950 hover:bg-red-900 border border-red-500/30 text-red-300 text-sm py-2 px-4 rounded-lg transition-colors">
+                                Thoát
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Token Status -->
+                    <div class="mt-6 border-t border-emerald-900/30 pt-4 text-xs space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Trạng thái:</span>
+                            <span id="auth-status" class="font-bold text-red-400">Chưa Đăng Nhập (Guest)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Vai trò (Role):</span>
+                            <span id="user-role" class="font-bold text-gray-300">GUEST</span>
+                        </div>
+                        <div class="overflow-hidden text-ellipsis whitespace-nowrap text-gray-500">
+                            Token: <span id="token-preview" class="text-emerald-800">Không có</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Exporter Box -->
+                <div class="glass p-6 rounded-2xl">
+                    <h2 class="text-lg font-bold text-emerald-400 mb-4 flex items-center gap-2">
+                        📊 Xuất Báo Cáo Thống Kê
+                    </h2>
+                    <p class="text-xs text-gray-400 mb-4">Các API này tự động trích xuất lịch sử ví, đặt cược và tạo file byte stream tải về.</p>
+                    <div class="space-y-3">
+                        <button onclick="downloadReport('pdf')" id="btn-pdf" class="w-full flex items-center justify-between bg-emerald-950 hover:bg-emerald-900 border border-emerald-500/30 text-emerald-300 font-medium text-sm py-3 px-4 rounded-xl transition-colors disabled:opacity-40" disabled>
+                            <span>📄 Tải Báo Cáo Giao Dịch (PDF)</span>
+                            <span class="text-xs bg-emerald-800 text-white px-2 py-0.5 rounded">PDF</span>
+                        </button>
+                        <button onclick="downloadReport('excel')" id="btn-excel" class="w-full flex items-center justify-between bg-emerald-950 hover:bg-emerald-900 border border-emerald-500/30 text-emerald-300 font-medium text-sm py-3 px-4 rounded-xl transition-colors disabled:opacity-40" disabled>
+                            <span>📈 Tải Báo Cáo Giao Dịch (Excel)</span>
+                            <span class="text-xs bg-teal-800 text-white px-2 py-0.5 rounded">XLSX</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- History Management -->
+                <div class="glass p-6 rounded-2xl">
+                    <h2 class="text-lg font-bold text-emerald-400 mb-4 flex items-center gap-2">
+                        ⏱️ Quản lý Lịch Sử Chat
+                    </h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="loadHistory()" id="btn-load-history" class="bg-emerald-950 hover:bg-emerald-900 border border-emerald-500/20 text-emerald-300 text-xs py-2 px-3 rounded-lg transition-all disabled:opacity-40" disabled>
+                            Tải lại Lịch Sử
+                        </button>
+                        <button onclick="clearHistory()" id="btn-clear-history" class="bg-red-950/60 hover:bg-red-900 border border-red-500/20 text-red-300 text-xs py-2 px-3 rounded-lg transition-all disabled:opacity-40" disabled>
+                            Xóa Lịch Sử
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Chatbot Simulator -->
+            <div class="lg:col-span-8 flex flex-col h-[70vh] glass rounded-2xl glow-green overflow-hidden">
+                <!-- Chat Window Header -->
+                <div class="bg-emerald-950/80 border-b border-emerald-900/40 p-4 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center font-bold text-white shadow-lg">
+                            HR
+                        </div>
+                        <div>
+                            <div class="font-bold text-white text-sm">Trợ lý Đua ngựa Horse Racing AI</div>
+                            <div class="text-xs text-emerald-400 flex items-center gap-1">
+                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                Sẵn sàng phản hồi (Gemini Flash)
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <button onclick="clearChatScreen()" class="text-xs text-gray-400 hover:text-emerald-400 transition-colors">
+                            Xóa màn hình chat
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages Log -->
+                <div id="chat-messages" class="flex-1 p-6 overflow-y-auto space-y-6 chat-scrollbar bg-black/20">
+                    <!-- Welcome message -->
+                    <div class="flex gap-3 max-w-[85%]">
+                        <div class="h-8 w-8 rounded-lg bg-emerald-900 text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0">AI</div>
+                        <div class="bg-emerald-950/40 border border-emerald-900/40 rounded-2xl rounded-tl-none p-4 shadow-md">
+                            <p class="text-sm text-gray-200">Xin chào! Tôi là Trợ lý Ảo Horse Racing. Bạn có thể hỏi tôi bất kỳ thông tin nào về luật chơi, hướng dẫn nạp tiền hoặc yêu cầu tôi xuất báo cáo thống kê giao dịch của bạn.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Alert logs -->
+                <div id="simulated-actions" class="px-6 py-2 bg-emerald-950/20 border-t border-emerald-900/10 text-xs text-yellow-400 hidden">
+                    <!-- Action notification here -->
+                </div>
+
+                <!-- Chat Input Form -->
+                <div class="p-4 bg-emerald-950/30 border-t border-emerald-900/40 flex gap-3">
+                    <input type="text" id="chat-input" placeholder="Nhập câu hỏi tại đây... (Ví dụ: 'Thống kê tiền nạp của tôi' hoặc 'Tôi nên đặt cược vào con nào?')" class="flex-1 bg-black/40 border border-emerald-900/60 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500" onkeydown="if(event.key==='Enter') sendMessage()">
+                    <button onclick="sendMessage()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-6 py-3 rounded-xl transition-all shadow-md shrink-0">
+                        Gửi câu hỏi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script logic -->
+    <script>
+        const API_URL = "http://localhost:8080";
+        let token = localStorage.getItem("test_token") || null;
+        let role = localStorage.getItem("test_role") || "GUEST";
+        let user = JSON.parse(localStorage.getItem("test_user")) || null;
+
+        // Initialize state on page load
+        updateAuthState();
+
+        function updateAuthState() {
+            const statusEl = document.getElementById("auth-status");
+            const roleEl = document.getElementById("user-role");
+            const tokenPreview = document.getElementById("token-preview");
+            const btnPdf = document.getElementById("btn-pdf");
+            const btnExcel = document.getElementById("btn-excel");
+            const btnLoadHistory = document.getElementById("btn-load-history");
+            const btnClearHistory = document.getElementById("btn-clear-history");
+
+            if (token) {
+                statusEl.textContent = `Đã Đăng Nhập: ${user?.fullName || 'User'}`;
+                statusEl.className = "font-bold text-emerald-400";
+                roleEl.textContent = role;
+                tokenPreview.textContent = token.substring(0, 25) + "...";
+                btnPdf.disabled = false;
+                btnExcel.disabled = false;
+                btnLoadHistory.disabled = false;
+                btnClearHistory.disabled = false;
+            } else {
+                statusEl.textContent = "Chưa Đăng Nhập (Guest)";
+                statusEl.className = "font-bold text-red-400";
+                roleEl.textContent = "GUEST";
+                tokenPreview.textContent = "Không có";
+                btnPdf.disabled = true;
+                btnExcel.disabled = true;
+                btnLoadHistory.disabled = true;
+                btnClearHistory.disabled = true;
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert("Đăng nhập thất bại: " + (errorData.message || "Kiểm tra thông tin email/mật khẩu."));
+                    return;
+                }
+
+                const data = await response.json();
+                token = data.accessToken;
+                user = data.user;
+                role = data.user.role;
+
+                localStorage.setItem("test_token", token);
+                localStorage.setItem("test_role", role);
+                localStorage.setItem("test_user", JSON.stringify(user));
+
+                updateAuthState();
+                appendLog("Hệ thống", `Đăng nhập thành công với vai trò ${role}! Lịch sử trò chuyện tự động đồng bộ.`, "system");
+                
+                // Automatically fetch history on login
+                loadHistory();
+            } catch (error) {
+                console.error("Login error:", error);
+                alert("Lỗi kết nối tới Server: " + error.message);
+            }
+        }
+
+        function logout() {
+            token = null;
+            role = "GUEST";
+            user = null;
+            localStorage.removeItem("test_token");
+            localStorage.removeItem("test_role");
+            localStorage.removeItem("test_user");
+            updateAuthState();
+            clearChatScreen();
+            appendLog("Hệ thống", "Đã đăng xuất. Bạn hiện ở chế độ Khách (Guest).", "system");
+        }
+
+        function clearChatScreen() {
+            const container = document.getElementById("chat-messages");
+            container.innerHTML = `
+                <div class="flex gap-3 max-w-[85%]">
+                    <div class="h-8 w-8 rounded-lg bg-emerald-900 text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0">AI</div>
+                    <div class="bg-emerald-950/40 border border-emerald-900/40 rounded-2xl rounded-tl-none p-4 shadow-md">
+                        <p class="text-sm text-gray-200">Màn hình chat đã được làm sạch. Bạn có thể đặt câu hỏi mới.</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById("simulated-actions").classList.add("hidden");
+        }
+
+        function appendLog(senderName, messageText, type = "ai", metadata = null) {
+            const container = document.getElementById("chat-messages");
+            const msgRow = document.createElement("div");
+            msgRow.className = "flex gap-3 max-w-[85%] " + (type === "user" ? "ml-auto flex-row-reverse" : "");
+
+            const avatar = document.createElement("div");
+            avatar.className = `h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                type === "user" ? "bg-emerald-600 text-white" : type === "system" ? "bg-amber-800 text-amber-100" : "bg-emerald-900 text-emerald-300"
+            }`;
+            avatar.textContent = type === "user" ? "ME" : type === "system" ? "SYS" : "AI";
+
+            const bubble = document.createElement("div");
+            bubble.className = `border rounded-2xl p-4 shadow-md ${
+                type === "user" 
+                    ? "bg-emerald-900/50 border-emerald-500/30 rounded-tr-none text-gray-200" 
+                    : type === "system" 
+                        ? "bg-amber-950/30 border-amber-500/20 text-amber-200"
+                        : "bg-emerald-950/40 border-emerald-900/40 rounded-tl-none text-gray-200"
+            }`;
+
+            // Parse message text or JSON structure
+            let parsedText = messageText;
+            let actions = [];
+            let chart = null;
+
+            if (type === "ai") {
+                try {
+                    const data = JSON.parse(messageText);
+                    parsedText = data.text || "";
+                    actions = data.actions || [];
+                    chart = data.chart || null;
+                } catch (e) {
+                    // Not JSON, handle as plain text
+                }
+            }
+
+            // Text display
+            const textPara = document.createElement("p");
+            textPara.className = "text-sm whitespace-pre-line";
+            bubble.appendChild(textPara);
+
+            // Chart rendering
+            let chartContainer = null;
+            if (chart) {
+                chartContainer = document.createElement("div");
+                chartContainer.className = "mt-4 p-3 bg-black/40 border border-emerald-950 rounded-xl hidden";
+                
+                const title = document.createElement("div");
+                title.className = "text-xs font-bold text-emerald-400 mb-2 uppercase tracking-wide";
+                title.textContent = `📊 BIỂU ĐỒ: ${chart.title || 'Thống kê'}`;
+                chartContainer.appendChild(title);
+
+                const barList = document.createElement("div");
+                barList.className = "space-y-2.5 mt-2";
+
+                const values = chart.data.map(d => d.value);
+                const maxVal = Math.max(...values, 1);
+
+                chart.data.forEach(item => {
+                    const percentage = (item.value / maxVal) * 100;
+                    
+                    const itemRow = document.createElement("div");
+                    itemRow.className = "space-y-1";
+
+                    const itemLabel = document.createElement("div");
+                    itemLabel.className = "flex justify-between text-[11px] text-gray-400";
+                    itemLabel.innerHTML = `<span>${item.label}</span><span class="text-emerald-300 font-bold">${item.value.toLocaleString()} VND</span>`;
+                    itemRow.appendChild(itemLabel);
+
+                    const barBg = document.createElement("div");
+                    barBg.className = "w-full bg-emerald-950/50 h-3 rounded-full overflow-hidden border border-emerald-900/20";
+                    
+                    const barFill = document.createElement("div");
+                    barFill.className = "bg-gradient-to-r from-emerald-600 to-teal-400 h-full rounded-full transition-all duration-1000";
+                    barFill.style.width = "0%";
+                    setTimeout(() => barFill.style.width = `${percentage}%`, 100);
+
+                    barBg.appendChild(barFill);
+                    itemRow.appendChild(barBg);
+                    barList.appendChild(itemRow);
+                });
+
+                chartContainer.appendChild(barList);
+                bubble.appendChild(chartContainer);
+            }
+
+            // Actions rendering
+            let actContainer = null;
+            if (actions.length > 0) {
+                actContainer = document.createElement("div");
+                actContainer.className = "mt-3 flex flex-wrap gap-2 pt-2 border-t border-emerald-900/20 hidden";
+
+                actions.forEach(act => {
+                    if (act.type === "NAVIGATE") {
+                        const badge = document.createElement("span");
+                        badge.className = "inline-flex items-center gap-1 bg-blue-950 border border-blue-800 text-blue-300 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full cursor-pointer hover:bg-blue-900 transition-all";
+                        badge.innerHTML = `⚡ Chuyển trang: ${act.payload}`;
+                        badge.onclick = () => simulateNavigation(act.payload);
+                        actContainer.appendChild(badge);
+                    } else if (act.type === "DOWNLOAD_FILE") {
+                        const downloadBtn = document.createElement("button");
+                        downloadBtn.className = "inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all shadow-md";
+                        downloadBtn.innerHTML = `📥 ${act.payload.label || 'Tải file'}`;
+                        downloadBtn.onclick = () => downloadReportUrl(act.payload.url);
+                        actContainer.appendChild(downloadBtn);
+                    }
+                });
+
+                bubble.appendChild(actContainer);
+            }
+
+            // Simulated typing effect for AI
+            if (type === "ai" && parsedText) {
+                let index = 0;
+                const speed = parsedText.length > 300 ? 5 : 12; // fast typing speed
+                const interval = setInterval(() => {
+                    if (index < parsedText.length) {
+                        textPara.textContent += parsedText.charAt(index);
+                        index++;
+                        container.scrollTop = container.scrollHeight;
+                    } else {
+                        clearInterval(interval);
+                        if (chartContainer) chartContainer.classList.remove("hidden");
+                        if (actContainer) actContainer.classList.remove("hidden");
+                        container.scrollTop = container.scrollHeight;
+                    }
+                }, speed);
+            } else {
+                textPara.textContent = parsedText;
+                if (chartContainer) chartContainer.classList.remove("hidden");
+                if (actContainer) actContainer.classList.remove("hidden");
+            }
+
+            msgRow.appendChild(avatar);
+            msgRow.appendChild(bubble);
+            container.appendChild(msgRow);
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function simulateNavigation(path) {
+            const simEl = document.getElementById("simulated-actions");
+            simEl.className = "px-6 py-2.5 bg-blue-950/40 border-t border-blue-900/40 text-xs text-blue-300 font-bold block transition-all flex justify-between items-center";
+            simEl.innerHTML = `<span>🚀 [CLIENT SIMULATION] Đang tự động chuyển hướng màn hình đến đường dẫn: <code class="bg-black/40 px-2 py-0.5 rounded text-white font-mono font-normal">${path}</code></span><button onclick="this.parentElement.classList.add('hidden')" class="text-gray-400 hover:text-white">✕</button>`;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById("chat-input");
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Display user message
+            appendLog("Khách", message, "user");
+            input.value = "";
+
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch(`${API_URL}/api/v1/chat`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ message })
+                });
+
+                if (!response.ok) {
+                    appendLog("Hệ thống", "Lỗi: Không nhận được câu trả lời từ máy chủ.", "system");
+                    return;
+                }
+
+                const rawBody = await response.text();
+                appendLog("AI", rawBody, "ai");
+            } catch (error) {
+                console.error("Chat error:", error);
+                appendLog("Hệ thống", "Lỗi kết nối mạng: " + error.message, "system");
+            }
+        }
+
+        async function loadHistory() {
+            if (!token) return;
+            try {
+                const response = await fetch(`${API_URL}/api/v1/chat/history`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    alert("Không thể tải lịch sử chat");
+                    return;
+                }
+
+                const history = await response.json();
+                clearChatScreen();
+                
+                if (history.length === 0) {
+                    appendLog("Hệ thống", "Lịch sử cuộc hội thoại trống.", "system");
+                    return;
+                }
+
+                history.forEach(h => {
+                    const isUser = h.sender === "USER";
+                    appendLog(
+                        isUser ? "Me" : "AI", 
+                        h.message, 
+                        isUser ? "user" : "ai"
+                    );
+                });
+                
+                appendLog("Hệ thống", `Đã khôi phục ${history.length} tin nhắn gần nhất từ cơ sở dữ liệu.`, "system");
+            } catch (error) {
+                alert("Lỗi khi tải lịch sử: " + error.message);
+            }
+        }
+
+        async function clearHistory() {
+            if (!token) return;
+            if (!confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử trò chuyện AI trong DB không?")) return;
+
+            try {
+                const response = await fetch(`${API_URL}/api/v1/chat/history`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    clearChatScreen();
+                    appendLog("Hệ thống", "Lịch sử trò chuyện đã được dọn sạch hoàn toàn.", "system");
+                } else {
+                    alert("Không thể xóa lịch sử chat.");
+                }
+            } catch (error) {
+                alert("Lỗi khi kết nối: " + error.message);
+            }
+        }
+
+        async function downloadReport(format) {
+            const url = `/api/v1/reports/${format}/wallet-transactions`;
+            downloadReportUrl(url);
+        }
+
+        async function downloadReportUrl(apiUrl) {
+            if (!token) {
+                alert("Hãy đăng nhập để thực hiện tải báo cáo!");
+                return;
+            }
+
+            try {
+                appendLog("Hệ thống", `Bắt đầu yêu cầu tải báo cáo từ: ${apiUrl}`, "system");
+                
+                const response = await fetch(`${API_URL}${apiUrl}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    alert("Tải file thất bại! Mã lỗi: " + response.status);
+                    return;
+                }
+
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = downloadUrl;
+                
+                // Determine file name from content disposition or URL
+                const fileExtension = apiUrl.includes("pdf") ? "pdf" : "xlsx";
+                a.download = `wallet_report_${user.id}_${Date.now()}.${fileExtension}`;
+                
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(downloadUrl);
+
+                appendLog("Hệ thống", "Tải báo cáo thành công!", "system");
+            } catch (error) {
+                alert("Lỗi khi tải báo cáo: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

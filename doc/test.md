@@ -1,105 +1,75 @@
-# Hướng dẫn test luồng tính năng Frontend
+# Danh sách tài khoản thử nghiệm (Test Accounts)
 
-Tất cả các dữ liệu dưới đây đã được khởi tạo sẵn trong Database (`HorseRacingDB.sql`). Chỉ cần khởi động lại DB (chạy init script) là có thể dùng ngay.
+Tất cả các tài khoản dưới đây đều sử dụng chung mật khẩu đã được cập nhật để thoả mãn điều kiện validation (tối thiểu 8 ký tự, có ít nhất 1 chữ hoa và 1 ký tự đặc biệt):
 
-## 1. Danh sách tài khoản Test
-
-> **Lưu ý:**
-> - Tài khoản **Admin** mặc định được tạo từ source code Backend chứ không nằm trong file SQL (chỉ có 1 tài khoản).
-> - Mật khẩu chung cho tất cả các tài khoản là: **`123456`** (riêng Admin là `Admin@12345`).
-
-### 🔑 ADMIN
-- `admin@gmail.com` -- `Admin@12345`
-
-### 🔑 SPECTATOR
-- `spectator1@test.com` -- `123456`
-- `spectator2@test.com` -- `123456`
-- `spectator3@test.com` -- `123456`
-- `spectator4@test.com` -- `123456`
-- `spectator5@test.com` -- `123456`
-- `spectator6@test.com` -- `123456`
-- `spectator7@test.com` -- `123456`
-- `spectator8@test.com` -- `123456`
-- `spectator9@test.com` -- `123456`
-- `spectator10@test.com` -- `123456`
-
-### 🔑 HORSE OWNER
-- `owner1@test.com` -- `123456`
-- `owner2@test.com` -- `123456`
-- `owner3@test.com` -- `123456`
-- `owner4@test.com` -- `123456`
-- `owner5@test.com` -- `123456`
-- `owner6@test.com` -- `123456`
-- `owner7@test.com` -- `123456`
-- `owner8@test.com` -- `123456`
-- `owner9@test.com` -- `123456`
-- `owner10@test.com` -- `123456`
-
-### 🔑 JOCKEY
-- `jockey1@test.com` -- `123456`
-- `jockey2@test.com` -- `123456`
-- `jockey3@test.com` -- `123456`
-- `jockey4@test.com` -- `123456`
-- `jockey5@test.com` -- `123456`
-- `jockey6@test.com` -- `123456`
-- `jockey7@test.com` -- `123456`
-- `jockey8@test.com` -- `123456`
-- `jockey9@test.com` -- `123456`
-- `jockey10@test.com` -- `123456`
-
-### 🔑 RACE REFEREE
-- `referee1@test.com` -- `123456`
-- `referee2@test.com` -- `123456`
-- `referee3@test.com` -- `123456`
-- `referee4@test.com` -- `123456`
-- `referee5@test.com` -- `123456`
-- `referee6@test.com` -- `123456`
-- `referee7@test.com` -- `123456`
-- `referee8@test.com` -- `123456`
-- `referee9@test.com` -- `123456`
-- `referee10@test.com` -- `123456`
+* **Mật khẩu (Password):** `Password123!`
 
 ---
 
-## 2. Dữ liệu đính kèm sẵn
+## 1. Danh sách tài khoản từ Nhóm 1 (Dữ liệu cơ bản)
 
-- **10 Owner** đã được duyệt Profile (`APPROVED`), mỗi Owner sở hữu sẵn **1 con ngựa** (ví dụ `owner1` sở hữu `Horse 1`, `owner10` sở hữu `Horse 10`). Tổng có 10 con ngựa.
-- **10 Jockey** đã được duyệt Profile (`APPROVED`), có sẵn các chỉ số win rate, kinh nghiệm khác nhau.
-- **Bạn bè:** `owner1` và `jockey1` đã kết bạn thành công với nhau.
-
----
-
-## 3. Thông tin Giải đấu (Tournaments)
-
-Hệ thống có sẵn **4 Giải đấu** đại diện cho 4 trạng thái:
-1. `Spring Championship 2026` - **Open Registration** (Có sẵn 1 vòng đua *Qualifier Round 1*)
-2. `Summer Cup 2026` - **Registration Closed**
-3. `Winter Classic 2025` - **Ongoing**
-4. `End of Year Event 2026` - **Completed**
+| STT | Tài khoản (Username) | Email | Vai trò (Role) | Mật khẩu (Password) |
+|---|---|---|---|---|
+| 1 | `owner1` | `owner1@test.com` | HORSE_OWNER | `Password123!` |
+| 2 | `jockey1` | `jockey1@test.com` | JOCKEY | `Password123!` |
+| 3 | `jockey2` | `jockey2@test.com` | JOCKEY | `Password123!` |
 
 ---
 
-## 4. Gợi ý Test API (Dành cho FE)
+## 2. Danh sách tài khoản từ Nhóm 2 (Dữ liệu mở rộng cho FE Testing)
 
-### A. Quản lý ngựa (Bởi Owner)
-Đăng nhập tài khoản `owner1`, vào quản lý ngựa (Stable):
-- **Danh sách ngựa:** `GET /api/owner/horses` (Sẽ thấy `Horse 1`).
-- **Thêm ngựa mới:** `POST /api/owner/horses`
-- **Sửa ngựa:** `PUT /api/owner/horses/{id}`
-- **Xóa ngựa:** `DELETE /api/owner/horses/{id}`
+### 2.1. Spectator Accounts (Khán giả)
+| STT | Tài khoản (Username) | Email | Vai trò (Role) | Mật khẩu (Password) |
+|---|---|---|---|---|
+| 1 | `spectator1` | `spectator1@test.com` | SPECTATOR | `Password123!` |
+| 2 | `spectator2` | `spectator2@test.com` | SPECTATOR | `Password123!` |
+| 3 | `spectator3` | `spectator3@test.com` | SPECTATOR | `Password123!` |
+| 4 | `spectator4` | `spectator4@test.com` | SPECTATOR | `Password123!` |
+| 5 | `spectator5` | `spectator5@test.com` | SPECTATOR | `Password123!` |
+| 6 | `spectator6` | `spectator6@test.com` | SPECTATOR | `Password123!` |
+| 7 | `spectator7` | `spectator7@test.com` | SPECTATOR | `Password123!` |
+| 8 | `spectator8` | `spectator8@test.com` | SPECTATOR | `Password123!` |
+| 9 | `spectator9` | `spectator9@test.com` | SPECTATOR | `Password123!` |
+| 10 | `spectator10` | `spectator10@test.com` | SPECTATOR | `Password123!` |
 
-### B. Quản lý Profile (Bởi Owner)
-- **Xem Profile:** `GET /api/owner/profile`
-- **Cập nhật Profile:** `PUT /api/owner/profile`
+### 2.2. Horse Owner Accounts (Chủ ngựa)
+| STT | Tài khoản (Username) | Email | Vai trò (Role) | Mật khẩu (Password) |
+|---|---|---|---|---|
+| 1 | `owner1` | `owner1@test.com` | HORSE_OWNER | `Password123!` |
+| 2 | `owner2` | `owner2@test.com` | HORSE_OWNER | `Password123!` |
+| 3 | `owner3` | `owner3@test.com` | HORSE_OWNER | `Password123!` |
+| 4 | `owner4` | `owner4@test.com` | HORSE_OWNER | `Password123!` |
+| 5 | `owner5` | `owner5@test.com` | HORSE_OWNER | `Password123!` |
+| 6 | `owner6` | `owner6@test.com` | HORSE_OWNER | `Password123!` |
+| 7 | `owner7` | `owner7@test.com` | HORSE_OWNER | `Password123!` |
+| 8 | `owner8` | `owner8@test.com` | HORSE_OWNER | `Password123!` |
+| 9 | `owner9` | `owner9@test.com` | HORSE_OWNER | `Password123!` |
+| 10 | `owner10` | `owner10@test.com` | HORSE_OWNER | `Password123!` |
 
-### C. Quản lý kết nối / Bạn bè
-- **Danh sách bạn bè:** `GET /api/connections/friends` (Sẽ thấy `jockey1` nếu dùng `owner1`).
-- **Danh bạ hệ thống:** `GET /api/connections/directory?role=JOCKEY`
-- **Kết bạn mới:** `POST /api/connections/request`
+### 2.3. Jockey Accounts (Nài ngựa)
+| STT | Tài khoản (Username) | Email | Vai trò (Role) | Mật khẩu (Password) |
+|---|---|---|---|---|
+| 1 | `jockey1` | `jockey1@test.com` | JOCKEY | `Password123!` |
+| 2 | `jockey2` | `jockey2@test.com` | JOCKEY | `Password123!` |
+| 3 | `jockey3` | `jockey3@test.com` | JOCKEY | `Password123!` |
+| 4 | `jockey4` | `jockey4@test.com` | JOCKEY | `Password123!` |
+| 5 | `jockey5` | `jockey5@test.com` | JOCKEY | `Password123!` |
+| 6 | `jockey6` | `jockey6@test.com` | JOCKEY | `Password123!` |
+| 7 | `jockey7` | `jockey7@test.com` | JOCKEY | `Password123!` |
+| 8 | `jockey8` | `jockey8@test.com` | JOCKEY | `Password123!` |
+| 9 | `jockey9` | `jockey9@test.com` | JOCKEY | `Password123!` |
+| 10 | `jockey10` | `jockey10@test.com` | JOCKEY | `Password123!` |
 
-### D. Đăng ký đua (Race Registration)
-- **Đăng ký đua:** `POST /api/owner/race-registrations`
-  - Chọn giải *Spring Championship 2026* (Open Registration) -> Vòng *Qualifier Round 1*.
-  - Chọn ngựa *Horse 1*.
-  - Chọn *jockey1* làm người cưỡi.
-  - Điền tỷ lệ ăn chia (VD: Owner 90%, Jockey 10%).
+### 2.4. Referee Accounts (Trọng tài)
+| STT | Tài khoản (Username) | Email | Vai trò (Role) | Mật khẩu (Password) |
+|---|---|---|---|---|
+| 1 | `referee1` | `referee1@test.com` | RACE_REFEREE | `Password123!` |
+| 2 | `referee2` | `referee2@test.com` | RACE_REFEREE | `Password123!` |
+| 3 | `referee3` | `referee3@test.com` | RACE_REFEREE | `Password123!` |
+| 4 | `referee4` | `referee4@test.com` | RACE_REFEREE | `Password123!` |
+| 5 | `referee5` | `referee5@test.com` | RACE_REFEREE | `Password123!` |
+| 6 | `referee6` | `referee6@test.com` | RACE_REFEREE | `Password123!` |
+| 7 | `referee7` | `referee7@test.com` | RACE_REFEREE | `Password123!` |
+| 8 | `referee8` | `referee8@test.com` | RACE_REFEREE | `Password123!` |
+| 9 | `referee9` | `referee9@test.com` | RACE_REFEREE | `Password123!` |
+| 10 | `referee10` | `referee10@test.com` | RACE_REFEREE | `Password123!` |
