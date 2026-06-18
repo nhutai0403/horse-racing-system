@@ -40,6 +40,9 @@ public class AiChatService {
     @Value("${app.gemini.api-key:}")
     private String geminiApiKey;
 
+    @Value("${app.gemini.model:gemini-2.5-flash}")
+    private String geminiModel;
+
     private final ResourceLoader resourceLoader;
     private final AiChatHistoryRepository aiChatHistoryRepository;
     private final WalletRepository walletRepository;
@@ -93,7 +96,7 @@ public class AiChatService {
             }
         }
 
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" + geminiApiKey;
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/" + geminiModel + ":generateContent?key=" + geminiApiKey;
 
         try {
             ObjectNode rootNode = objectMapper.createObjectNode();
