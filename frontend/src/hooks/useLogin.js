@@ -29,7 +29,7 @@ export function useLogin() {
   };
 
   const redirectByRole = (role) => {
-    if (role === 'ADMIN') navigate('/admin');
+    if (role === 'ADMIN') navigate('/admin/dashboard');
     else if (role === 'HORSE_OWNER') navigate('/owner');
     else if (role === 'JOCKEY') navigate('/jockey');
     else if (role === 'RACE_REFEREE') navigate('/referee');

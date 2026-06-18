@@ -1,68 +1,47 @@
-import { useContext, useState } from 'react';
+import React, { useContext } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
-import { useAdminRequests } from '../../hooks/useAdminRequests';
-import AdminProfileCard from './components/AdminProfileCard';
-import UpgradeRequestsPanel from './components/UpgradeRequestsPanel';
-import UpgradeHistory from './components/UpgradeHistory';
-import '../Dashboard.css';
+import DashboardLayout from '../layouts/DashboardLayout';
+import '../Horse-Owner/HorseOwner.css'; // Reuses HorseOwner premium CSS variables and styles
+
+// Import Admin content panels
+import AdminDashboardContent from './components/AdminDashboardContent';
+import UserManagementContent from './components/UserManagementContent';
+import UpgradeUserRoleContent from './components/UpgradeUserRoleContent';
+import TournamentsPanel from './components/TournamentsPanel';
+import RacesPanel from './components/RacesPanel';
+import WithdrawalsPanel from './components/WithdrawalsPanel';
+
+const adminNavLinks = [
+  { path: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { path: '/admin/usermanagement', label: 'User Management', icon: 'group' },
+  { path: '/admin/upgradeuserrole', label: 'Upgrade User Role', icon: 'manage_accounts' },
+  { path: '/admin/tournamentmanagement', label: 'Tournament Management', icon: 'emoji_events' },
+  { path: '/admin/racemanagement', label: 'Race Management', icon: 'flag' },
+  { path: '/admin/withdrawals', label: 'Withdrawals', icon: 'account_balance_wallet' }
+];
 
 export default function AdminPage() {
-  const { user, logout } = useContext(AuthContext);
-  const { 
-    pendingRequests, 
-    resolvedRequests, 
-    approveRequest, 
-    rejectRequest 
-  } = useAdminRequests();
+  const { user } = useContext(AuthContext);
 
-  const [lightboxImage, setLightboxImage] = useState(null);
+  const profile = {
+    fullName: user?.fullName || 'System Admin',
+    avatar: user?.avatarUrl || ''
+  };
 
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-wrapper">
-        
-        {/* Header */}
-        <header className="dashboard-header">
-          <div>
-            <span className="role-badge">ADMIN ROLE</span>
-            <h1 className="dashboard-title">Admin Control Panel</h1>
-          </div>
-          <button className="logout-btn" onClick={logout}>
-            Log Out
-          </button>
-        </header>
-
-        {/* Layout Grid */}
-        <div className="dashboard-grid">
-          
-          {/* Left Column: User details */}
-          <AdminProfileCard user={user} />
-
-          {/* Right Column: Upgrade requests and history */}
-          <main style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            
-            <UpgradeRequestsPanel 
-              pendingRequests={pendingRequests}
-              onApprove={approveRequest}
-              onReject={rejectRequest}
-              setLightboxImage={setLightboxImage}
-            />
-
-            <UpgradeHistory resolvedRequests={resolvedRequests} />
-
-          </main>
-
-        </div>
-      </div>
-      
-      {lightboxImage && (
-        <div className="lightbox-modal" onClick={() => setLightboxImage(null)}>
-          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <img src={`http://localhost:8080${lightboxImage}`} alt="Full Certificate" className="lightbox-img" />
-            <button className="lightbox-close" onClick={() => setLightboxImage(null)} style={{ top: '-40px' }}>&times;</button>
-          </div>
-        </div>
-      )}
-    </div>
+    <DashboardLayout navLinks={adminNavLinks} profile={profile}>
+      <Routes>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<AdminDashboardContent />} />
+        <Route path="usermanagement" element={<UserManagementContent />} />
+        <Route path="upgradeuserrole" element={<UpgradeUserRoleContent />} />
+        <Route path="tournamentmanagement" element={<TournamentsPanel />} />
+        <Route path="racemanagement" element={<RacesPanel />} />
+        <Route path="withdrawals" element={<WithdrawalsPanel />} />
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="dashboard" replace />} />
+      </Routes>
+    </DashboardLayout>
   );
 }

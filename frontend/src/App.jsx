@@ -54,7 +54,7 @@ function App() {
             <Route path="/verify-email" element={<VerifyAccountPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-            {/* Standalone Horse Owner Dashboard Suite (Nested Routing delegated to page component) */}
+            {/* Standalone Horse Owner Dashboard Suite */}
             <Route
               path="/owner/*"
               element={
@@ -65,7 +65,7 @@ function App() {
             />
             <Route path="/horseowner/dashboard" element={<Navigate to="/owner" replace />} />
 
-            {/* Jockey Nested Dashboard Layout (Nested Routing delegated to page component) */}
+            {/* Jockey Nested Dashboard Layout */}
             <Route
               path="/jockey/*"
               element={
@@ -75,7 +75,7 @@ function App() {
               }
             />
 
-            {/* Referee Nested Dashboard Layout (Nested Routing delegated to page component) */}
+            {/* Referee Nested Dashboard Layout */}
             <Route
               path="/referee/*"
               element={
@@ -85,12 +85,22 @@ function App() {
               }
             />
 
-            {/* Spectator Nested Dashboard Layout (Nested Routing delegated to page component) */}
+            {/* Spectator Nested Dashboard Layout */}
             <Route
               path="/spectator/*"
               element={
                 <ProtectedRoute allowedRoles={["SPECTATOR"]}>
                   <SpectatorPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Standalone Admin Dashboard Suite */}
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN"]}>
+                  <AdminPage />
                 </ProtectedRoute>
               }
             />
@@ -107,17 +117,6 @@ function App() {
                 }
               />
               <Route path="/home" element={<Navigate to="/" replace />} />
-
-              {/* Admin Control Page */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}>
-                    <AdminPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/admin/dashboard" element={<Navigate to="/admin" replace />} />
             </Route>
 
             {/* Catch-all fallback redirecting to root */}
