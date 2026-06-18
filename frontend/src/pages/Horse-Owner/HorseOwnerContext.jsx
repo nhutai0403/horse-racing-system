@@ -1,11 +1,15 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getOwnerProfileAPI, getMyHorsesAPI } from '../../services/owner';
+import { getOwnerProfileAPI, getMyHorsesAPI, getMyRaceRegistrationsAPI } from '../../services/owner';
 import { getFriendsAPI } from '../../services/connections';
 import {
   getTournamentsAPI,
   getTournamentRacesAPI,
   getRaceParticipantsAPI,
 } from '../../services/races';
+import {
+  getWalletBalanceAPI,
+  getTransactionHistoryAPI
+} from '../../services/wallet';
 import {
   initialOwnerProfile,
   initialHorses,
@@ -30,7 +34,7 @@ export function HorseOwnerProvider({ children }) {
     try {
       setLoading(true);
 
-      // 1. Fetch Profile
+      // 1. Fetch Profile & Wallet Balance
       let profileData = null;
       try {
         profileData = await getOwnerProfileAPI();
@@ -38,8 +42,15 @@ export function HorseOwnerProvider({ children }) {
         console.error(err);
       }
 
-      const savedBalance = localStorage.getItem('owner_wallet_balance');
-      const walletBalance = savedBalance ? parseFloat(savedBalance) : 1250000000;
+      let walletBalance = 0;
+      try {
+        const balanceData = await getWalletBalanceAPI();
+        walletBalance = balanceData.balance;
+      } catch (err) {
+        console.error('Failed to load wallet balance:', err);
+        const savedBalance = localStorage.getItem('owner_wallet_balance');
+        walletBalance = savedBalance ? parseFloat(savedBalance) : 1250000000;
+      }
 
       if (profileData) {
         setProfile({
@@ -58,6 +69,7 @@ export function HorseOwnerProvider({ children }) {
           avatarOffsetX: 0,
           avatarOffsetY: 0,
         });
+        localStorage.setItem('owner_wallet_balance', walletBalance.toString());
       }
 
       // 2. Fetch Horses
@@ -109,6 +121,13 @@ export function HorseOwnerProvider({ children }) {
 
       // 4. Fetch Tournaments and Races
       try {
+        let registrationsData = [];
+        try {
+          registrationsData = await getMyRaceRegistrationsAPI();
+        } catch (err) {
+          console.error('Không thể lấy danh sách đăng ký thi đấu từ API:', err);
+        }
+
         const tournamentsData = await getTournamentsAPI();
         const allRaces = [];
         for (const t of tournamentsData) {
@@ -125,13 +144,21 @@ export function HorseOwnerProvider({ children }) {
               .filter((p) => horsesData.some((myH) => myH.id === p.horseId))
               .map((p) => p.horseName);
 
+            const apiRegistered = registrationsData
+              .filter((reg) => (reg.raceId === r.id || reg.tournamentId === r.id) && reg.status !== 'REJECTED')
+              .map((reg) => reg.horseName);
+
             const savedLocal = localStorage.getItem('owner_registered_races') || '[]';
             const localList = JSON.parse(savedLocal);
             const localRegistered = localList
               .filter((l) => l.raceId === r.id)
               .map((l) => l.horseName);
 
-            const registeredHorsesSet = new Set([...registeredHorsesList, ...localRegistered]);
+            const registeredHorsesSet = new Set([
+              ...registeredHorsesList,
+              ...apiRegistered,
+              ...localRegistered,
+            ]);
 
             allRaces.push({
               id: r.id,
@@ -152,12 +179,18 @@ export function HorseOwnerProvider({ children }) {
       }
 
       // Load Transactions
-      const savedTx = localStorage.getItem('owner_transactions');
-      if (savedTx) {
-        setTransactions(JSON.parse(savedTx));
-      } else {
-        setTransactions(initialTransactions);
-        localStorage.setItem('owner_transactions', JSON.stringify(initialTransactions));
+      try {
+        const txs = await getTransactionHistoryAPI();
+        setTransactions(txs);
+      } catch (err) {
+        console.error('Failed to load transaction history:', err);
+        const savedTx = localStorage.getItem('owner_transactions');
+        if (savedTx) {
+          setTransactions(JSON.parse(savedTx));
+        } else {
+          setTransactions(initialTransactions);
+          localStorage.setItem('owner_transactions', JSON.stringify(initialTransactions));
+        }
       }
 
       // Load Race History

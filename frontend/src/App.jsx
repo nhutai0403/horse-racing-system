@@ -1,9 +1,10 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Header from './components/Header/Header'; 
 import Footer from './components/Footer/Footer';
+import FloatingAiChat from './components/FloatingAiChat/FloatingAiChat';
 
 // Lazy load Page Components
 const AuthPage = lazy(() => import('./pages/AuthPage/AuthPage'));
@@ -15,6 +16,7 @@ const JockeyPage = lazy(() => import('./pages/Jockey/JockeyPage'));
 const RefereePage = lazy(() => import('./pages/Race-Referee/RefereePage'));
 const SpectatorPage = lazy(() => import('./pages/Spectator/SpectatorPage'));
 const UnauthorizedPage = lazy(() => import('./pages/Unauthorized/UnauthorizedPage'));
+const PaymentQRPage = lazy(() => import('./pages/Payment/PaymentQRPage'));
 
 const MainLayout = () => {
   return (
@@ -29,6 +31,14 @@ const MainLayout = () => {
 };
 
 function App() {
+  const [customAlert, setCustomAlert] = useState(null);
+
+  useEffect(() => {
+    window.alert = (message) => {
+      setCustomAlert(message);
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -105,6 +115,16 @@ function App() {
               }
             />
 
+            {/* Payment Route */}
+            <Route
+              path="/payment-qr"
+              element={
+                <ProtectedRoute allowedRoles={["HORSE_OWNER", "JOCKEY"]}>
+                  <PaymentQRPage />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Protected Routes enclosed in MainLayout */}
             <Route element={<MainLayout />}>
               {/* Landing Dashboard */}
@@ -123,6 +143,20 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+
+        {customAlert && (
+          <div className="custom-alert-overlay" onClick={() => setCustomAlert(null)}>
+            <div className="custom-alert-box" onClick={(e) => e.stopPropagation()}>
+              <h3 className="custom-alert-title">Thông Báo</h3>
+              <p className="custom-alert-message">{customAlert}</p>
+              <button className="custom-alert-btn" onClick={() => setCustomAlert(null)}>
+                Đóng
+              </button>
+            </div>
+          </div>
+        )}
+
+        <FloatingAiChat />
       </BrowserRouter>
     </AuthProvider>
   );

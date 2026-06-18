@@ -5,7 +5,11 @@ import axiosClient from '../api/axiosClient';
  */
 
 const isMockMode = () => {
-  return false; // Force mock mode for offline UI testing
+  const override = localStorage.getItem('use_mock_api');
+  if (override !== null) {
+    return override === 'true';
+  }
+  return localStorage.getItem('backend_online') !== 'true';
 };
 
 export async function getTournamentsAPI() {

@@ -6,7 +6,11 @@ import { initialJockeyDirectory } from '../pages/Jockey/mockData';
  */
 
 const isMockMode = () => {
-  return false; // Force mock mode for offline testing
+  const override = localStorage.getItem('use_mock_api');
+  if (override !== null) {
+    return override === 'true';
+  }
+  return localStorage.getItem('backend_online') !== 'true';
 };
 
 const getMockDirectory = () => {

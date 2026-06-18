@@ -6,7 +6,7 @@ import { useHorseOwner } from './HorseOwnerContext';
 import { submitRaceRegistrationAPI } from '../../services/owner';
 
 export default function RaceEntriesContent() {
-  const { horses = [], systemUsers = [], tournaments = [], setTournaments } = useHorseOwner();
+  const { horses = [], systemUsers = [], tournaments = [], setTournaments, refreshData } = useHorseOwner();
   const [showModal, setShowModal] = useState(false);
   const [selectedRace, setSelectedRace] = useState(null);
   const [formData, setFormData] = useState({
@@ -76,6 +76,12 @@ export default function RaceEntriesContent() {
       const localList = JSON.parse(savedLocal);
       localList.push({ raceId: selectedRace.id, horseName: selectedHorseObj.name });
       localStorage.setItem('owner_registered_races', JSON.stringify(localList));
+
+      try {
+        await refreshData();
+      } catch (e) {
+        console.error(e);
+      }
 
       setSuccessMsg(`Đăng ký thành công ngựa ${selectedHorseObj.name} với Nài ngựa ${selectedJockeyObj.fullName} cho vòng đua ${selectedRace.tournamentName}!`);
       setShowModal(false);

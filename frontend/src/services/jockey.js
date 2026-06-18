@@ -3,7 +3,10 @@ import { initialJockeyProfile, initialJockeyInvitations } from '../pages/Jockey/
 
 const isMockMode = () => {
   const override = localStorage.getItem('use_mock_api');
-  return override === null ? true : override === 'true';
+  if (override !== null) {
+    return override === 'true';
+  }
+  return localStorage.getItem('backend_online') !== 'true';
 };
 
 export async function getJockeyProfileAPI() {

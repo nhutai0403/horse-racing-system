@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useHorseOwner } from './HorseOwnerContext';
 import { updateOwnerProfileAPI, uploadFilesAPI } from '../../services/owner';
+import { depositAPI, withdrawAPI } from '../../services/wallet';
 
 const presetAvatars = [
   'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80',
@@ -11,6 +13,7 @@ const presetAvatars = [
 ];
 
 export default function ProfileContent() {
+  const navigate = useNavigate();
   const { profile, setProfile, transactions, setTransactions, raceHistory } = useHorseOwner();
   const [formData, setFormData] = useState({ ...profile });
   const [depositAmount, setDepositAmount] = useState('');
@@ -57,24 +60,13 @@ export default function ProfileContent() {
       alert('Please enter a valid positive deposit amount.');
       return;
     }
-    // Update balance
-    const updatedBalance = profile.walletBalance + amt;
-    setProfile((prev) => ({ ...prev, walletBalance: updatedBalance }));
 
-    // Add to transaction history
-    const newTx = {
-      id: `TX00${transactions.length + 1}`,
-      date: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      type: 'DEPOSIT',
-      event: 'Deposit from linked bank account (Mock)',
-      amount: amt,
-    };
-    setTransactions((prev) => [newTx, ...prev]);
+    // Chuyển hướng sang trang nạp tiền QR
+    navigate('/payment-qr', { state: { amount: amt, returnUrl: '/owner/profile' } });
     setDepositAmount('');
-    alert(`Mock Deposit of ${amt.toLocaleString()} VND successful!`);
   };
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     const amt = parseFloat(depositAmount);
     if (isNaN(amt) || amt <= 0) {
       alert('Please enter a valid positive withdrawal amount.');
@@ -84,21 +76,27 @@ export default function ProfileContent() {
       alert('Insufficient funds for withdrawal.');
       return;
     }
-    // Update balance
-    const updatedBalance = profile.walletBalance - amt;
-    setProfile((prev) => ({ ...prev, walletBalance: updatedBalance }));
 
-    // Add to transaction history
-    const newTx = {
-      id: `TX00${transactions.length + 1}`,
-      date: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      type: 'WITHDRAWAL',
-      event: 'Withdrawal to linked bank account (Mock)',
-      amount: -amt,
-    };
-    setTransactions((prev) => [newTx, ...prev]);
-    setDepositAmount('');
-    alert(`Mock Withdrawal of ${amt.toLocaleString()} VND successful!`);
+    try {
+      await withdrawAPI(amt);
+      
+      // Fallback update for mock/real display
+      const updatedBalance = profile.walletBalance - amt;
+      setProfile((prev) => ({ ...prev, walletBalance: updatedBalance }));
+
+      const newTx = {
+        id: `TX00${Date.now()}`,
+        date: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        type: 'WITHDRAWAL',
+        event: 'Yêu cầu rút tiền về tài khoản ngân hàng liên kết',
+        amount: -amt,
+      };
+      setTransactions((prev) => [newTx, ...prev]);
+      setDepositAmount('');
+      alert('Gửi yêu cầu rút tiền thành công, vui lòng chờ Admin duyệt!');
+    } catch (err) {
+      alert('Yêu cầu rút tiền thất bại: ' + err.message);
+    }
   };
 
   const handleFileChange = async (e) => {

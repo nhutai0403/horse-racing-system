@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useHorseOwner } from './HorseOwnerContext';
 import StatusBadge from '../../components/StatusBadge';
 import MetricBar from '../../components/MetricBar';
-import { createHorseAPI, uploadFilesAPI } from '../../services/owner';
+import { createHorseAPI, uploadFilesAPI, updateHorseAPI, deleteHorseAPI } from '../../services/owner';
 
 export default function StableContent() {
   const { horses = [], setHorses } = useHorseOwner();
@@ -91,7 +91,7 @@ export default function StableContent() {
     }
   };
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
     if (!editHorseData.name.trim()) {
       alert('Please enter a horse name.');
@@ -107,22 +107,35 @@ export default function StableContent() {
       return;
     }
 
-    setHorses((prev) =>
-      prev.map((h) =>
-        h.id === editHorseData.id
-          ? {
-              ...h,
-              name: editHorseData.name.trim(),
-              breed: editHorseData.breed.trim(),
-              age: ageNum,
-              gender: editHorseData.gender,
-              status: editHorseData.status,
-              image: editHorseData.image || '',
-            }
-          : h,
-      ),
-    );
-    setShowEditModal(false);
+    try {
+      const response = await updateHorseAPI(editHorseData.id, {
+        name: editHorseData.name.trim(),
+        breedName: editHorseData.breed.trim(),
+        age: ageNum,
+        gender: editHorseData.gender,
+        imageUrl: editHorseData.image || '',
+        status: editHorseData.status
+      });
+
+      setHorses((prev) =>
+        prev.map((h) =>
+          h.id === editHorseData.id
+            ? {
+                ...h,
+                name: response.name,
+                breed: response.breedName || response.breed || editHorseData.breed.trim(),
+                age: response.age,
+                gender: response.gender,
+                status: response.status || editHorseData.status,
+                image: response.imageUrl || response.image || '',
+              }
+            : h,
+        ),
+      );
+      setShowEditModal(false);
+    } catch (err) {
+      alert('Cập nhật thông tin ngựa thất bại: ' + err.message);
+    }
   };
 
   const handleDeleteClick = (horse) => {
@@ -130,13 +143,18 @@ export default function StableContent() {
     setShowDeleteModal(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (horseToDelete) {
-      const remainingHorses = horses.filter((h) => h.id !== horseToDelete.id);
-      setHorses(remainingHorses);
-      setSelectedHorseId(remainingHorses[0]?.id || null);
-      setShowDeleteModal(false);
-      setHorseToDelete(null);
+      try {
+        await deleteHorseAPI(horseToDelete.id);
+        const remainingHorses = horses.filter((h) => h.id !== horseToDelete.id);
+        setHorses(remainingHorses);
+        setSelectedHorseId(remainingHorses[0]?.id || null);
+        setShowDeleteModal(false);
+        setHorseToDelete(null);
+      } catch (err) {
+        alert('Xóa ngựa thất bại: ' + err.message);
+      }
     }
   };
 

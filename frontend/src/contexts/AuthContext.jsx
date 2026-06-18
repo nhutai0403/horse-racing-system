@@ -3,9 +3,9 @@ import { createContext, useState, useEffect } from 'react';
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const SESSION_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours in milliseconds ppp
+  const SESSION_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 
-  const checkSessionValid = () => {
+  function checkSessionValid() {
     const loginTimestamp = localStorage.getItem('horse_racing_login_timestamp');
     if (!loginTimestamp) return false;
 

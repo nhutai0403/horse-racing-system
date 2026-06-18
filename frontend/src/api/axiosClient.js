@@ -105,4 +105,20 @@ function handleLogoutRedirect() {
   window.location.href = '/login';
 }
 
+// Tự động kiểm tra trạng thái hoạt động của Backend
+(async () => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500); // Timeout 1.5 giây
+    await fetch('http://localhost:8080/api/tournaments', { 
+      signal: controller.signal,
+      mode: 'cors'
+    });
+    clearTimeout(timeoutId);
+    localStorage.setItem('backend_online', 'true');
+  } catch (e) {
+    localStorage.setItem('backend_online', 'false');
+  }
+})();
+
 export default axiosClient;

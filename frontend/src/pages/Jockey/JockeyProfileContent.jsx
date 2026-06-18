@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useJockey } from './JockeyContext';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
@@ -6,6 +7,7 @@ import { updateJockeyProfileAPI } from '../../services/jockey';
 import { depositAPI, withdrawAPI } from '../../services/wallet';
 
 export default function JockeyProfileContent() {
+  const navigate = useNavigate();
   const { profile, setProfile, transactions, setTransactions } = useJockey();
   const [activeSubTab, setActiveSubTab] = useState('edit-profile'); // 'edit-profile' | 'wallet'
   
@@ -67,25 +69,7 @@ export default function JockeyProfileContent() {
 
     try {
       if (actionType === 'DEPOSIT') {
-        const res = await depositAPI(numericAmt);
-        if (res.checkoutUrl) {
-          // Chuyển hướng đến cổng thanh toán PayOS thực tế
-          window.location.href = res.checkoutUrl;
-        } else {
-          setProfile(prev => ({
-            ...prev,
-            walletBalance: prev.walletBalance + numericAmt
-          }));
-          const newTx = {
-            id: `TXJ_${Date.now()}`,
-            date: new Date().toISOString().replace('T', ' ').slice(0, 19),
-            type: 'DEPOSIT',
-            event: 'Nạp tiền vào ví từ tài khoản liên kết (Giả lập)',
-            amount: numericAmt
-          };
-          setTransactions(prev => [newTx, ...prev]);
-          alert('Nạp tiền giả lập thành công!');
-        }
+        navigate('/payment-qr', { state: { amount: numericAmt, returnUrl: '/jockey/profile' } });
       } else {
         await withdrawAPI(numericAmt);
         setProfile(prev => ({
