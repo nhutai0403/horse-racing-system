@@ -25,9 +25,12 @@ public class DatabaseInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final RaceTrackRepository raceTrackRepository;
     private final HorseBreedRepository horseBreedRepository;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     @Override
     public void run(String... args) throws Exception {
+        String dbName = jdbcTemplate.queryForObject("SELECT DB_NAME()", String.class);
+        log.info("=== BACKEND IS CONNECTED TO DATABASE: {} ===", dbName);
         // Create an initial admin user if not exists
         if (!userRepository.existsByEmail("admin@gmail.com")) {
             User admin = User.builder()

@@ -16,6 +16,7 @@ import com.horseracing.repositories.JockeyProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.horseracing.entities.enums.NotificationType;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,6 +29,7 @@ public class UpgradeRequestService {
     private final UserRepository userRepository;
     private final HorseOwnerProfileRepository horseOwnerProfileRepository;
     private final JockeyProfileRepository jockeyProfileRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public UpgradeRequestResponse submitRequest(String email, UpgradeRequestSubmit requestDto) {
@@ -65,29 +67,35 @@ public class UpgradeRequestService {
         }
 
         // Role-specific validation
-        if (role == Role.JOCKEY) {
-            if (requestDto.getWeight() == null || requestDto.getWeight() < 40 || requestDto.getWeight() > 80) {
-                throw new RuntimeException("Jockey weight must be between 40 and 80 kg");
+        switch (role) {
+            case JOCKEY -> {
+                if (requestDto.getWeight() == null || requestDto.getWeight() < 40 || requestDto.getWeight() > 80) {
+                    throw new RuntimeException("Jockey weight must be between 40 and 80 kg");
+                }
+                if (requestDto.getHeight() == null || requestDto.getHeight() <= 0) {
+                    throw new RuntimeException("Jockey height must be a positive number");
+                }
+                if (requestDto.getLicenseNumber() == null || requestDto.getLicenseNumber().trim().isEmpty()) {
+                    throw new RuntimeException("Jockey license number is required");
+                }
             }
-            if (requestDto.getHeight() == null || requestDto.getHeight() <= 0) {
-                throw new RuntimeException("Jockey height must be a positive number");
+            case HORSE_OWNER -> {
+                if (requestDto.getStableName() == null || requestDto.getStableName().trim().isEmpty()) {
+                    throw new RuntimeException("Stable name is required");
+                }
+                if (requestDto.getStableAddress() == null || requestDto.getStableAddress().trim().isEmpty()) {
+                    throw new RuntimeException("Stable address is required");
+                }
             }
-            if (requestDto.getLicenseNumber() == null || requestDto.getLicenseNumber().trim().isEmpty()) {
-                throw new RuntimeException("Jockey license number is required");
+            case RACE_REFEREE -> {
+                if (requestDto.getCertificationNumber() == null || requestDto.getCertificationNumber().trim().isEmpty()) {
+                    throw new RuntimeException("Referee certification number is required");
+                }
+                if (requestDto.getExperienceYears() == null || requestDto.getExperienceYears() < 0) {
+                    throw new RuntimeException("Referee experience years must be a positive number");
+                }
             }
-        } else if (role == Role.HORSE_OWNER) {
-            if (requestDto.getStableName() == null || requestDto.getStableName().trim().isEmpty()) {
-                throw new RuntimeException("Stable name is required");
-            }
-            if (requestDto.getStableAddress() == null || requestDto.getStableAddress().trim().isEmpty()) {
-                throw new RuntimeException("Stable address is required");
-            }
-        } else if (role == Role.RACE_REFEREE) {
-            if (requestDto.getCertificationNumber() == null || requestDto.getCertificationNumber().trim().isEmpty()) {
-                throw new RuntimeException("Referee certification number is required");
-            }
-            if (requestDto.getExperienceYears() == null || requestDto.getExperienceYears() < 0) {
-                throw new RuntimeException("Referee experience years must be a positive number");
+            default -> {
             }
         }
 
@@ -114,6 +122,20 @@ public class UpgradeRequestService {
                 .build();
 
         upgradeRequest = upgradeRequestRepository.save(upgradeRequest);
+
+        // Notify admins
+        List<User> admins = userRepository.findAll().stream()
+                .filter(u -> u.getRole() == Role.ADMIN)
+                .collect(Collectors.toList());
+        for (User admin : admins) {
+            notificationService.sendNotification(
+                    admin,
+                    "Có yêu cầu nâng cấp tài khoản mới",
+                    "Người dùng " + user.getFullName() + " đã gửi yêu cầu nâng cấp tài khoản lên " + role + ". Vui lòng vào trang quản trị để xem xét.",
+                    NotificationType.ROLE_UPGRADE
+            );
+        }
+
         return UpgradeRequestResponse.fromEntity(upgradeRequest);
     }
 
@@ -187,6 +209,13 @@ public class UpgradeRequestService {
 
         upgradeRequestRepository.save(request);
 
+        notificationService.sendNotification(
+                user,
+                "Nâng cấp tài khoản thành công",
+                "Chúc mừng! Yêu cầu nâng cấp tài khoản của bạn lên " + request.getRequestedRole() + " đã được Ban quản trị duyệt thành công. Vui lòng đăng nhập lại để trải nghiệm giao diện mới.",
+                NotificationType.ROLE_UPGRADE
+        );
+
         return UpgradeRequestResponse.fromEntity(request);
     }
 
@@ -203,6 +232,13 @@ public class UpgradeRequestService {
         request.setRejectionReason(rejectDto.getRejectionReason());
 
         upgradeRequestRepository.save(request);
+
+        notificationService.sendNotification(
+                request.getUser(),
+                "Yêu cầu nâng cấp bị từ chối",
+                "Yêu cầu nâng cấp tài khoản của bạn đã bị từ chối. Lý do từ chối: " + rejectDto.getRejectionReason(),
+                NotificationType.ROLE_UPGRADE
+        );
 
         return UpgradeRequestResponse.fromEntity(request);
     }

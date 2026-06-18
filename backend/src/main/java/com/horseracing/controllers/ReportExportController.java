@@ -35,7 +35,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -64,46 +63,46 @@ public class ReportExportController {
         List<WalletTransaction> transactions = walletTransactionRepository.findByWalletIdOrderByCreatedAtDesc(wallet.getId());
 
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4);
-            PdfWriter.getInstance(document, out);
-            document.open();
+            try (Document document = new Document(PageSize.A4)) {
+                PdfWriter.getInstance(document, out);
+                document.open();
 
-            // Document Header
-            com.lowagie.text.Font titleFont = com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.HELVETICA_BOLD, 18);
-            Paragraph title = new Paragraph("LICH SU GIAO DICH VI DIEN TU\n(E-WALLET TRANSACTION HISTORY)", titleFont);
-            title.setAlignment(Element.ALIGN_CENTER);
-            document.add(title);
-            document.add(new Paragraph(" "));
+                // Document Header
+                com.lowagie.text.Font titleFont = com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.HELVETICA_BOLD, 18);
+                Paragraph title = new Paragraph("LICH SU GIAO DICH VI DIEN TU\n(E-WALLET TRANSACTION HISTORY)", titleFont);
+                title.setAlignment(Element.ALIGN_CENTER);
+                document.add(title);
+                document.add(new Paragraph(" "));
 
-            // Metadata info
-            document.add(new Paragraph("Khach hang (Customer): " + user.getFullName()));
-            document.add(new Paragraph("Email: " + user.getEmail()));
-            document.add(new Paragraph("So du hien tai (Current Balance): " + wallet.getBalance() + " VND"));
-            document.add(new Paragraph("Ngay xuat bao cao (Export Date): " + LocalDateTime.now()));
-            document.add(new Paragraph(" "));
+                // Metadata info
+                document.add(new Paragraph("Khach hang (Customer): " + user.getFullName()));
+                document.add(new Paragraph("Email: " + user.getEmail()));
+                document.add(new Paragraph("So du hien tai (Current Balance): " + wallet.getBalance() + " VND"));
+                document.add(new Paragraph("Ngay xuat bao cao (Export Date): " + LocalDateTime.now()));
+                document.add(new Paragraph(" "));
 
-            // Create Table
-            PdfPTable table = new PdfPTable(5);
-            table.setWidthPercentage(100);
-            
-            // Header Row
-            table.addCell("ID");
-            table.addCell("Loai giao dich (Type)");
-            table.addCell("So tien (Amount)");
-            table.addCell("Trang thai (Status)");
-            table.addCell("Ngay tao (Created Date)");
+                // Create Table
+                PdfPTable table = new PdfPTable(5);
+                table.setWidthPercentage(100);
+                
+                // Header Row
+                table.addCell("ID");
+                table.addCell("Loai giao dich (Type)");
+                table.addCell("So tien (Amount)");
+                table.addCell("Trang thai (Status)");
+                table.addCell("Ngay tao (Created Date)");
 
-            // Populate Rows
-            for (WalletTransaction tx : transactions) {
-                table.addCell(String.valueOf(tx.getId()));
-                table.addCell(tx.getTransactionType());
-                table.addCell(tx.getAmount() != null ? tx.getAmount().toString() + " VND" : "0 VND");
-                table.addCell(tx.getStatus());
-                table.addCell(tx.getCreatedAt() != null ? tx.getCreatedAt().toString() : "N/A");
+                // Populate Rows
+                for (WalletTransaction tx : transactions) {
+                    table.addCell(String.valueOf(tx.getId()));
+                    table.addCell(tx.getTransactionType());
+                    table.addCell(tx.getAmount() != null ? tx.getAmount().toString() + " VND" : "0 VND");
+                    table.addCell(tx.getStatus());
+                    table.addCell(tx.getCreatedAt() != null ? tx.getCreatedAt().toString() : "N/A");
+                }
+
+                document.add(table);
             }
-
-            document.add(table);
-            document.close();
 
             byte[] contents = out.toByteArray();
             HttpHeaders headers = new HttpHeaders();

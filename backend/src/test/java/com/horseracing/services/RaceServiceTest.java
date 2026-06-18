@@ -42,6 +42,8 @@ public class RaceServiceTest {
     private RaceParticipantRepository raceParticipantRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private RaceService raceService;
@@ -60,6 +62,7 @@ public class RaceServiceTest {
         assertNotNull(horseRepository);
         assertNotNull(jockeyProfileRepository);
         assertNotNull(horseOwnerProfileRepository);
+        assertNotNull(notificationService);
     }
 
     @Test

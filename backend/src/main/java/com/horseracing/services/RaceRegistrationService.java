@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.horseracing.entities.enums.NotificationType;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +26,7 @@ public class RaceRegistrationService {
     private final RaceParticipantRepository raceParticipantRepository;
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public RaceRegistrationResponse submitRegistration(String ownerEmail, RegisterRaceRequest request) {
@@ -151,6 +153,13 @@ public class RaceRegistrationService {
             walletTransactionRepository.save(transaction);
         }
 
+        notificationService.sendNotification(
+                jockey.getUser(),
+                "Lời mời tham gia giải đấu",
+                "Chủ ngựa " + owner.getUser().getFullName() + " mời bạn làm nài ngựa điều khiển ngựa " + horse.getName() + " tham gia vòng đua " + race.getRaceName() + " thuộc giải đấu " + race.getTournament().getTournamentName() + " với tỷ lệ chia thưởng: Jockey " + request.getJockeySharePercent() + "% - Owner " + request.getOwnerSharePercent() + "%. Vui lòng xác nhận.",
+                NotificationType.REGISTRATION
+        );
+
         return RaceRegistrationResponse.fromEntity(registration);
     }
 
@@ -206,6 +215,19 @@ public class RaceRegistrationService {
 
         raceParticipantRepository.save(participant);
 
+        notificationService.sendNotification(
+                registration.getOwner().getUser(),
+                "Đăng ký giải đấu được phê duyệt",
+                "Đăng ký thi đấu vòng đua " + race.getRaceName() + " với ngựa " + registration.getHorse().getName() + " của bạn đã được Admin phê duyệt chính thức. Bạn đã nằm trong danh sách thi đấu.",
+                NotificationType.REGISTRATION
+        );
+        notificationService.sendNotification(
+                registration.getJockey().getUser(),
+                "Đăng ký giải đấu được phê duyệt",
+                "Đăng ký thi đấu vòng đua " + race.getRaceName() + " với ngựa " + registration.getHorse().getName() + " của bạn đã được Admin phê duyệt chính thức. Bạn đã nằm trong danh sách thi đấu.",
+                NotificationType.REGISTRATION
+        );
+
         return RaceRegistrationResponse.fromEntity(registration);
     }
 
@@ -220,6 +242,19 @@ public class RaceRegistrationService {
 
         registration.setStatus("REJECTED");
         registration = raceRegistrationRepository.save(registration);
+
+        notificationService.sendNotification(
+                registration.getOwner().getUser(),
+                "Đăng ký giải đấu không được chọn",
+                "Đăng ký thi đấu vòng đua " + registration.getRace().getRaceName() + " với ngựa " + registration.getHorse().getName() + " của bạn không được chọn (do vượt quá số lượng giới hạn hoặc không đạt tiêu chí giải đấu). Phí tham gia (nếu có) đã được hoàn lại 100% vào ví.",
+                NotificationType.REGISTRATION
+        );
+        notificationService.sendNotification(
+                registration.getJockey().getUser(),
+                "Đăng ký giải đấu không được chọn",
+                "Đăng ký thi đấu vòng đua " + registration.getRace().getRaceName() + " với ngựa " + registration.getHorse().getName() + " của bạn không được chọn (do vượt quá số lượng giới hạn hoặc không đạt tiêu chí giải đấu). Phí tham gia (nếu có) đã được hoàn lại 100% vào ví.",
+                NotificationType.REGISTRATION
+        );
 
         return RaceRegistrationResponse.fromEntity(registration);
     }
@@ -262,6 +297,13 @@ public class RaceRegistrationService {
                     .build();
             walletTransactionRepository.save(transaction);
         }
+
+        notificationService.sendNotification(
+                registration.getJockey().getUser(),
+                "Hủy đăng ký giải đấu",
+                "Chủ ngựa " + registration.getOwner().getUser().getFullName() + " đã hủy đăng ký tham gia vòng đua " + registration.getRace().getRaceName() + " đối với bạn.",
+                NotificationType.REGISTRATION
+        );
 
         return RaceRegistrationResponse.fromEntity(registration);
     }
@@ -359,6 +401,14 @@ public class RaceRegistrationService {
         registration.setStatus("PENDING_JOCKEY");
 
         registration = raceRegistrationRepository.save(registration);
+
+        notificationService.sendNotification(
+                registration.getJockey().getUser(),
+                "Cập nhật thông tin đăng ký giải đấu",
+                "Thông tin đăng ký thi đấu vòng đua " + registration.getRace().getRaceName() + " của bạn đã được cập nhật bởi Chủ ngựa " + registration.getOwner().getUser().getFullName() + ". Vui lòng kiểm tra và xác nhận lại.",
+                NotificationType.REGISTRATION
+        );
+
         return RaceRegistrationResponse.fromEntity(registration);
     }
 

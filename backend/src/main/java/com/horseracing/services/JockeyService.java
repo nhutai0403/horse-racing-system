@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import com.horseracing.dto.response.*;
 import com.horseracing.entities.RaceRegistration;
+import com.horseracing.entities.enums.NotificationType;
 import com.horseracing.repositories.RaceRegistrationRepository;
 import com.horseracing.repositories.RaceParticipantRepository;
 @Service
@@ -28,6 +29,7 @@ public class JockeyService {
     private final UpgradeRequestRepository upgradeRequestRepository;
     private final RaceRegistrationRepository raceRegistrationRepository;
     private final RaceParticipantRepository raceParticipantRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public JockeyProfileResponse getJockeyProfile(String email) {
@@ -128,13 +130,27 @@ public class JockeyService {
 
         if ("ACCEPT".equalsIgnoreCase(action)) {
             registration.setStatus("PENDING");
+            registration = raceRegistrationRepository.save(registration);
+            notificationService.sendNotification(
+                    registration.getOwner().getUser(),
+                    "Jockey chấp nhận lời mời thi đấu",
+                    "Jockey " + registration.getJockey().getUser().getFullName() + " đã đồng ý tham gia vòng đua " + registration.getRace().getRaceName() + " với ngựa " + registration.getHorse().getName() + ". Hồ sơ đăng ký đã chính thức được gửi lên Ban Tổ Chức (chờ Admin duyệt).",
+                    NotificationType.REGISTRATION
+            );
         } else if ("REJECT".equalsIgnoreCase(action)) {
             registration.setStatus("REJECTED_BY_JOCKEY");
+            registration = raceRegistrationRepository.save(registration);
+            notificationService.sendNotification(
+                    registration.getOwner().getUser(),
+                    "Jockey từ chối lời mời thi đấu",
+                    "Jockey " + registration.getJockey().getUser().getFullName() + " đã từ chối lời mời tham gia vòng đua " + registration.getRace().getRaceName() + " với ngựa " + registration.getHorse().getName() + ". Lượt đăng ký này đã bị hủy bỏ.",
+                    NotificationType.REGISTRATION
+            );
         } else {
             throw new RuntimeException("Invalid action. Use ACCEPT or REJECT");
         }
 
-        return RaceRegistrationResponse.fromEntity(raceRegistrationRepository.save(registration));
+        return RaceRegistrationResponse.fromEntity(registration);
     }
 
     @Transactional(readOnly = true)

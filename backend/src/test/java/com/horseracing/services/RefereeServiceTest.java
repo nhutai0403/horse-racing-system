@@ -69,6 +69,7 @@ public class RefereeServiceTest {
     @Mock private BanHistoryRepository banHistoryRepository;
     @Mock private PrizeDistributionRepository prizeDistributionRepository;
     @Mock private PlatformTransactionManager transactionManager;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private RefereeService refereeService;
@@ -88,6 +89,7 @@ public class RefereeServiceTest {
         assertNotNull(blacklistRepository);
         assertNotNull(banHistoryRepository);
         assertNotNull(transactionManager);
+        assertNotNull(notificationService);
 
         refereeUser = User.builder().id(3).fullName("Test Referee").email("referee@test.com").build();
         track = RaceTrack.builder().id(1).name("Grand National Track").surfaceCondition("Good").build();
@@ -139,14 +141,20 @@ public class RefereeServiceTest {
         User ownerUser = User.builder().id(10).email("owner@test.com").build();
         HorseOwnerProfile owner = HorseOwnerProfile.builder().id(1).user(ownerUser).build();
         Horse horse = Horse.builder().id(4).name("Lightning").owner(owner).build();
-        RaceParticipant participant = RaceParticipant.builder().id(12).race(race).horse(horse).status("READY").build();
+        JockeyProfile jockey = JockeyProfile.builder().id(2).user(User.builder().id(11).email("jockey@test.com").build()).build();
+        RaceParticipant participant = RaceParticipant.builder().id(12).race(race).horse(horse).jockey(jockey).status("READY").build();
 
         User bettorUser = User.builder().id(20).email("bettor@test.com").build();
         Wallet bettorWallet = Wallet.builder().id(100).user(bettorUser).balance(BigDecimal.valueOf(100.0)).build();
         Bet bet = Bet.builder().id(50).user(bettorUser).amount(BigDecimal.valueOf(50.0)).status("PENDING").build();
 
+        RaceRegistration reg = RaceRegistration.builder()
+                .owner(owner)
+                .jockey(jockey)
+                .build();
+
         when(raceParticipantRepository.findById(12)).thenReturn(Optional.of(participant));
-        when(raceRegistrationRepository.findFirstByRaceIdAndHorseId(5, 4)).thenReturn(Optional.of(RaceRegistration.builder().build()));
+        when(raceRegistrationRepository.findFirstByRaceIdAndHorseId(5, 4)).thenReturn(Optional.of(reg));
         when(betRepository.findByParticipantIdAndStatus(12, "PENDING")).thenReturn(List.of(bet));
         when(walletRepository.findByUserId(20)).thenReturn(Optional.of(bettorWallet));
 

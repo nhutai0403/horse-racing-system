@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.horseracing.entities.enums.NotificationType;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class UserConnectionService {
     private final JockeyProfileRepository jockeyProfileRepository;
     private final HorseOwnerProfileRepository horseOwnerProfileRepository;
     private final UpgradeRequestRepository upgradeRequestRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public ConnectionUserResponse sendRequest(String requesterEmail, Integer recipientId) {
@@ -47,17 +49,23 @@ public class UserConnectionService {
         Optional<UserConnection> existing = userConnectionRepository.findConnectionBetween(requester.getId(), recipientId);
         if (existing.isPresent()) {
             UserConnection conn = existing.get();
-            if ("ACCEPTED".equals(conn.getStatus())) {
-                throw new RuntimeException("You are already connected");
-            } else if ("PENDING".equals(conn.getStatus())) {
-                throw new RuntimeException("Connection request is already pending");
-            } else {
-                // If rejected, we can reactivate it
-                conn.setStatus("PENDING");
-                conn.setRequester(requester);
-                conn.setRecipient(recipient);
-                conn = userConnectionRepository.save(conn);
-                return mapToResponse(conn, requester);
+            switch (conn.getStatus()) {
+                case "ACCEPTED" -> throw new RuntimeException("You are already connected");
+                case "PENDING" -> throw new RuntimeException("Connection request is already pending");
+                default -> {
+                    // If rejected, we can reactivate it
+                    conn.setStatus("PENDING");
+                    conn.setRequester(requester);
+                    conn.setRecipient(recipient);
+                    conn = userConnectionRepository.save(conn);
+                    notificationService.sendNotification(
+                            recipient,
+                            "Lời mời kết nối mới",
+                            "Bạn nhận được lời mời kết nối mới từ " + requester.getFullName() + " (Vai trò: " + requester.getRole() + ").",
+                            NotificationType.CONNECTION
+                    );
+                    return mapToResponse(conn, requester);
+                }
             }
         }
 
@@ -68,6 +76,12 @@ public class UserConnectionService {
                 .build();
 
         connection = userConnectionRepository.save(connection);
+        notificationService.sendNotification(
+                recipient,
+                "Lời mời kết nối mới",
+                "Bạn nhận được lời mời kết nối mới từ " + requester.getFullName() + " (Vai trò: " + requester.getRole() + ").",
+                NotificationType.CONNECTION
+        );
         return mapToResponse(connection, requester);
     }
 
@@ -87,8 +101,20 @@ public class UserConnectionService {
         if ("ACCEPT".equalsIgnoreCase(action)) {
             connection.setStatus("ACCEPTED");
             connection = userConnectionRepository.save(connection);
+            notificationService.sendNotification(
+                    connection.getRequester(),
+                    "Yêu cầu kết nối được chấp nhận",
+                    connection.getRecipient().getFullName() + " đã chấp nhận yêu cầu kết nối của bạn. Hai bạn giờ đã có thể đăng ký tham gia các giải đấu cùng nhau.",
+                    NotificationType.CONNECTION
+            );
             return mapToResponse(connection, connection.getRecipient());
         } else if ("REJECT".equalsIgnoreCase(action)) {
+            notificationService.sendNotification(
+                    connection.getRequester(),
+                    "Yêu cầu kết nối bị từ chối",
+                    connection.getRecipient().getFullName() + " đã từ chối yêu cầu kết nối của bạn.",
+                    NotificationType.CONNECTION
+            );
             // Delete connection request so they can try again later
             userConnectionRepository.delete(connection);
             return ConnectionUserResponse.builder()

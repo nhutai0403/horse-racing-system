@@ -1,0 +1,181 @@
+TÓM TẮT LUỒNG THÔNG BÁO HỆ THỐNG (NOTIFICATION WORKFLOW SUMMARY)
+
+Tài liệu này đặc tả luồng thông báo tự động (Notification Workflow) giữa các vai trò (Admin, Trọng tài, Chủ ngựa, Jockey, Spectator) trong hệ thống Quản lý đua ngựa (Horse Racing System).
+
+Hệ thống thông báo này hoạt động hoàn toàn ở phía Backend (DB & BE Service) và được kích hoạt tự động mỗi khi có sự kiện nghiệp vụ xảy ra.
+
+=========================================
+1. CẤU TRÚC DỮ LIỆU THÔNG BÁO (DATABASE SCHEMA)
+=========================================
+Bảng [notifications] trong Database được thiết kế như sau:
+* id (int, Khóa chính, tự tăng): Mã định danh thông báo.
+* user_id (int, Khóa ngoại liên kết users.id): Người nhận thông báo.
+* title (nvarchar(255)): Tiêu đề ngắn gọn của thông báo.
+* content (nvarchar(max)): Nội dung chi tiết của thông báo.
+* type (nvarchar(50)): Phân loại thông báo (Mặc định là 'GENERAL').
+* is_read (bit, Mặc định là 0 - Chưa đọc): Trạng thái người dùng đã xem thông báo hay chưa.
+* created_at (datetime, Mặc định getdate()): Thời gian tạo thông báo.
+* read_at (datetime, có thể null): Thời điểm người dùng đánh dấu đã đọc.
+
+Các loại thông báo (type):
+* ROLE_UPGRADE: Liên quan đến việc nâng cấp tài khoản từ Người xem (Spectator) lên Chủ ngựa (Horse Owner) hoặc Jockey.
+* CONNECTION: Lời mời kết bạn/kết nối giữa Chủ ngựa và Jockey.
+* REGISTRATION: Đăng ký giải đấu, nài ngựa và xác nhận của Jockey.
+* RACE_STATUS: Thay đổi trạng thái cuộc đua (Loại tham gia, Hoàn hủy, Gắn cờ, Khởi chạy).
+* WALLET: Thay đổi số dư ví (Nhận thưởng thắng cược, nhận thưởng đua ngựa, hoàn tiền cược, hoàn phí tham gia).
+* SYSTEM_ALERT: Tài khoản bị khóa, đưa vào blacklist bởi Trọng tài hoặc Admin.
+* GENERAL: Thông báo chung khác từ hệ thống.
+
+=========================================
+2. CHI TIẾT LUỒNG THÔNG BÁO THEO NGHIỆP VỤ
+=========================================
+
+2.1. Luồng Nâng Cấp Tài Khoản (Role Upgrade Workflow)
+------------------------------------
+Khi Người xem (Spectator) gửi hồ sơ nâng cấp tài khoản hoặc hồ sơ được duyệt/từ chối:
+
+* Sự kiện 1: Người xem gửi yêu cầu nâng cấp tài khoản
+  - Bên nhận: Ban quản trị (tất cả users có vai trò ADMIN).
+  - Tiêu đề (title): Có yêu cầu nâng cấp tài khoản mới
+  - Nội dung (content): Người dùng [Full Name] đã gửi yêu cầu nâng cấp tài khoản lên [Requested Role]. Vui lòng vào trang quản trị để xem xét.
+  - Loại thông báo (type): ROLE_UPGRADE
+
+* Sự kiện 2: Admin Duyệt hồ sơ nâng cấp
+  - Bên nhận: Người gửi yêu cầu nâng cấp (user_id).
+  - Tiêu đề (title): Nâng cấp tài khoản thành công
+  - Nội dung (content): Chúc mừng! Yêu cầu nâng cấp tài khoản của bạn lên [ROLE] đã được Ban quản trị duyệt thành công. Vui lòng đăng nhập lại để trải nghiệm giao diện mới.
+  - Loại thông báo (type): ROLE_UPGRADE
+
+* Sự kiện 3: Admin Từ chối hồ sơ nâng cấp
+  - Bên nhận: Người gửi yêu cầu nâng cấp (user_id).
+  - Tiêu đề (title): Yêu cầu nâng cấp bị từ chối
+  - Nội dung (content): Yêu cầu nâng cấp tài khoản của bạn đã bị từ chối. Lý do từ chối: [Rejection Reason]
+  - Loại thông báo (type): ROLE_UPGRADE
+
+
+2.2. Luồng Kết Bạn/Kết Nối (User Connection Workflow)
+------------------------------------
+Để tham gia giải đấu, Chủ ngựa và Jockey cần thiết lập mối quan hệ kết bạn (Connection).
+
+* Sự kiện 1: Chủ ngựa gửi lời mời kết bạn cho Jockey (hoặc ngược lại)
+  - Bên nhận: Jockey/Chủ ngựa nhận lời mời (recipient_id).
+  - Tiêu đề (title): Lời mời kết nối mới
+  - Nội dung (content): Bạn nhận được lời mời kết nối mới từ [Sender Full Name] (Vai trò: [Sender Role]).
+  - Loại thông báo (type): CONNECTION
+
+* Sự kiện 2: Chấp nhận lời mời kết bạn
+  - Bên nhận: Người gửi lời mời kết bạn ban đầu (requester_id).
+  - Tiêu đề (title): Yêu cầu kết nối được chấp nhận
+  - Nội dung (content): [Recipient Full Name] đã chấp nhận yêu cầu kết nối của bạn. Hai bạn giờ đã có thể đăng ký tham gia các giải đấu cùng nhau.
+  - Loại thông báo (type): CONNECTION
+
+* Sự kiện 3: Từ chối lời mời kết bạn
+  - Bên nhận: Người gửi lời mời kết bạn ban đầu (requester_id).
+  - Tiêu đề (title): Yêu cầu kết nối bị từ chối
+  - Nội dung (content): [Recipient Full Name] đã từ chối yêu cầu kết nối của bạn.
+  - Loại thông báo (type): CONNECTION
+
+
+2.3. Luồng Đăng Ký Giải Đấu & Xác Nhận Của Jockey (Race Registration Workflow)
+------------------------------------
+Khi giải đấu ở trạng thái OPEN_FOR_REGISTER, Chủ ngựa tiến hành đăng ký ngựa và chọn Jockey đã kết bạn để tham gia.
+
+* Sự kiện 1: Chủ ngựa gửi đăng ký thi đấu kèm lời mời Jockey
+  - Bên nhận: Jockey được chọn (jockey_id).
+  - Tiêu đề (title): Lời mời tham gia giải đấu
+  - Nội dung (content): Chủ ngựa [Owner Name] mời bạn làm nài ngựa điều khiển ngựa [Horse Name] tham gia vòng đua [Race Name] thuộc giải đấu [Tournament Name] với tỷ lệ chia thưởng: Jockey [Jockey Share]% - Owner [Owner Share]%. Vui lòng xác nhận.
+  - Loại thông báo (type): REGISTRATION
+
+* Sự kiện 2: Jockey Đồng ý lời mời tham gia
+  - Bên nhận: Chủ ngựa đăng ký (owner_id).
+  - Tiêu đề (title): Jockey chấp nhận lời mời thi đấu
+  - Nội dung (content): Jockey [Jockey Name] đã đồng ý tham gia vòng đua [Race Name] với ngựa [Horse Name]. Hồ sơ đăng ký đã chính thức được gửi lên Ban Tổ Chức (chờ Admin duyệt).
+  - Loại thông báo (type): REGISTRATION
+
+* Sự kiện 3: Jockey Từ chối lời mời tham gia
+  - Bên nhận: Chủ ngựa đăng ký (owner_id).
+  - Tiêu đề (title): Jockey từ chối lời mời thi đấu
+  - Nội dung (content): Jockey [Jockey Name] đã từ chối lời mời tham gia vòng đua [Race Name] với ngựa [Horse Name]. Lượt đăng ký này đã bị hủy bỏ.
+  - Loại thông báo (type): REGISTRATION
+
+* Sự kiện 4: Chủ ngựa cập nhật thông tin đăng ký (Đổi ngựa/Đổi Jockey/Đổi tỷ lệ chia)
+  - Bên nhận: Jockey liên quan.
+  - Tiêu đề (title): Cập nhật thông tin đăng ký giải đấu
+  - Nội dung (content): Thông tin đăng ký thi đấu vòng đua [Race Name] của bạn đã được cập nhật bởi Chủ ngựa [Owner Name]. Vui lòng kiểm tra và xác nhận lại.
+  - Loại thông báo (type): REGISTRATION
+
+* Sự kiện 5: Chủ ngựa hủy đăng ký khi đang chờ
+  - Bên nhận: Jockey liên quan.
+  - Tiêu đề (title): Hủy đăng ký giải đấu
+  - Nội dung (content): Chủ ngựa [Owner Name] đã hủy đăng ký tham gia vòng đua [Race Name] đối với bạn.
+  - Loại thông báo (type): REGISTRATION
+
+* Sự kiện 6: Admin Phê duyệt đăng ký tham gia chính thức
+  - Bên nhận: Cả Chủ ngựa (owner_id) và Jockey (jockey_id).
+  - Tiêu đề (title): Đăng ký giải đấu được phê duyệt
+  - Nội dung (content): Đăng ký thi đấu vòng đua [Race Name] với ngựa [Horse Name] của bạn đã được Admin phê duyệt chính thức. Bạn đã nằm trong danh sách thi đấu.
+  - Loại thông báo (type): REGISTRATION
+
+* Sự kiện 7: Đăng ký của Chủ ngựa không được chọn (Bị Admin Reject do dư người/vi phạm)
+  - Bên nhận: Cả Chủ ngựa (owner_id) và Jockey (jockey_id).
+  - Tiêu đề (title): Đăng ký giải đấu không được chọn
+  - Nội dung (content): Đăng ký thi đấu vòng đua [Race Name] với ngựa [Horse Name] của bạn không được chọn (do vượt quá số lượng giới hạn hoặc không đạt tiêu chí giải đấu). Phí tham gia (nếu có) đã được hoàn lại 100% vào ví.
+  - Loại thông báo (type): REGISTRATION
+
+
+
+2.4. Luồng Điều Hành Cuộc Đua Của Trọng Tài (Referee Control Workflow)
+------------------------------------
+Trong giai đoạn kiểm tra trước giờ đua (Pre-race Checklist) và trong khi giả lập đua (Live Simulation):
+
+* Sự kiện 1: Trọng tài loại bỏ người vi phạm trước giờ đua (Jockey sai cân nặng, ngựa vi phạm)
+  - Bên nhận 1: Chủ ngựa (owner_id) và Jockey (jockey_id) bị loại.
+    * Tiêu đề (title): Truất quyền thi đấu trước trận
+    * Nội dung (content): Cặp đấu của bạn (Ngựa: [Horse Name], Jockey: [Jockey Name]) đã bị Trọng tài loại khỏi vòng đua [Race Name] do vi phạm điều lệ thi đấu. Lý do: [Reason]. Phí tham gia không được hoàn lại.
+    * Loại thông báo (type): RACE_STATUS
+  - Bên nhận 2: Tất cả Spectators đã đặt cược vào con ngựa bị loại này (Hoàn tiền cược 100%).
+    * Tiêu đề (title): Hoàn tiền cược cuộc đua
+    * Nội dung (content): Ngựa [Horse Name] đã bị loại khỏi vòng đua [Race Name] trước giờ chạy. Hệ thống đã hoàn trả 100% số tiền đặt cược ([Amount] VNĐ) vào ví của bạn.
+    * Loại thông báo (type): WALLET
+
+* Sự kiện 2: Trọng tài gắn cờ vi phạm khi đang đua (Add Penalty Flag)
+  - Bên nhận: Chủ ngựa (owner_id) và Jockey (jockey_id).
+  - Tiêu đề (title): Cảnh cáo vi phạm trên sân đua
+  - Nội dung (content): Cảnh cáo: Ngựa [Horse Name] của bạn bị Trọng tài gắn cờ vi phạm ([Violation Type] - [Description]) tại vòng đua [Race Name]. Tổng số cờ hiện tại: [Count]/3. Bị phạt cộng thêm [Count * 3] giây vào thời gian về đích.
+  - Loại thông báo (type): RACE_STATUS
+
+* Sự kiện 3: Ngựa nhận đủ 3 cờ vi phạm (Tự động bị xử thua/Disqualified)
+  - Bên nhận: Chủ ngựa (owner_id) và Jockey (jockey_id).
+  - Tiêu đề (title): Truất quyền thi đấu do nhận đủ 3 cờ vi phạm
+  - Nội dung (content): Ngựa [Horse Name] đã bị xử thua và truất quyền thi đấu trực tiếp (Disqualified) tại vòng đua [Race Name] do nhận đủ 3 cờ vi phạm từ Trọng tài.
+  - Loại thông báo (type): RACE_STATUS
+
+* Sự kiện 4: Trọng tài cấm tài khoản vi phạm nghiêm trọng (Add Blacklist)
+  - Bên nhận: Người dùng vi phạm (user_id).
+  - Tiêu đề (title): Tài khoản bị tạm khóa / Đưa vào Blacklist
+  - Nội dung (content): Tài khoản của bạn đã bị khóa bởi Trọng tài. Lý do: [Reason]. Thời hạn cấm: [Duration]. Vui lòng liên hệ Admin để được giải quyết.
+  - Loại thông báo (type): SYSTEM_ALERT
+
+
+2.5. Luồng Xác Nhận Kết Quả & Chia Thưởng (Payout Workflow)
+------------------------------------
+Khi tất cả ngựa cán đích, Trọng tài nhấn nút "Xác nhận kết quả" (Confirm Results), hệ thống bắt đầu chia giải thưởng và chi trả cá cược.
+
+* Sự kiện 1: Chủ ngựa & Jockey của các ngựa đạt Top 1, Top 2, Top 3 nhận tiền thưởng
+  - Bên nhận: Chủ ngựa (owner_id) và Jockey (jockey_id) đạt giải.
+  - Tiêu đề (title): Nhận tiền thưởng giải đấu
+  - Nội dung (content): Chúc mừng! Ngựa [Horse Name] và Jockey [Jockey Name] đã đạt Giải [Nhất/Nhì/Ba] tại vòng đua [Race Name]. Số tiền thưởng [Amount] VNĐ đã được cộng vào ví của bạn.
+  - Loại thông báo (type): WALLET
+
+* Sự kiện 2: Spectator thắng cược
+  - Bên nhận: Spectator đặt cược chính xác vào ngựa vô địch (user_id).
+  - Tiêu đề (title): Chúc mừng thắng cược cuộc đua
+  - Nội dung (content): Chúc mừng! Bạn đã thắng cược tại vòng đua [Race Name] với số tiền thắng cược [Amount] VNĐ (dựa trên tỷ lệ odds x số tiền đặt cược). Số tiền đã được cộng vào ví.
+  - Loại thông báo (type): WALLET
+
+* Sự kiện 3: Spectator thua cược
+  - Bên nhận: Spectator đặt cược không trúng thưởng (user_id).
+  - Tiêu đề (title): Kết quả đặt cược cuộc đua
+  - Nội dung (content): Kết quả vòng đua [Race Name] đã được Trọng tài xác nhận. Thật tiếc, vé cược của bạn vào ngựa [Horse Name] không trúng thưởng. Chúc bạn may mắn lần sau!
+  - Loại thông báo (type): RACE_STATUS
+

@@ -15,6 +15,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.stereotype.Service;
+import com.horseracing.entities.enums.NotificationType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -43,6 +44,7 @@ public class RefereeService {
     private final BanHistoryRepository banHistoryRepository;
     private final PrizeDistributionRepository prizeDistributionRepository;
     private final PlatformTransactionManager transactionManager;
+    private final NotificationService notificationService;
 
     private TransactionTemplate transactionTemplate;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
@@ -152,6 +154,20 @@ public class RefereeService {
         if (reg != null) {
             reg.setStatus("REJECTED");
             raceRegistrationRepository.save(reg);
+
+            // Notify Owner and Jockey
+            notificationService.sendNotification(
+                    reg.getOwner().getUser(),
+                    "Truất quyền thi đấu trước trận",
+                    "Cặp đấu của bạn (Ngựa: " + participant.getHorse().getName() + ", Jockey: " + participant.getJockey().getUser().getFullName() + ") đã bị Trọng tài loại khỏi vòng đua " + participant.getRace().getRaceName() + " do vi phạm điều lệ thi đấu. Lý do: " + reason + ". Phí tham gia không được hoàn lại.",
+                    NotificationType.RACE_STATUS
+            );
+            notificationService.sendNotification(
+                    reg.getJockey().getUser(),
+                    "Truất quyền thi đấu trước trận",
+                    "Cặp đấu của bạn (Ngựa: " + participant.getHorse().getName() + ", Jockey: " + participant.getJockey().getUser().getFullName() + ") đã bị Trọng tài loại khỏi vòng đua " + participant.getRace().getRaceName() + " do vi phạm điều lệ thi đấu. Lý do: " + reason + ". Phí tham gia không được hoàn lại.",
+                    NotificationType.RACE_STATUS
+            );
         }
 
         // Refund all spectator bets on this horse in this race
@@ -178,6 +194,13 @@ public class RefereeService {
                     .referenceId(bet.getId())
                     .build();
             walletTransactionRepository.save(transaction);
+
+            notificationService.sendNotification(
+                    bet.getUser(),
+                    "Hoàn tiền cược cuộc đua",
+                    "Ngựa " + participant.getHorse().getName() + " đã bị loại khỏi vòng đua " + participant.getRace().getRaceName() + " trước giờ chạy. Hệ thống đã hoàn trả 100% số tiền đặt cược (" + bet.getAmount() + " VNĐ) vào ví của bạn.",
+                    NotificationType.WALLET
+            );
         }
     }
 
@@ -408,11 +431,12 @@ public class RefereeService {
 
         long count = refereeFlagRepository.countBySimulationIdAndHorseId(simulation.getId(), horse.getId());
         boolean disqualified = false;
+        RaceParticipant part = raceParticipantRepository.findByRaceIdAndHorseId(raceId, horse.getId())
+                .orElseThrow(() -> new RuntimeException("Participant not found"));
+
         if (count >= 3) {
             disqualified = true;
             // Disqualify participant
-            RaceParticipant part = raceParticipantRepository.findByRaceIdAndHorseId(raceId, horse.getId())
-                    .orElseThrow(() -> new RuntimeException("Participant not found"));
             part.setStatus("DISQUALIFIED");
             raceParticipantRepository.save(part);
 
@@ -420,6 +444,34 @@ public class RefereeService {
                     .orElseThrow(() -> new RuntimeException("Simulation state not found"));
             state.setStatus("DISQUALIFIED");
             simulationHorseStateRepository.save(state);
+        }
+
+        if (disqualified) {
+            notificationService.sendNotification(
+                    horse.getOwner().getUser(),
+                    "Truất quyền thi đấu do nhận đủ 3 cờ vi phạm",
+                    "Ngựa " + horse.getName() + " đã bị xử thua và truất quyền thi đấu trực tiếp (Disqualified) tại vòng đua " + part.getRace().getRaceName() + " do nhận đủ 3 cờ vi phạm từ Trọng tài.",
+                    NotificationType.RACE_STATUS
+            );
+            notificationService.sendNotification(
+                    part.getJockey().getUser(),
+                    "Truất quyền thi đấu do nhận đủ 3 cờ vi phạm",
+                    "Ngựa " + horse.getName() + " đã bị xử thua và truất quyền thi đấu trực tiếp (Disqualified) tại vòng đua " + part.getRace().getRaceName() + " do nhận đủ 3 cờ vi phạm từ Trọng tài.",
+                    NotificationType.RACE_STATUS
+            );
+        } else {
+            notificationService.sendNotification(
+                    horse.getOwner().getUser(),
+                    "Cảnh cáo vi phạm trên sân đua",
+                    "Cảnh cáo: Ngựa " + horse.getName() + " của bạn bị Trọng tài gắn cờ vi phạm (" + request.getViolationType() + " - " + request.getDescription() + ") tại vòng đua " + part.getRace().getRaceName() + ". Tổng số cờ hiện tại: " + count + "/3. Bị phạt cộng thêm " + (count * 3) + " giây vào thời gian về đích.",
+                    NotificationType.RACE_STATUS
+            );
+            notificationService.sendNotification(
+                    part.getJockey().getUser(),
+                    "Cảnh cáo vi phạm trên sân đua",
+                    "Cảnh cáo: Ngựa " + horse.getName() + " của bạn bị Trọng tài gắn cờ vi phạm (" + request.getViolationType() + " - " + request.getDescription() + ") tại vòng đua " + part.getRace().getRaceName() + ". Tổng số cờ hiện tại: " + count + "/3. Bị phạt cộng thêm " + (count * 3) + " giây vào thời gian về đích.",
+                    NotificationType.RACE_STATUS
+            );
         }
 
         return FlagResponse.builder()
@@ -459,11 +511,25 @@ public class RefereeService {
                     .orElseThrow(() -> new RuntimeException("Target user not found"));
             target.setEnabled(false);
             userRepository.save(target);
+
+            notificationService.sendNotification(
+                    target,
+                    "Tài khoản bị tạm khóa / Đưa vào Blacklist",
+                    "Tài khoản của bạn đã bị khóa bởi Trọng tài. Lý do: " + request.getReason() + ". Thời hạn cấm: " + (Boolean.TRUE.equals(request.getIsPermanent()) ? "Vĩnh viễn" : request.getEndDate()) + ". Vui lòng liên hệ Admin để được giải quyết.",
+                    NotificationType.SYSTEM_ALERT
+            );
         } else if ("HORSE".equalsIgnoreCase(request.getTargetType())) {
             Horse target = horseRepository.findById(request.getTargetId())
                     .orElseThrow(() -> new RuntimeException("Target horse not found"));
             target.setStatus("INACTIVE");
             horseRepository.save(target);
+
+            notificationService.sendNotification(
+                    target.getOwner().getUser(),
+                    "Chiến mã bị đưa vào Blacklist",
+                    "Ngựa " + target.getName() + " của bạn đã bị đưa vào Blacklist bởi Trọng tài. Lý do: " + request.getReason() + ".",
+                    NotificationType.SYSTEM_ALERT
+            );
         }
     }
 
@@ -555,6 +621,20 @@ public class RefereeService {
                             .distributedAt(LocalDateTime.now())
                             .build();
                     prizeDistributionRepository.save(pd);
+
+                    notificationService.sendNotification(
+                            reg.getOwner().getUser(),
+                            "Nhận tiền thưởng giải đấu",
+                            "Chúc mừng! Ngựa " + p.getHorse().getName() + " và Jockey " + p.getJockey().getUser().getFullName() + " đã đạt Giải " + (p.getFinalRank() == 1 ? "Nhất" : (p.getFinalRank() == 2 ? "Nhì" : "Ba")) + " tại vòng đua " + race.getRaceName() + ". Số tiền thưởng " + ownerAmount + " VNĐ đã được cộng vào ví của bạn.",
+                            NotificationType.WALLET
+                    );
+
+                    notificationService.sendNotification(
+                            reg.getJockey().getUser(),
+                            "Nhận tiền thưởng giải đấu",
+                            "Chúc mừng! Ngựa " + p.getHorse().getName() + " và Jockey " + p.getJockey().getUser().getFullName() + " đã đạt Giải " + (p.getFinalRank() == 1 ? "Nhất" : (p.getFinalRank() == 2 ? "Nhì" : "Ba")) + " tại vòng đua " + race.getRaceName() + ". Số tiền thưởng " + jockeyAmount + " VNĐ đã được cộng vào ví của bạn.",
+                            NotificationType.WALLET
+                    );
                 }
             }
         }
@@ -591,10 +671,24 @@ public class RefereeService {
                             .referenceId(bet.getId())
                             .build();
                     walletTransactionRepository.save(transaction);
+
+                    notificationService.sendNotification(
+                            bet.getUser(),
+                            "Chúc mừng thắng cược cuộc đua",
+                            "Chúc mừng! Bạn đã thắng cược tại vòng đua " + race.getRaceName() + " với số tiền thắng cược " + payout + " VNĐ (dựa trên tỷ lệ odds x số tiền đặt cược). Số tiền đã được cộng vào ví.",
+                            NotificationType.WALLET
+                    );
                 } else {
                     bet.setStatus("LOST");
                     bet.setPayoutAmount(BigDecimal.ZERO);
                     betRepository.save(bet);
+
+                    notificationService.sendNotification(
+                            bet.getUser(),
+                            "Kết quả đặt cược cuộc đua",
+                            "Kết quả vòng đua " + race.getRaceName() + " đã được Trọng tài xác nhận. Thật tiếc, vé cược của bạn vào ngựa " + bet.getParticipant().getHorse().getName() + " không trúng thưởng. Chúc bạn may mắn lần sau!",
+                            NotificationType.RACE_STATUS
+                    );
                 }
             }
         }
