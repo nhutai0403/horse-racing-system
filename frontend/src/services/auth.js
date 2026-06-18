@@ -4,50 +4,101 @@ import axiosClient from '../api/axiosClient';
  * Authentication Service connecting to Spring Boot Backend
  */
 
-const isMockMode = () => {
-  return false; // Force mock mode for offline testing
+// TODO(TEST MOCK DATA): Remove MOCK_LOGIN_ACCOUNTS and the mock-account branch in loginAPI after manual testing.
+export const MOCK_LOGIN_ACCOUNTS = [
+  {
+    password: 'Test@123',
+    accessToken: 'mock-admin-access-token-for-testing-only',
+    refreshToken: 'mock-admin-refresh-token-for-testing-only',
+    user: {
+      id: 9001,
+      username: 'admin.test',
+      fullName: 'Mock Admin Tester',
+      email: 'admin@test.local',
+      phoneNumber: '0900000001',
+      provider: 'LOCAL',
+      role: 'ADMIN',
+      enabled: true,
+    },
+  },
+  {
+    password: 'Test@123',
+    accessToken: 'mock-spectator-access-token-for-testing-only',
+    refreshToken: 'mock-spectator-refresh-token-for-testing-only',
+    user: {
+      id: 9002,
+      username: 'spectator.test',
+      fullName: 'Mock Spectator Tester',
+      email: 'spectator@test.local',
+      phoneNumber: '0900000002',
+      provider: 'LOCAL',
+      role: 'SPECTATOR',
+      enabled: true,
+    },
+  },
+  {
+    password: 'Test@123',
+    accessToken: 'mock-owner-access-token-for-testing-only',
+    refreshToken: 'mock-owner-refresh-token-for-testing-only',
+    user: {
+      id: 9003,
+      username: 'owner.test',
+      fullName: 'Mock Horse Owner Tester',
+      email: 'owner@test.local',
+      phoneNumber: '0900000003',
+      provider: 'LOCAL',
+      role: 'HORSE_OWNER',
+      enabled: true,
+    },
+  },
+  {
+    password: 'Test@123',
+    accessToken: 'mock-jockey-access-token-for-testing-only',
+    refreshToken: 'mock-jockey-refresh-token-for-testing-only',
+    user: {
+      id: 9004,
+      username: 'jockey.test',
+      fullName: 'Mock Jockey Tester',
+      email: 'jockey@test.local',
+      phoneNumber: '0900000004',
+      provider: 'LOCAL',
+      role: 'JOCKEY',
+      enabled: true,
+    },
+  },
+  {
+    password: 'Test@123',
+    accessToken: 'mock-referee-access-token-for-testing-only',
+    refreshToken: 'mock-referee-refresh-token-for-testing-only',
+    user: {
+      id: 9005,
+      username: 'referee.test',
+      fullName: 'Mock Race Referee Tester',
+      email: 'referee@test.local',
+      phoneNumber: '0900000005',
+      provider: 'LOCAL',
+      role: 'RACE_REFEREE',
+      enabled: true,
+    },
+  },
+];
+
+const findMockLoginAccount = (email, password) => {
+  const normalizedEmail = email.trim().toLowerCase();
+  return MOCK_LOGIN_ACCOUNTS.find(
+    (account) => account.user.email.toLowerCase() === normalizedEmail && account.password === password
+  );
 };
 
 export async function loginAPI(email, password) {
-  if (isMockMode()) {
-    // Determine role from email
-    let role = 'SPECTATOR';
-    let fullName = 'Test Spectator';
-    let username = 'spectator1';
+  const mockAccount = findMockLoginAccount(email, password);
 
-    const normalizedEmail = email.toLowerCase();
-    if (normalizedEmail.includes('referee')) {
-      role = 'RACE_REFEREE';
-      fullName = 'Test Race Referee';
-      username = 'referee1';
-    } else if (normalizedEmail.includes('owner')) {
-      role = 'HORSE_OWNER';
-      fullName = 'Test Horse Owner';
-      username = 'owner1';
-    } else if (normalizedEmail.includes('jockey')) {
-      role = 'JOCKEY';
-      fullName = 'Test Jockey';
-      username = 'jockey1';
-    } else if (normalizedEmail.includes('admin')) {
-      role = 'ADMIN';
-      fullName = 'Test Admin';
-      username = 'admin1';
-    }
-
-    // Mock response matching the real backend AuthResponse
+  if (mockAccount) {
+    // TODO(TEST MOCK DATA): Delete this block when the temporary test accounts are no longer needed.
     return {
-      accessToken: 'mock-access-token-jwt-placeholder',
-      refreshToken: 'mock-refresh-token-uuid-placeholder',
-      user: {
-        id: 999,
-        username,
-        fullName,
-        email,
-        phoneNumber: '0123456789',
-        provider: 'LOCAL',
-        role,
-        enabled: true
-      }
+      accessToken: mockAccount.accessToken,
+      refreshToken: mockAccount.refreshToken,
+      user: { ...mockAccount.user },
     };
   }
 
@@ -102,19 +153,15 @@ export async function logoutAPI(refreshToken) {
 }
 
 export async function getProfileAPI() {
-  if (isMockMode()) {
-    const savedUser = localStorage.getItem('horse_racing_user');
-    if (savedUser) return JSON.parse(savedUser);
-    return {
-      id: 999,
-      username: 'spectator1',
-      fullName: 'Test Spectator',
-      email: 'spectator1@test.com',
-      phoneNumber: '0123456789',
-      provider: 'LOCAL',
-      role: 'SPECTATOR',
-      enabled: true
-    };
+  const savedUser = localStorage.getItem('horse_racing_user');
+  const parsedUser = savedUser ? JSON.parse(savedUser) : null;
+  const isMockUser = parsedUser && MOCK_LOGIN_ACCOUNTS.some(
+    (account) => account.user.email.toLowerCase() === parsedUser.email?.toLowerCase()
+  );
+
+  if (isMockUser) {
+    // TODO(TEST MOCK DATA): Remove this mock-profile shortcut together with MOCK_LOGIN_ACCOUNTS.
+    return parsedUser;
   }
 
   try {
