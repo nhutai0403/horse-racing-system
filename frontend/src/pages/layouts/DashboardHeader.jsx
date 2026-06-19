@@ -97,6 +97,10 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
       navigate('/owner/profile');
     } else if (user?.role === 'JOCKEY') {
       navigate('/jockey/profile');
+    } else if (user?.role === 'SPECTATOR') {
+      navigate('/spectator/dashboard');
+    } else if (user?.role === 'ADMIN') {
+      navigate('/admin/dashboard');
     } else {
       alert(`${user?.role} profile is under development`);
     }
