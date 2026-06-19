@@ -91,6 +91,7 @@ export async function sendConnectionRequestAPI(recipientId) {
     const response = await axiosClient.post('/connections/request', null, {
       params: { recipientId }
     });
+    window.dispatchEvent(new Event('jockey_invitations_updated'));
     return response.data; // ConnectionUserResponse of the new connection
   } catch (error) {
     const errMsg = error.response?.data?.message || 'Failed to send friend request.';
@@ -115,6 +116,7 @@ export async function respondToConnectionRequestAPI(connectionId, action) {
     const response = await axiosClient.put(`/connections/request/${connectionId}/respond`, null, {
       params: { action }
     });
+    window.dispatchEvent(new Event('jockey_invitations_updated'));
     return response.data; // ConnectionUserResponse
   } catch (error) {
     const errMsg = error.response?.data?.message || 'Failed to respond to friend request.';
@@ -137,6 +139,7 @@ export async function deleteConnectionAPI(connectionId) {
 
   try {
     const response = await axiosClient.delete(`/connections/${connectionId}`);
+    window.dispatchEvent(new Event('jockey_invitations_updated'));
     return response.data;
   } catch (error) {
     const errMsg = error.response?.data?.message || 'Failed to delete connection.';

@@ -40,8 +40,8 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Avoid infinite loop if refresh API fails with 401, or request was already retried
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Avoid infinite loop if refresh API fails, or request was already retried
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
       if (originalRequest.url === '/auth/refresh' || originalRequest.url === '/auth/login') {
         return Promise.reject(error);
       }

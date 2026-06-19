@@ -21,8 +21,13 @@ export default function JockeyInvitationsContent() {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.state && location.state.activeTab) {
-      setActiveTab(location.state.activeTab);
+    if (location.state) {
+      if (location.state.activeTab) {
+        setActiveTab(location.state.activeTab);
+      }
+      if (location.state.activeSubTab) {
+        setActiveSubTab(location.state.activeSubTab);
+      }
     }
   }, [location]);
   
@@ -128,6 +133,8 @@ export default function JockeyInvitationsContent() {
     inv.status !== 'PENDING' && 
     friendsList.some(f => f.userId === inv.ownerId || f.id === inv.ownerId)
   );
+
+  const incomingRequests = directoryList.filter(user => user.friendStatus === 'PENDING_RECEIVED');
 
   const handleAcceptRide = (id) => {
     respondToInvitation(id, 'ACCEPTED');
@@ -299,6 +306,13 @@ export default function JockeyInvitationsContent() {
               Bạn bè của tôi ({friendsList.length})
             </button>
             <button
+              onClick={() => setActiveSubTab('friend-requests')}
+              className={`ho-tab-btn ${activeSubTab === 'friend-requests' ? 'ho-tab-btn-active' : ''}`}
+              style={{ fontSize: '11px', padding: '0.4rem 1.2rem' }}
+            >
+              Lời mời kết bạn ({incomingRequests.length})
+            </button>
+            <button
               onClick={() => setActiveSubTab('find')}
               className={`ho-tab-btn ${activeSubTab === 'find' ? 'ho-tab-btn-active' : ''}`}
               style={{ fontSize: '11px', padding: '0.4rem 1.2rem' }}
@@ -356,6 +370,65 @@ export default function JockeyInvitationsContent() {
                         >
                           Hủy kết bạn
                         </button>
+                      </div>
+                    </DataCard>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* Sub-Tab: Friend Requests */}
+          {activeSubTab === 'friend-requests' && !loading && (
+            <div className="row g-4">
+              {incomingRequests.length === 0 ? (
+                <div className="col-12 text-center py-5 glass-card text-secondary italic">
+                  Không có lời mời kết bạn nào đang chờ duyệt.
+                </div>
+              ) : (
+                incomingRequests.map((user) => (
+                  <div 
+                    key={user.userId || user.id} 
+                    className="col-12 col-md-6 col-lg-4 cursor-pointer hover-scale transition-all"
+                    onClick={() => {
+                      setSelectedFriend(user);
+                      setShowFriendModal(true);
+                    }}
+                  >
+                    <DataCard interactive={false}>
+                      <div className="d-flex align-items-center gap-3">
+                        <div className="rounded-circle overflow-hidden border flex-shrink-0" style={{ width: '55px', height: '55px', borderColor: '#c0c9c0' }}>
+                          <img
+                            src={user.avatar || DEFAULT_AVATAR}
+                            alt={user.fullName}
+                            className="w-100 h-100 object-fit-cover"
+                          />
+                        </div>
+                        <div className="flex-grow-1">
+                          <h4 className="fw-bold fs-6 m-0" style={{ color: 'var(--ho-primary-dark)' }}>
+                            {user.fullName}
+                          </h4>
+                          <p className="ho-font-grotesk fw-bold text-uppercase text-secondary m-0 mt-1" style={{ fontSize: '9px', letterSpacing: '0.05em' }}>
+                            {user.role ? user.role.replace('_', ' ') : 'HORSE OWNER'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="d-flex gap-2">
+                          <button 
+                            onClick={() => handleRespondRequest(user.connectionId, 'ACCEPT')}
+                            className="ho-btn ho-btn-dark-green flex-grow-1 fw-bold"
+                          >
+                            Đồng ý
+                          </button>
+                          <button 
+                            onClick={() => handleRespondRequest(user.connectionId, 'REJECT')}
+                            className="ho-btn ho-btn-outline-danger px-3 fw-bold"
+                          >
+                            Từ chối
+                          </button>
+                        </div>
                       </div>
                     </DataCard>
                   </div>

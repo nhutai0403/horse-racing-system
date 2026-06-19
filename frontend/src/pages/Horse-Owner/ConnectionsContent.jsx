@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import DataCard from '../../components/DataCard';
 import StatusBadge from '../../components/StatusBadge';
 import { useHorseOwner } from './HorseOwnerContext';
@@ -14,7 +15,7 @@ import {
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80';
 
 export default function ConnectionsContent() {
-  const [activeSubTab, setActiveSubTab] = useState('my-friends'); // 'my-friends' | 'find'
+  const [activeSubTab, setActiveSubTab] = useState('my-friends'); // 'my-friends' | 'find' | 'friend-requests'
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const { refreshData } = useHorseOwner();
@@ -24,6 +25,14 @@ export default function ConnectionsContent() {
   const [friendsList, setFriendsList] = useState([]);
   const [directoryList, setDirectoryList] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state && location.state.activeSubTab) {
+      setActiveSubTab(location.state.activeSubTab);
+    }
+  }, [location]);
 
   const fetchConnections = async () => {
     try {
@@ -83,6 +92,8 @@ export default function ConnectionsContent() {
     }
   };
 
+  const incomingRequests = directoryList.filter(user => user.friendStatus === 'PENDING_RECEIVED');
+
   return (
     <div className="container-fluid p-0 animate-fade-in" style={{ maxWidth: '1440px' }}>
       <div className="d-flex justify-content-between align-items-end border-bottom pb-3 mb-4" style={{ borderColor: 'var(--ho-border-muted)' }}>
@@ -103,6 +114,12 @@ export default function ConnectionsContent() {
           className={`ho-tab-btn ${activeSubTab === 'my-friends' ? 'ho-tab-btn-active' : ''}`}
         >
           Bạn bè của tôi ({friendsList.length})
+        </button>
+        <button
+          onClick={() => setActiveSubTab('friend-requests')}
+          className={`ho-tab-btn ${activeSubTab === 'friend-requests' ? 'ho-tab-btn-active' : ''}`}
+        >
+          Lời mời kết bạn ({incomingRequests.length})
         </button>
         <button
           onClick={() => setActiveSubTab('find')}
@@ -161,6 +178,65 @@ export default function ConnectionsContent() {
                     >
                       Hủy kết bạn
                     </button>
+                  </div>
+                </DataCard>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Tab: Friend Requests */}
+      {activeSubTab === 'friend-requests' && !loading && (
+        <div className="row g-4">
+          {incomingRequests.length === 0 ? (
+            <div className="col-12 text-center py-5 glass-card text-secondary italic">
+              Không có lời mời kết bạn nào đang chờ duyệt.
+            </div>
+          ) : (
+            incomingRequests.map((user) => (
+              <div 
+                key={user.userId || user.id} 
+                className="col-12 col-md-6 col-lg-4 cursor-pointer hover-scale transition-all"
+                onClick={() => {
+                  setSelectedFriend(user);
+                  setShowFriendModal(true);
+                }}
+              >
+                <DataCard interactive={false}>
+                  <div className="d-flex align-items-center gap-3">
+                    <div className="rounded-circle overflow-hidden border flex-shrink-0" style={{ width: '50px', height: '50px', borderColor: '#c0c9c0' }}>
+                      <img
+                        src={user.avatar || DEFAULT_AVATAR}
+                        alt={user.fullName}
+                        className="w-100 h-100 object-fit-cover"
+                      />
+                    </div>
+                    <div className="flex-grow-1">
+                      <h4 className="fw-bold fs-6 m-0" style={{ color: 'var(--ho-primary-dark)' }}>
+                        {user.fullName}
+                      </h4>
+                      <p className="ho-font-grotesk fw-bold text-uppercase text-secondary m-0 mt-1" style={{ fontSize: '10px', letterSpacing: '0.05em' }}>
+                        {user.role ? user.role.replace('_', ' ') : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="d-flex gap-2">
+                      <button 
+                        onClick={() => handleRespondRequest(user.connectionId, 'ACCEPT')}
+                        className="ho-btn ho-btn-dark-green flex-grow-1 fw-bold"
+                      >
+                        Đồng ý
+                      </button>
+                      <button 
+                        onClick={() => handleRespondRequest(user.connectionId, 'REJECT')}
+                        className="ho-btn ho-btn-outline-danger px-3 fw-bold"
+                      >
+                        Từ chối
+                      </button>
+                    </div>
                   </div>
                 </DataCard>
               </div>

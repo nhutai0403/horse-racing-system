@@ -109,6 +109,7 @@ export async function respondToJockeyInvitationAPI(invitationId, action) {
     const response = await axiosClient.put(`/jockey/invitations/${invitationId}/respond`, null, {
       params: { action: apiAction }
     });
+    window.dispatchEvent(new Event('jockey_invitations_updated'));
     return response.data; // RaceRegistrationResponse
   } catch (error) {
     const errMsg = error.response?.data?.message || 'Không thể gửi phản hồi lời mời đua.';

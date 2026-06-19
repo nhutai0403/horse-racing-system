@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { getConnectionsDirectoryAPI } from '../../services/connections';
+import { getJockeyInvitationsAPI } from '../../services/jockey';
 
 export default function DashboardHeader({ user, profile, navLinks, logout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -11,41 +13,55 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
   const notificationRef = useRef(null);
   const navigate = useNavigate();
 
-  const loadNotifications = () => {
+  const loadNotifications = async () => {
+    if (!user) {
+      setPendingNotifications([]);
+      return;
+    }
     try {
-      if (user?.role === 'JOCKEY') {
-        const invsRaw = localStorage.getItem('jockey_invitations') || '[]';
-        const invs = JSON.parse(invsRaw);
-        
-        const dirRaw = localStorage.getItem('mock_connections_directory') || '[]';
-        const directory = JSON.parse(dirRaw);
-        const activeFriends = directory.filter(u => u.friendStatus === 'FRIEND');
-        
-        // Filter pending invitations from active friends
-        const jockeyNotifications = invs.filter(inv => 
-          inv.status === 'PENDING' && 
-          activeFriends.some(f => f.userId === inv.ownerId || f.id === inv.ownerId)
-        );
-        setPendingNotifications(jockeyNotifications);
-      } else if (user?.role === 'HORSE_OWNER') {
-        const dirRaw = localStorage.getItem('mock_connections_directory') || '[]';
-        const directory = JSON.parse(dirRaw);
-        
-        // Filter pending received friend requests
-        const ownerNotifications = directory
+      let combinedNotifications = [];
+
+      // 1. Fetch friend requests (both Jockey and Horse Owner roles can receive friend requests)
+      try {
+        const directory = await getConnectionsDirectoryAPI();
+        const pendingFriendRequests = directory
           .filter(u => u.friendStatus === 'PENDING_RECEIVED')
           .map(u => ({
             id: `FRIEND_REQ_${u.userId || u.id}`,
             ownerName: u.fullName,
             senderName: u.fullName,
             userId: u.userId || u.id,
+            connectionId: u.connectionId,
             type: 'FRIEND_REQUEST'
           }));
-        setPendingNotifications(ownerNotifications);
-      } else {
-        setPendingNotifications([]);
+        combinedNotifications = [...combinedNotifications, ...pendingFriendRequests];
+      } catch (err) {
+        console.error('Failed to load connections for notifications:', err);
       }
+
+      // 2. Fetch ride invitations for JOCKEY
+      if (user.role === 'JOCKEY') {
+        try {
+          const invs = await getJockeyInvitationsAPI();
+          const pendingRideInvs = invs
+            .filter(inv => inv.status === 'PENDING_JOCKEY' || inv.status === 'PENDING')
+            .map(inv => ({
+              id: `RIDE_INV_${inv.id}`,
+              ownerName: inv.ownerName,
+              senderName: inv.ownerName,
+              horseName: inv.horseName,
+              tournamentName: inv.raceName,
+              type: 'RIDE_INVITATION'
+            }));
+          combinedNotifications = [...combinedNotifications, ...pendingRideInvs];
+        } catch (err) {
+          console.error('Failed to load ride invitations for notifications:', err);
+        }
+      }
+
+      setPendingNotifications(combinedNotifications);
     } catch (e) {
+      console.error('Error loading notifications:', e);
       setPendingNotifications([]);
     }
   };
@@ -83,10 +99,14 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
 
   const handleNotificationClick = (noti) => {
     setNotificationOpen(false);
-    if (user?.role === 'JOCKEY') {
+    if (noti.type === 'FRIEND_REQUEST') {
+      if (user?.role === 'JOCKEY') {
+        navigate('/jockey/invitations', { state: { activeTab: 'connections', activeSubTab: 'friend-requests' } });
+      } else if (user?.role === 'HORSE_OWNER') {
+        navigate('/owner/friends', { state: { activeSubTab: 'friend-requests' } });
+      }
+    } else if (noti.type === 'RIDE_INVITATION') {
       navigate('/jockey/invitations', { state: { activeTab: 'race-invitations' } });
-    } else if (user?.role === 'HORSE_OWNER') {
-      navigate('/owner/friends');
     }
   };
 
@@ -97,6 +117,10 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
       navigate('/owner/profile');
     } else if (user?.role === 'JOCKEY') {
       navigate('/jockey/profile');
+    } else if (user?.role === 'SPECTATOR') {
+      navigate('/spectator/dashboard');
+    } else if (user?.role === 'ADMIN') {
+      navigate('/admin/dashboard');
     } else {
       alert(`${user?.role} profile is under development`);
     }
@@ -193,17 +217,17 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
                       >
                         <div className="d-flex align-items-center gap-2 w-100">
                           <span className="material-symbols-outlined text-warning" style={{ fontSize: '18px' }}>
-                            {user?.role === 'JOCKEY' ? 'sports_score' : 'person'}
+                            {noti.type === 'FRIEND_REQUEST' ? 'person' : 'sports_score'}
                           </span>
                           <span className="fw-bold text-dark text-truncate" style={{ fontSize: '12.5px', maxWidth: '200px' }}>
-                            {noti.ownerName || noti.senderName || 'Lời mời'}
+                            {noti.senderName || 'Lời mời'}
                           </span>
                           <span className="badge bg-warning text-dark ms-auto" style={{ fontSize: '8px', padding: '2px 4px' }}>Mới</span>
                         </div>
                         <p className="text-secondary small m-0 text-truncate-2" style={{ fontSize: '11.5px', lineHeight: '1.4', textAlign: 'left', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal' }}>
-                          {user?.role === 'JOCKEY' 
-                            ? `Mời bạn đua ngựa ${noti.horseName} tại cúp ${noti.tournamentName.split(' - ')[0]}`
-                            : `Gửi yêu cầu kết bạn đến bạn.`
+                          {noti.type === 'FRIEND_REQUEST' 
+                            ? `Gửi yêu cầu kết bạn đến bạn.`
+                            : `Mời bạn đua ngựa ${noti.horseName} tại cúp ${noti.tournamentName}`
                           }
                         </p>
                       </button>

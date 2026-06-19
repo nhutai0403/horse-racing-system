@@ -547,8 +547,8 @@ export default function TournamentsPanel() {
                     fontSize: '11px',
                     fontWeight: '700',
                     textTransform: 'uppercase',
-                    background: t.tournamentStatus === 'Completed' ? 'rgba(16, 185, 129, 0.15)' : t.tournamentStatus === 'Ongoing' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(212, 175, 55, 0.15)',
-                    color: t.tournamentStatus === 'Completed' ? '#10b981' : t.tournamentStatus === 'Ongoing' ? '#3b82f6' : 'var(--ho-accent-gold-text)',
+                    background: t.tournamentStatus === 'Completed' || t.tournamentStatus === 'Finished' ? 'rgba(16, 185, 129, 0.15)' : t.tournamentStatus === 'Ongoing' || t.tournamentStatus === 'Active' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(212, 175, 55, 0.15)',
+                    color: t.tournamentStatus === 'Completed' || t.tournamentStatus === 'Finished' ? '#10b981' : t.tournamentStatus === 'Ongoing' || t.tournamentStatus === 'Active' ? '#3b82f6' : 'var(--ho-accent-gold-text)',
                     border: '1px solid var(--ho-border-gold)'
                   }}>
                     {t.tournamentStatus}
@@ -598,10 +598,9 @@ export default function TournamentsPanel() {
                     }}
                   >
                     <option value="Upcoming">Upcoming</option>
-                    <option value="Open Registration">Open Registration</option>
-                    <option value="Registration Closed">Registration Closed</option>
-                    <option value="Ongoing">Ongoing</option>
-                    <option value="Completed">Completed</option>
+                    <option value="Active">Active (Open Registration)</option>
+                    <option value="Finished">Finished (Completed)</option>
+                    <option value="Cancelled">Cancelled</option>
                   </select>
 
                   <div style={{ display: 'flex', gap: '8px' }}>
