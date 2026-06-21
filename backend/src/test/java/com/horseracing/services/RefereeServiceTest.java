@@ -215,4 +215,37 @@ public class RefereeServiceTest {
         verify(prizeDistributionRepository, times(1)).save(any(PrizeDistribution.class));
         verify(walletTransactionRepository, atLeastOnce()).save(any(WalletTransaction.class));
     }
+
+    @Test
+    void testUpdateInspectionStatus_RejectedAndSpectatorRefund() {
+        User ownerUser = User.builder().id(10).email("owner@test.com").build();
+        HorseOwnerProfile owner = HorseOwnerProfile.builder().id(1).user(ownerUser).build();
+        Horse horse = Horse.builder().id(4).name("Lightning").owner(owner).build();
+        JockeyProfile jockey = JockeyProfile.builder().id(2).user(User.builder().id(11).email("jockey@test.com").build()).build();
+        RaceParticipant participant = RaceParticipant.builder().id(12).race(race).horse(horse).jockey(jockey).status("PENDING_INSPECTION").build();
+
+        User bettorUser = User.builder().id(20).email("bettor@test.com").build();
+        Wallet bettorWallet = Wallet.builder().id(100).user(bettorUser).balance(BigDecimal.valueOf(100.0)).build();
+        Bet bet = Bet.builder().id(50).user(bettorUser).amount(BigDecimal.valueOf(50.0)).status("PENDING").build();
+
+        RaceRegistration reg = RaceRegistration.builder()
+                .owner(owner)
+                .jockey(jockey)
+                .build();
+
+        when(userRepository.findByEmail("referee@test.com")).thenReturn(Optional.of(refereeUser));
+        when(raceParticipantRepository.findById(12)).thenReturn(Optional.of(participant));
+        when(raceRegistrationRepository.findFirstByRaceIdAndHorseId(5, 4)).thenReturn(Optional.of(reg));
+        when(betRepository.findByParticipantIdAndStatus(12, "PENDING")).thenReturn(List.of(bet));
+        when(walletRepository.findByUserId(20)).thenReturn(Optional.of(bettorWallet));
+
+        refereeService.updateInspectionStatus(12, "REJECTED", "Sick horse", "referee@test.com");
+
+        assertEquals("REJECTED", participant.getStatus());
+        assertEquals("REJECTED", reg.getStatus());
+        assertEquals("REFUNDED", bet.getStatus());
+        assertEquals(BigDecimal.valueOf(150.0), bettorWallet.getBalance());
+        verify(walletRepository, times(1)).save(bettorWallet);
+        verify(walletTransactionRepository, times(1)).save(any(WalletTransaction.class));
+    }
 }

@@ -290,6 +290,25 @@ public class RaceRegistrationService {
         registration.setStatus("REJECTED");
         registration = raceRegistrationRepository.save(registration);
 
+        BigDecimal entryFee = registration.getRace().getTournament().getEntryFee();
+        if (entryFee != null && entryFee.compareTo(BigDecimal.ZERO) > 0) {
+            Wallet wallet = walletRepository.findByUserId(registration.getOwner().getUser().getId())
+                    .orElseThrow(() -> new RuntimeException("Wallet not found"));
+
+            wallet.setBalance(wallet.getBalance().add(entryFee));
+            walletRepository.save(wallet);
+
+            WalletTransaction transaction = WalletTransaction.builder()
+                    .wallet(wallet)
+                    .transactionType("REFUND")
+                    .amount(entryFee)
+                    .status("SUCCESS")
+                    .referenceType("RACE_REGISTRATION")
+                    .referenceId(registration.getId())
+                    .build();
+            walletTransactionRepository.save(transaction);
+        }
+
         notificationService.sendNotification(
                 registration.getOwner().getUser(),
                 "Đăng ký giải đấu không được chọn",

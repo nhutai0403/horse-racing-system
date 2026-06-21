@@ -132,7 +132,7 @@ public class RefereeService {
         raceParticipantRepository.save(participant);
 
         if ("REJECTED".equalsIgnoreCase(status)) {
-            // Also notify owner and jockey, refund them
+            // Also notify owner and jockey
             RaceRegistration reg = raceRegistrationRepository
                     .findFirstByRaceIdAndHorseId(participant.getRace().getId(), participant.getHorse().getId())
                     .orElse(null);
@@ -141,29 +141,44 @@ public class RefereeService {
                 reg.setStatus("REJECTED");
                 raceRegistrationRepository.save(reg);
 
-                BigDecimal entryFee = participant.getRace().getTournament().getEntryFee();
-                if (entryFee != null && entryFee.compareTo(BigDecimal.ZERO) > 0) {
-                    Wallet wallet = walletRepository.findByUserId(reg.getOwner().getUser().getId())
-                            .orElseThrow(() -> new RuntimeException("Wallet not found"));
-                    wallet.setBalance(wallet.getBalance().add(entryFee));
-                    walletRepository.save(wallet);
-
-                    WalletTransaction transaction = WalletTransaction.builder()
-                            .wallet(wallet)
-                            .transactionType("REFUND")
-                            .amount(entryFee)
-                            .status("SUCCESS")
-                            .referenceType("RACE_REGISTRATION")
-                            .referenceId(reg.getId())
-                            .build();
-                    walletTransactionRepository.save(transaction);
-                }
-
                 notificationService.sendNotification(
                         reg.getOwner().getUser(),
                         "Ngựa không vượt qua vòng kiểm tra trước trận",
-                        "Ngựa " + participant.getHorse().getName() + " đã bị từ chối tham gia vòng đua " + participant.getRace().getRaceName() + " bởi Trọng tài. Lý do: " + reason + ". Lệ phí tham gia đã được hoàn lại.",
+                        "Ngựa " + participant.getHorse().getName() + " đã bị từ chối tham gia vòng đua " + participant.getRace().getRaceName() + " bởi Trọng tài. Lý do: " + reason + ". Lệ phí tham gia không được hoàn lại.",
                         NotificationType.RACE_STATUS
+                );
+            }
+
+            // Refund all spectator bets on this horse in this race
+            List<Bet> bets = betRepository.findByParticipantIdAndStatus(participantId, "PENDING");
+            for (Bet bet : bets) {
+                bet.setStatus("REFUNDED");
+                betRepository.save(bet);
+
+                Wallet wallet = walletRepository.findByUserId(bet.getUser().getId())
+                        .orElseGet(() -> {
+                            Wallet w = Wallet.builder().user(bet.getUser()).balance(BigDecimal.ZERO).build();
+                            return walletRepository.save(w);
+                        });
+
+                wallet.setBalance(wallet.getBalance().add(bet.getAmount()));
+                walletRepository.save(wallet);
+
+                WalletTransaction transaction = WalletTransaction.builder()
+                        .wallet(wallet)
+                        .transactionType("REFUND")
+                        .amount(bet.getAmount())
+                        .status("SUCCESS")
+                        .referenceType("BET")
+                        .referenceId(bet.getId())
+                        .build();
+                walletTransactionRepository.save(transaction);
+
+                notificationService.sendNotification(
+                        bet.getUser(),
+                        "Hoàn tiền cược cuộc đua",
+                        "Ngựa " + participant.getHorse().getName() + " không vượt qua vòng kiểm tra trước trận. Hệ thống đã hoàn trả 100% số tiền đặt cược (" + bet.getAmount() + " VNĐ) vào ví của bạn.",
+                        NotificationType.WALLET
                 );
             }
         }
