@@ -43,6 +43,10 @@ public class Bet {
     private String status = "PENDING"; // PENDING, WON, LOST, REFUNDED
 
     @Builder.Default
+    @Column(name = "bet_type", length = 20)
+    private String betType = "WIN"; // WIN, PLACE, SHOW
+
+    @Builder.Default
     @Column(name = "payout_amount", precision = 18, scale = 2)
     private BigDecimal payoutAmount = BigDecimal.ZERO;
 

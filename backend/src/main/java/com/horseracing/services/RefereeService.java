@@ -797,18 +797,174 @@ public class RefereeService {
             }
         }
 
-        // 2. Betting Payout
-        RaceParticipant winner = participants.stream()
-                .filter(p -> p.getFinalRank() != null && p.getFinalRank() == 1)
-                .findFirst()
-                .orElse(null);
-
+        // 2. Betting Payout (Pari-Mutuel Option 1: Split-Pools)
         List<Bet> bets = betRepository.findByRaceId(raceId);
+        
+        BigDecimal totalWinPool = BigDecimal.ZERO;
+        BigDecimal totalPlacePool = BigDecimal.ZERO;
+        BigDecimal totalShowPool = BigDecimal.ZERO;
+
         for (Bet bet : bets) {
             if ("PENDING".equals(bet.getStatus())) {
-                if (winner != null && bet.getParticipant().getId().equals(winner.getId())) {
+                String type = bet.getBetType() != null ? bet.getBetType() : "WIN";
+                if ("WIN".equalsIgnoreCase(type)) {
+                    totalWinPool = totalWinPool.add(bet.getAmount());
+                } else if ("PLACE".equalsIgnoreCase(type)) {
+                    totalPlacePool = totalPlacePool.add(bet.getAmount());
+                } else if ("SHOW".equalsIgnoreCase(type)) {
+                    totalShowPool = totalShowPool.add(bet.getAmount());
+                }
+            }
+        }
+
+        // Net pools after 10% House Edge (payback rate is 90%)
+        BigDecimal netWinPool = totalWinPool.multiply(BigDecimal.valueOf(0.9));
+        BigDecimal netPlacePool = totalPlacePool.multiply(BigDecimal.valueOf(0.9));
+        BigDecimal netShowPool = totalShowPool.multiply(BigDecimal.valueOf(0.9));
+
+        Integer rank1Id = null;
+        Integer rank2Id = null;
+        Integer rank3Id = null;
+
+        for (RaceParticipant p : participants) {
+            Integer rank = p.getFinalRank();
+            if (rank != null) {
+                switch (rank) {
+                    case 1 -> rank1Id = p.getId();
+                    case 2 -> rank2Id = p.getId();
+                    case 3 -> rank3Id = p.getId();
+                }
+            }
+        }
+
+        BigDecimal totalWinOnWinner = BigDecimal.ZERO;
+        BigDecimal totalPlaceOnH1 = BigDecimal.ZERO;
+        BigDecimal totalPlaceOnH2 = BigDecimal.ZERO;
+        BigDecimal totalShowOnH1 = BigDecimal.ZERO;
+        BigDecimal totalShowOnH2 = BigDecimal.ZERO;
+        BigDecimal totalShowOnH3 = BigDecimal.ZERO;
+
+        for (Bet bet : bets) {
+            if ("PENDING".equals(bet.getStatus())) {
+                String type = bet.getBetType() != null ? bet.getBetType() : "WIN";
+                Integer partId = bet.getParticipant().getId();
+
+                if ("WIN".equalsIgnoreCase(type)) {
+                    if (partId.equals(rank1Id)) {
+                        totalWinOnWinner = totalWinOnWinner.add(bet.getAmount());
+                    }
+                } else if ("PLACE".equalsIgnoreCase(type)) {
+                    if (partId.equals(rank1Id)) {
+                        totalPlaceOnH1 = totalPlaceOnH1.add(bet.getAmount());
+                    } else if (partId.equals(rank2Id)) {
+                        totalPlaceOnH2 = totalPlaceOnH2.add(bet.getAmount());
+                    }
+                } else if ("SHOW".equalsIgnoreCase(type)) {
+                    if (partId.equals(rank1Id)) {
+                        totalShowOnH1 = totalShowOnH1.add(bet.getAmount());
+                    } else if (partId.equals(rank2Id)) {
+                        totalShowOnH2 = totalShowOnH2.add(bet.getAmount());
+                    } else if (partId.equals(rank3Id)) {
+                        totalShowOnH3 = totalShowOnH3.add(bet.getAmount());
+                    }
+                }
+            }
+        }
+
+        // Calculate WIN odds
+        BigDecimal oddsWin = BigDecimal.valueOf(1.05);
+        if (totalWinOnWinner.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal computed = netWinPool.divide(totalWinOnWinner, 2, java.math.RoundingMode.HALF_UP);
+            if (computed.compareTo(BigDecimal.valueOf(1.05)) > 0) {
+                oddsWin = computed;
+            }
+        }
+
+        // Calculate PLACE odds
+        BigDecimal oddsPlaceH1 = BigDecimal.valueOf(1.05);
+        BigDecimal oddsPlaceH2 = BigDecimal.valueOf(1.05);
+
+        boolean hasPlaceH1 = totalPlaceOnH1.compareTo(BigDecimal.ZERO) > 0;
+        boolean hasPlaceH2 = totalPlaceOnH2.compareTo(BigDecimal.ZERO) > 0;
+
+        if (hasPlaceH1 && hasPlaceH2) {
+            BigDecimal halfPool = netPlacePool.divide(BigDecimal.valueOf(2), 4, java.math.RoundingMode.HALF_UP);
+            BigDecimal computedH1 = halfPool.divide(totalPlaceOnH1, 2, java.math.RoundingMode.HALF_UP);
+            BigDecimal computedH2 = halfPool.divide(totalPlaceOnH2, 2, java.math.RoundingMode.HALF_UP);
+            if (computedH1.compareTo(BigDecimal.valueOf(1.05)) > 0) oddsPlaceH1 = computedH1;
+            if (computedH2.compareTo(BigDecimal.valueOf(1.05)) > 0) oddsPlaceH2 = computedH2;
+        } else if (hasPlaceH1) {
+            BigDecimal computedH1 = netPlacePool.divide(totalPlaceOnH1, 2, java.math.RoundingMode.HALF_UP);
+            if (computedH1.compareTo(BigDecimal.valueOf(1.05)) > 0) oddsPlaceH1 = computedH1;
+        } else if (hasPlaceH2) {
+            BigDecimal computedH2 = netPlacePool.divide(totalPlaceOnH2, 2, java.math.RoundingMode.HALF_UP);
+            if (computedH2.compareTo(BigDecimal.valueOf(1.05)) > 0) oddsPlaceH2 = computedH2;
+        }
+
+        // Calculate SHOW odds
+        BigDecimal oddsShowH1 = BigDecimal.valueOf(1.05);
+        BigDecimal oddsShowH2 = BigDecimal.valueOf(1.05);
+        BigDecimal oddsShowH3 = BigDecimal.valueOf(1.05);
+
+        int activeShowCount = 0;
+        if (totalShowOnH1.compareTo(BigDecimal.ZERO) > 0) activeShowCount++;
+        if (totalShowOnH2.compareTo(BigDecimal.ZERO) > 0) activeShowCount++;
+        if (totalShowOnH3.compareTo(BigDecimal.ZERO) > 0) activeShowCount++;
+
+        if (activeShowCount > 0) {
+            BigDecimal sharePool = netShowPool.divide(BigDecimal.valueOf(activeShowCount), 4, java.math.RoundingMode.HALF_UP);
+            if (totalShowOnH1.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal computed = sharePool.divide(totalShowOnH1, 2, java.math.RoundingMode.HALF_UP);
+                if (computed.compareTo(BigDecimal.valueOf(1.05)) > 0) oddsShowH1 = computed;
+            }
+            if (totalShowOnH2.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal computed = sharePool.divide(totalShowOnH2, 2, java.math.RoundingMode.HALF_UP);
+                if (computed.compareTo(BigDecimal.valueOf(1.05)) > 0) oddsShowH2 = computed;
+            }
+            if (totalShowOnH3.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal computed = sharePool.divide(totalShowOnH3, 2, java.math.RoundingMode.HALF_UP);
+                if (computed.compareTo(BigDecimal.valueOf(1.05)) > 0) oddsShowH3 = computed;
+            }
+        }
+
+        // Distribute payouts
+        for (Bet bet : bets) {
+            if ("PENDING".equals(bet.getStatus())) {
+                String type = bet.getBetType() != null ? bet.getBetType() : "WIN";
+                Integer partId = bet.getParticipant().getId();
+                boolean isWon = false;
+                BigDecimal odds = BigDecimal.valueOf(1.05);
+
+                if ("WIN".equalsIgnoreCase(type)) {
+                    if (partId.equals(rank1Id)) {
+                        isWon = true;
+                        odds = oddsWin;
+                    }
+                } else if ("PLACE".equalsIgnoreCase(type)) {
+                    if (partId.equals(rank1Id)) {
+                        isWon = true;
+                        odds = oddsPlaceH1;
+                    } else if (partId.equals(rank2Id)) {
+                        isWon = true;
+                        odds = oddsPlaceH2;
+                    }
+                } else if ("SHOW".equalsIgnoreCase(type)) {
+                    if (partId.equals(rank1Id)) {
+                        isWon = true;
+                        odds = oddsShowH1;
+                    } else if (partId.equals(rank2Id)) {
+                        isWon = true;
+                        odds = oddsShowH2;
+                    } else if (partId.equals(rank3Id)) {
+                        isWon = true;
+                        odds = oddsShowH3;
+                    }
+                }
+
+                if (isWon) {
                     bet.setStatus("WON");
-                    BigDecimal payout = bet.getAmount().multiply(bet.getOdds());
+                    bet.setOdds(odds);
+                    BigDecimal payout = bet.getAmount().multiply(odds);
                     bet.setPayoutAmount(payout);
                     betRepository.save(bet);
 
@@ -833,7 +989,7 @@ public class RefereeService {
                     notificationService.sendNotification(
                             bet.getUser(),
                             "Chúc mừng thắng cược cuộc đua",
-                            "Chúc mừng! Bạn đã thắng cược tại vòng đua " + race.getRaceName() + " với số tiền thắng cược " + payout + " VNĐ (dựa trên tỷ lệ odds x số tiền đặt cược). Số tiền đã được cộng vào ví.",
+                            "Chúc mừng! Bạn đã thắng cược (" + type + ") tại vòng đua " + race.getRaceName() + " với số tiền thắng cược " + payout + " VNĐ (dựa trên tỷ lệ odds " + odds + " của quỹ chia). Số tiền đã được cộng vào ví.",
                             NotificationType.WALLET
                     );
                 } else {
@@ -844,7 +1000,7 @@ public class RefereeService {
                     notificationService.sendNotification(
                             bet.getUser(),
                             "Kết quả đặt cược cuộc đua",
-                            "Kết quả vòng đua " + race.getRaceName() + " đã được Trọng tài xác nhận. Thật tiếc, vé cược của bạn vào ngựa " + bet.getParticipant().getHorse().getName() + " không trúng thưởng. Chúc bạn may mắn lần sau!",
+                            "Kết quả vòng đua " + race.getRaceName() + " đã được Trọng tài xác nhận. Thật tiếc, vé cược (" + type + ") của bạn vào ngựa " + bet.getParticipant().getHorse().getName() + " không trúng thưởng. Chúc bạn may mắn lần sau!",
                             NotificationType.RACE_STATUS
                     );
                 }

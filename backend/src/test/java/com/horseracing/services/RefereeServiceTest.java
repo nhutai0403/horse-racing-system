@@ -179,9 +179,17 @@ public class RefereeServiceTest {
 
         RaceParticipant p1 = RaceParticipant.builder().id(12).race(race).horse(horse).jockey(jockey).finalRank(1).status("FINISHED").build();
 
+        // Add a second horse and participant that loses the WIN pool
+        Horse horse2 = Horse.builder().id(5).name("Thunder").owner(owner).build();
+        RaceParticipant p2 = RaceParticipant.builder().id(13).race(race).horse(horse2).jockey(jockey).finalRank(4).status("FINISHED").build();
+
         User bettorUser = User.builder().id(20).email("bettor@test.com").build();
         Wallet bettorWallet = Wallet.builder().id(100).user(bettorUser).balance(BigDecimal.valueOf(100.0)).build();
-        Bet bet = Bet.builder().id(50).user(bettorUser).participant(p1).amount(BigDecimal.valueOf(50.0)).odds(BigDecimal.valueOf(2.5)).status("PENDING").build();
+        Bet bet = Bet.builder().id(50).user(bettorUser).participant(p1).amount(BigDecimal.valueOf(50.0)).odds(BigDecimal.valueOf(2.5)).betType("WIN").status("PENDING").build();
+
+        // Add a losing bet to show pool calculation: WIN pool total = 50 + 150 = 200. Net pool = 200 * 0.9 = 180. Odds = 180 / 50 = 3.6
+        User bettorUser2 = User.builder().id(21).email("bettor2@test.com").build();
+        Bet bet2 = Bet.builder().id(51).user(bettorUser2).participant(p2).amount(BigDecimal.valueOf(150.0)).odds(BigDecimal.valueOf(1.5)).betType("WIN").status("PENDING").build();
 
         Wallet ownerWallet = Wallet.builder().id(101).user(ownerUser).balance(BigDecimal.valueOf(0.0)).build();
         Wallet jockeyWallet = Wallet.builder().id(102).user(jockeyUser).balance(BigDecimal.valueOf(0.0)).build();
@@ -194,19 +202,22 @@ public class RefereeServiceTest {
                 .build();
 
         when(raceRepository.findById(5)).thenReturn(Optional.of(race));
-        when(raceParticipantRepository.findByRaceId(5)).thenReturn(List.of(p1));
+        when(raceParticipantRepository.findByRaceId(5)).thenReturn(List.of(p1, p2));
         when(raceRegistrationRepository.findFirstByRaceIdAndHorseId(5, 4)).thenReturn(Optional.of(reg));
         when(walletRepository.findByUserId(10)).thenReturn(Optional.of(ownerWallet));
         when(walletRepository.findByUserId(11)).thenReturn(Optional.of(jockeyWallet));
-        when(betRepository.findByRaceId(5)).thenReturn(List.of(bet));
+        when(betRepository.findByRaceId(5)).thenReturn(List.of(bet, bet2));
         when(walletRepository.findByUserId(20)).thenReturn(Optional.of(bettorWallet));
 
         refereeService.confirmResults(5);
 
         assertEquals("FINISHED", race.getStatus());
         assertEquals("WON", bet.getStatus());
-        assertEquals(0, BigDecimal.valueOf(125.0).compareTo(bet.getPayoutAmount())); // 50 * 2.5 = 125
-        assertEquals(0, BigDecimal.valueOf(225.0).compareTo(bettorWallet.getBalance())); // 100 + 125 = 225
+        // WIN pool calculation: WIN pool total = 50 + 150 = 200. Net pool = 200 * 0.9 = 180. Winner bet is 50. Odds = 180 / 50 = 3.6
+        assertEquals(0, BigDecimal.valueOf(180.0).compareTo(bet.getPayoutAmount())); // 50 * 3.6 = 180
+        assertEquals(0, BigDecimal.valueOf(280.0).compareTo(bettorWallet.getBalance())); // 100 + 180 = 280
+        assertEquals("LOST", bet2.getStatus());
+        assertEquals(0, BigDecimal.ZERO.compareTo(bet2.getPayoutAmount()));
 
         // Prize: First place gets 1000.0 -> 70% to owner (700) and 30% to jockey (300)
         assertEquals(0, BigDecimal.valueOf(700.0).compareTo(ownerWallet.getBalance()));
