@@ -5,6 +5,15 @@ import RaphaelHUD from './RaphaelHUD';
 import './LiveSimulation.css';
 import { audioManager } from './audioHelper';
 
+const darkenColor = (hex, percent) => {
+  let num = parseInt(hex.replace("#",""), 16),
+      amt = Math.round(2.55 * percent * 100),
+      R = (num >> 16) - amt,
+      G = (num >> 8 & 0x00FF) - amt,
+      B = (num & 0x0000FF) - amt;
+  return "#" + (0x1000000 + (R<0?0:R>255?255:R)*0x10000 + (G<0?0:G>255?255:G)*0x100 + (B<0?0:B>255?255:B)).toString(16).slice(1);
+};
+
 export default function LiveSimulation() {
   const navigate = useNavigate();
 
@@ -30,9 +39,11 @@ export default function LiveSimulation() {
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [clickedProgress, setClickedProgress] = useState(null);
   const [environment, setEnvironment] = useState('sunset');
+  const [povHorse, setPovHorse] = useState(null);
 
   const canvasRef = useRef(null);
   const horsesRef = useRef(horses);
+  const povHorseRef = useRef(null);
   const visualHorses = useRef([]);
   const confettiParticles = useRef([]);
   const shakeIntensity = useRef(0);
@@ -129,6 +140,10 @@ export default function LiveSimulation() {
   useEffect(() => {
     horsesRef.current = horses;
   }, [horses]);
+
+  useEffect(() => {
+    povHorseRef.current = povHorse;
+  }, [povHorse]);
 
   // Handle simulation timer
   useEffect(() => {
@@ -400,6 +415,33 @@ export default function LiveSimulation() {
       // Clear the canvas
       ctx.clearRect(0, 0, W, H);
 
+      const activePov = povHorseRef.current;
+      const followedVisualHorse = activePov ? visualHorses.current.find(h => h.id === activePov.id) : null;
+      const povProgress = followedVisualHorse ? followedVisualHorse.visualProgress : (activePov ? activePov.progress : 0);
+
+      const targetLaneIndex = activePov ? activePov.id - 1 : 0;
+      const laneHorizonCenterX = Vx - 18 + (targetLaneIndex + 0.5) * 36 / numLanes;
+      const laneBottomCenterX = startX + (targetLaneIndex + 0.5) * (endX - startX) / numLanes;
+
+      const getShiftX = (t) => {
+        if (!activePov) return 0;
+        const laneCenterX = laneHorizonCenterX + (laneBottomCenterX - laneHorizonCenterX) * t;
+        return Vx - laneCenterX;
+      };
+
+      const tx = (x, t) => {
+        return x + getShiftX(t);
+      };
+
+      const getPovT = (pObj) => {
+        if (!activePov) {
+          return pObj / 100;
+        }
+        const D = pObj - povProgress;
+        if (D < 0) return -1;
+        return 8.8 / (D + 10.4);
+      };
+
       // Save context for Screen Shake (Feature 10)
       ctx.save();
       if (shakeIntensity.current > 0) {
@@ -439,10 +481,10 @@ export default function LiveSimulation() {
 
         // Draw main concrete stand structure
         ctx.beginPath();
-        ctx.moveTo(topX1, topY1_val);
-        ctx.lineTo(topX2, topY2_val);
-        ctx.lineTo(bottomX2, bottomY2);
-        ctx.lineTo(bottomX1, bottomY1);
+        ctx.moveTo(tx(topX1, 0), topY1_val);
+        ctx.lineTo(tx(topX2, 0), topY2_val);
+        ctx.lineTo(tx(bottomX2, 1), bottomY2);
+        ctx.lineTo(tx(bottomX1, 1), bottomY1);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
@@ -451,15 +493,15 @@ export default function LiveSimulation() {
         ctx.fillStyle = environment === 'cyber' ? '#0f172a' : '#1e293b';
         ctx.beginPath();
         if (isLeft) {
-          ctx.moveTo(0, topY1_val - 25);
-          ctx.lineTo(Vx - 65, topY2_val - 15);
-          ctx.lineTo(Vx - 55, topY2_val);
-          ctx.lineTo(0, topY1_val);
+          ctx.moveTo(tx(0, 0), topY1_val - 25);
+          ctx.lineTo(tx(Vx - 65, 0), topY2_val - 15);
+          ctx.lineTo(tx(Vx - 55, 0), topY2_val);
+          ctx.lineTo(tx(0, 0), topY1_val);
         } else {
-          ctx.moveTo(Vx + 55, topY1_val);
-          ctx.lineTo(W, topY2_val);
-          ctx.lineTo(W, topY2_val - 25);
-          ctx.lineTo(Vx + 65, topY1_val - 15);
+          ctx.moveTo(tx(Vx + 55, 0), topY1_val);
+          ctx.lineTo(tx(W, 0), topY2_val);
+          ctx.lineTo(tx(W, 0), topY2_val - 25);
+          ctx.lineTo(tx(Vx + 65, 0), topY1_val - 15);
         }
         ctx.closePath();
         ctx.fill();
@@ -469,11 +511,11 @@ export default function LiveSimulation() {
         ctx.lineWidth = 3;
         ctx.beginPath();
         if (isLeft) {
-          ctx.moveTo(0, topY1_val);
-          ctx.lineTo(Vx - 55, topY2_val);
+          ctx.moveTo(tx(0, 0), topY1_val);
+          ctx.lineTo(tx(Vx - 55, 0), topY2_val);
         } else {
-          ctx.moveTo(Vx + 55, topY1_val);
-          ctx.lineTo(W, topY2_val);
+          ctx.moveTo(tx(Vx + 55, 0), topY1_val);
+          ctx.lineTo(tx(W, 0), topY2_val);
         }
         ctx.stroke();
 
@@ -489,15 +531,15 @@ export default function LiveSimulation() {
             const startY_tier = topY1_val + (H - topY1_val) * ratio;
             const endX_tier = (Vx - 55) + ((startX - 80) - (Vx - 55)) * ratio;
             const endY_tier = topY2_val + (H - topY2_val) * ratio;
-            ctx.moveTo(startX_tier, startY_tier);
-            ctx.lineTo(endX_tier, endY_tier);
+            ctx.moveTo(tx(startX_tier, ratio), startY_tier);
+            ctx.lineTo(tx(endX_tier, ratio), endY_tier);
           } else {
             const startX_tier = (Vx + 55) + ((endX + 80) - (Vx + 55)) * ratio;
             const startY_tier = topY1_val + (H - topY1_val) * ratio;
             const endX_tier = W;
             const endY_tier = topY2_val + (H - topY2_val) * ratio;
-            ctx.moveTo(startX_tier, startY_tier);
-            ctx.lineTo(endX_tier, endY_tier);
+            ctx.moveTo(tx(startX_tier, ratio), startY_tier);
+            ctx.lineTo(tx(endX_tier, ratio), endY_tier);
           }
           ctx.stroke();
         }
@@ -533,36 +575,38 @@ export default function LiveSimulation() {
             const seed = (tier * 100 + i) * 2.3;
             const bob = (racePhase === 'RUNNING') ? Math.sin(timeSec * 3 + seed) * (1.2 + 3.8 * ratio) : 0;
 
+            const shiftedX = tx(x, ratio);
+
             // Optional cheering arms (drawn behind/next to body)
             if (racePhase === 'RUNNING' && (i + tier) % 3 === 0) {
               ctx.strokeStyle = '#fca5a5';
               ctx.lineWidth = Math.max(1, size * 0.22);
               ctx.beginPath();
               // Left arm
-              ctx.moveTo(x - size * 0.22, y - size * 0.8 + bob);
-              ctx.lineTo(x - size * 0.55, y - size * 1.5 + bob + Math.cos(timeSec * 6 + seed) * (size * 0.4));
+              ctx.moveTo(shiftedX - size * 0.22, y - size * 0.8 + bob);
+              ctx.lineTo(shiftedX - size * 0.55, y - size * 1.5 + bob + Math.cos(timeSec * 6 + seed) * (size * 0.4));
               // Right arm
-              ctx.moveTo(x + size * 0.22, y - size * 0.8 + bob);
-              ctx.lineTo(x + size * 0.55, y - size * 1.5 + bob + Math.sin(timeSec * 6 + seed) * (size * 0.4));
+              ctx.moveTo(shiftedX + size * 0.22, y - size * 0.8 + bob);
+              ctx.lineTo(shiftedX + size * 0.55, y - size * 1.5 + bob + Math.sin(timeSec * 6 + seed) * (size * 0.4));
               ctx.stroke();
             }
 
             // Body
             ctx.fillStyle = crowdColors[(tier + i) % crowdColors.length];
             ctx.beginPath();
-            ctx.arc(x, y - size * 0.8 + bob, size * 0.45, 0, Math.PI * 2);
+            ctx.arc(shiftedX, y - size * 0.8 + bob, size * 0.45, 0, Math.PI * 2);
             ctx.fill();
             
             // Head
             ctx.fillStyle = '#fca5a5';
             ctx.beginPath();
-            ctx.arc(x, y - size * 1.25 + bob, size * 0.3, 0, Math.PI * 2);
+            ctx.arc(shiftedX, y - size * 1.25 + bob, size * 0.3, 0, Math.PI * 2);
             ctx.fill();
 
             // Cap/Hair
             ctx.fillStyle = crowdColors[(tier + i + 3) % crowdColors.length];
             ctx.beginPath();
-            ctx.arc(x, y - size * 1.4 + bob, size * 0.28, Math.PI, 0);
+            ctx.arc(shiftedX, y - size * 1.4 + bob, size * 0.28, Math.PI, 0);
             ctx.fill();
 
             // Phone camera flashes (Feature 11)
@@ -572,7 +616,7 @@ export default function LiveSimulation() {
               ctx.shadowColor = '#ffffff';
               ctx.shadowBlur = 10;
               ctx.beginPath();
-              ctx.arc(x + (Math.random() - 0.5) * 3, y - size * 1.1 + bob, 1.0 + Math.random() * 1.5, 0, Math.PI * 2);
+              ctx.arc(shiftedX + (Math.random() - 0.5) * 3, y - size * 1.1 + bob, 1.0 + Math.random() * 1.5, 0, Math.PI * 2);
               ctx.fill();
               ctx.restore();
             }
@@ -586,15 +630,15 @@ export default function LiveSimulation() {
               ctx.strokeStyle = '#94a3b8';
               ctx.lineWidth = Math.max(1, size * 0.15);
               ctx.beginPath();
-              ctx.moveTo(x, y - size * 0.8 + bob);
-              ctx.lineTo(x + size * 0.3, y - size * 0.8 - flagHeight + bob);
+              ctx.moveTo(shiftedX, y - size * 0.8 + bob);
+              ctx.lineTo(shiftedX + size * 0.3, y - size * 0.8 - flagHeight + bob);
               ctx.stroke();
               
               ctx.fillStyle = flagColor;
               ctx.beginPath();
-              ctx.moveTo(x + size * 0.3, y - size * 0.8 - flagHeight + bob);
-              ctx.lineTo(x + size * 0.3 + size * 1.0, y - size * 0.8 - flagHeight + flagWaving + bob);
-              ctx.lineTo(x + size * 0.3, y - size * 0.8 - flagHeight + size * 0.65 + bob);
+              ctx.moveTo(shiftedX + size * 0.3, y - size * 0.8 - flagHeight + bob);
+              ctx.lineTo(shiftedX + size * 0.3 + size * 1.0, y - size * 0.8 - flagHeight + flagWaving + bob);
+              ctx.lineTo(shiftedX + size * 0.3, y - size * 0.8 - flagHeight + size * 0.65 + bob);
               ctx.closePath();
               ctx.fill();
             }
@@ -766,22 +810,22 @@ export default function LiveSimulation() {
       // Draw Distant Hills silhouette
       ctx.fillStyle = environment === 'cyber' ? '#02060f' : environment === 'snow' ? '#475569' : '#0f3224';
       ctx.beginPath();
-      ctx.moveTo(0, horizonY);
-      ctx.quadraticCurveTo(W * 0.15, horizonY - 12, W * 0.35, horizonY - 4);
-      ctx.quadraticCurveTo(W * 0.55, horizonY - 18, W * 0.7, horizonY - 6);
-      ctx.quadraticCurveTo(W * 0.88, horizonY - 8, W, horizonY);
-      ctx.lineTo(W, H);
-      ctx.lineTo(0, H);
+      ctx.moveTo(tx(0, 0), horizonY);
+      ctx.quadraticCurveTo(tx(W * 0.15, 0), horizonY - 12, tx(W * 0.35, 0), horizonY - 4);
+      ctx.quadraticCurveTo(tx(W * 0.55, 0), horizonY - 18, tx(W * 0.7, 0), horizonY - 6);
+      ctx.quadraticCurveTo(tx(W * 0.88, 0), horizonY - 8, tx(W, 0), horizonY);
+      ctx.lineTo(tx(W, 1), H);
+      ctx.lineTo(tx(0, 1), H);
       ctx.closePath();
       ctx.fill();
 
       // Redraw grass overlay
       ctx.fillStyle = config.grassColor;
       ctx.beginPath();
-      ctx.moveTo(0, horizonY);
-      ctx.lineTo(W, horizonY);
-      ctx.lineTo(W, H);
-      ctx.lineTo(0, H);
+      ctx.moveTo(tx(0, 0), horizonY);
+      ctx.lineTo(tx(W, 0), horizonY);
+      ctx.lineTo(tx(W, 1), H);
+      ctx.lineTo(tx(0, 1), H);
       ctx.closePath();
       ctx.fill();
 
@@ -790,58 +834,307 @@ export default function LiveSimulation() {
       drawStands(false);
 
       // 3. Draw Track Surface
-      ctx.fillStyle = config.trackColor;
+      const trackGrad = ctx.createLinearGradient(Vx, horizonY, Vx, H);
+      if (environment === 'cyber') {
+        trackGrad.addColorStop(0, '#0a0f1d');
+        trackGrad.addColorStop(0.5, '#111827');
+        trackGrad.addColorStop(1, '#1f2937');
+      } else if (environment === 'sunset') {
+        trackGrad.addColorStop(0, '#4a2c11');
+        trackGrad.addColorStop(0.5, '#5c3a21');
+        trackGrad.addColorStop(1, '#6e473b');
+      } else if (environment === 'sunny') {
+        trackGrad.addColorStop(0, '#1c5e3b');
+        trackGrad.addColorStop(0.5, '#227c4e');
+        trackGrad.addColorStop(1, '#289760');
+      } else if (environment === 'snow') {
+        trackGrad.addColorStop(0, '#cbd5e1');
+        trackGrad.addColorStop(0.5, '#e2e8f0');
+        trackGrad.addColorStop(1, '#f1f5f9');
+      } else { // rain
+        trackGrad.addColorStop(0, '#2d221c');
+        trackGrad.addColorStop(0.5, '#382a22');
+        trackGrad.addColorStop(1, '#48352b');
+      }
+      ctx.fillStyle = trackGrad;
+      
       ctx.beginPath();
-      ctx.moveTo(Vx - 18, horizonY);
-      ctx.lineTo(Vx + 18, horizonY);
-      ctx.lineTo(endX, H);
-      ctx.lineTo(startX, H);
+      ctx.moveTo(tx(Vx - 18, 0), horizonY);
+      ctx.lineTo(tx(Vx + 18, 0), horizonY);
+      ctx.lineTo(tx(endX, 1), H);
+      ctx.lineTo(tx(startX, 1), H);
       ctx.closePath();
       ctx.fill();
 
+      // 3a. Draw Alternating 3D Track Panels (for depth effect)
+      const segments = 24;
+      for (let s = 0; s < segments; s++) {
+        const tStart = s / segments;
+        const tEnd = (s + 1) / segments;
+        
+        const yStart = horizonY + (H - horizonY) * (tStart * tStart);
+        const yEnd = horizonY + (H - horizonY) * (tEnd * tEnd);
+        
+        const xStartLeft = Vx - 18 + (startX - (Vx - 18)) * tStart;
+        const xStartRight = Vx + 18 + (endX - (Vx + 18)) * tStart;
+        
+        const xEndLeft = Vx - 18 + (startX - (Vx - 18)) * tEnd;
+        const xEndRight = Vx + 18 + (endX - (Vx + 18)) * tEnd;
+        
+        ctx.beginPath();
+        ctx.moveTo(tx(xStartLeft, tStart), yStart);
+        ctx.lineTo(tx(xStartRight, tStart), yStart);
+        ctx.lineTo(tx(xEndRight, tEnd), yEnd);
+        ctx.lineTo(tx(xEndLeft, tEnd), yEnd);
+        ctx.closePath();
+        
+        if (s % 2 === 0) {
+          ctx.fillStyle = environment === 'cyber' ? 'rgba(0, 242, 254, 0.02)' : 'rgba(255, 255, 255, 0.03)';
+        } else {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+        }
+        ctx.fill();
+      }
+
+      // 3b. Draw Rumble Strips (Kerbs) on the track shoulders (moving in sync with speed)
+      const numKerbs = 24;
+      const runningOffset = racePhase === 'RUNNING' ? speedOffset * numKerbs : 0;
+      
+      for (let s = 0; s < numKerbs; s++) {
+        const tValStart = ((s + runningOffset) % numKerbs) / numKerbs;
+        const tValEnd = (((s + 1 + runningOffset) % numKerbs) / numKerbs);
+        
+        if (tValStart > tValEnd) continue;
+        
+        const yStart = horizonY + (H - horizonY) * (tValStart * tValStart);
+        const yEnd = horizonY + (H - horizonY) * (tValEnd * tValEnd);
+        
+        // Left Kerb
+        const lxStart = Vx - 18 + (startX - (Vx - 18)) * tValStart;
+        const lxEnd = Vx - 18 + (startX - (Vx - 18)) * tValEnd;
+        const l_oxStart = lxStart - 8 * tValStart;
+        const l_oxEnd = lxEnd - 8 * tValEnd;
+        
+        // Right Kerb
+        const rxStart = Vx + 18 + (endX - (Vx + 18)) * tValStart;
+        const rxEnd = Vx + 18 + (endX - (Vx + 18)) * tValEnd;
+        const r_oxStart = rxStart + 8 * tValStart;
+        const r_oxEnd = rxEnd + 8 * tValEnd;
+        
+        let primaryColor, secondaryColor;
+        if (environment === 'cyber') {
+          primaryColor = '#ec4899'; // neon pink
+          secondaryColor = '#00f2fe'; // neon cyan
+        } else if (environment === 'snow') {
+          primaryColor = '#94a3b8'; // gray slate
+          secondaryColor = '#ffffff'; // white
+        } else {
+          primaryColor = '#ef4444'; // red
+          secondaryColor = '#ffffff'; // white
+        }
+        
+        const colorVal = Math.floor(s + runningOffset);
+        const isEven = Math.abs(colorVal) % 2 === 0;
+        const fillColor = isEven ? primaryColor : secondaryColor;
+        
+        ctx.fillStyle = fillColor;
+        
+        // Left
+        ctx.beginPath();
+        ctx.moveTo(tx(lxStart, tValStart), yStart);
+        ctx.lineTo(tx(lxEnd, tValEnd), yEnd);
+        ctx.lineTo(tx(l_oxEnd, tValEnd), yEnd);
+        ctx.lineTo(tx(l_oxStart, tValStart), yStart);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Right
+        ctx.beginPath();
+        ctx.moveTo(tx(rxStart, tValStart), yStart);
+        ctx.lineTo(tx(rxEnd, tValEnd), yEnd);
+        ctx.lineTo(tx(r_oxEnd, tValEnd), yEnd);
+        ctx.lineTo(tx(r_oxStart, tValStart), yStart);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // 3c. Cyber laser borders
+      if (environment === 'cyber') {
+        ctx.save();
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#00f2fe';
+        ctx.strokeStyle = '#00f2fe';
+        ctx.lineWidth = 3;
+        
+        ctx.beginPath();
+        ctx.moveTo(tx(Vx - 18, 0), horizonY);
+        ctx.lineTo(tx(startX, 1), H);
+        ctx.moveTo(tx(Vx + 18, 0), horizonY);
+        ctx.lineTo(tx(endX, 1), H);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 3d. Draw Sponsor Billboards on the grass sides
+      const drawBillboards = () => {
+        const boards = [
+          { side: 'left', t: 0.22, text: '🏆 SWP391', color: '#1e3a8a', neon: '#00f2fe' },
+          { side: 'right', t: 0.35, text: '⚡ OMEGA', color: '#064e3b', neon: '#10b981' },
+          { side: 'left', t: 0.52, text: '⭐ RAPHAEL', color: '#78350f', neon: '#d4af37' },
+          { side: 'right', t: 0.68, text: '🔥 TITAN', color: '#7f1d1d', neon: '#ef4444' }
+        ];
+
+        boards.forEach(b => {
+          const t1_val = getPovT(b.t * 100);
+          const t2_val = getPovT((b.t + 0.12) * 100);
+          if (t1_val < 0 || t2_val < 0) return;
+          
+          const y1 = horizonY + (H - horizonY) * (t1_val * t1_val);
+          const y2 = horizonY + (H - horizonY) * (t2_val * t2_val);
+          
+          let x1, x2;
+          if (b.side === 'left') {
+            x1 = Vx - 18 + (startX - (Vx - 18)) * t1_val;
+            x2 = Vx - 18 + (startX - (Vx - 18)) * t2_val;
+          } else {
+            x1 = Vx + 18 + (endX - (Vx + 18)) * t1_val;
+            x2 = Vx + 18 + (endX - (Vx + 18)) * t2_val;
+          }
+          
+          const offsetMultiplier = b.side === 'left' ? -1 : 1;
+          const bx1 = x1 + offsetMultiplier * 15 * t1_val;
+          const bx2 = x2 + offsetMultiplier * 15 * t2_val;
+          
+          const h1 = 28 * t1_val;
+          const h2 = 28 * t2_val;
+          
+          const ty1 = y1 - h1;
+          const ty2 = y2 - h2;
+          
+          const bx1_shifted = tx(bx1, t1_val);
+          const bx2_shifted = tx(bx2, t2_val);
+
+          // Draw legs
+          ctx.strokeStyle = '#475569';
+          ctx.lineWidth = Math.max(1, 2 * t1_val);
+          ctx.beginPath();
+          ctx.moveTo(bx1_shifted, y1);
+          ctx.lineTo(bx1_shifted, y1 - h1 * 0.4);
+          ctx.moveTo(bx2_shifted, y2);
+          ctx.lineTo(bx2_shifted, y2 - h2 * 0.4);
+          ctx.stroke();
+
+          // Draw board body
+          ctx.save();
+          if (environment === 'cyber') {
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = b.neon;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.strokeStyle = b.neon;
+          } else {
+            ctx.fillStyle = b.color;
+            ctx.strokeStyle = '#ffffff';
+          }
+          ctx.lineWidth = Math.max(1, 2 * t1_val);
+          
+          ctx.beginPath();
+          ctx.moveTo(bx1_shifted, y1 - h1 * 0.3);
+          ctx.lineTo(bx2_shifted, y2 - h2 * 0.3);
+          ctx.lineTo(bx2_shifted, ty2);
+          ctx.lineTo(bx1_shifted, ty1);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          
+          // Sponsor Text
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `bold ${Math.max(6, Math.floor(11 * t1_val))}px 'Inter', sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          const cx = (bx1_shifted + bx2_shifted) / 2;
+          const cy = ((y1 - h1 * 0.3) + ty1 + (y2 - h2 * 0.3) + ty2) / 4;
+          const angle = Math.atan2((y2 - h2 * 0.3) - (y1 - h1 * 0.3), bx2_shifted - bx1_shifted);
+          
+          ctx.translate(cx, cy);
+          ctx.rotate(angle);
+          ctx.fillText(b.text, 0, 0);
+          ctx.restore();
+        });
+      };
+      drawBillboards();
+
       // 4. Draw lane dividing chalk lines
       ctx.strokeStyle = config.laneLineColor;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = environment === 'cyber' ? 2 : 1.5;
+      ctx.save();
+      if (environment === 'cyber') {
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'rgba(0, 242, 254, 0.3)';
+      }
       for (let i = 1; i < numLanes; i++) {
         const bottomDividerX = startX + i * (endX - startX) / numLanes;
         const topDividerX = Vx - 18 + i * 36 / numLanes;
         ctx.beginPath();
-        ctx.moveTo(topDividerX, horizonY);
-        ctx.lineTo(bottomDividerX, H);
+        ctx.moveTo(tx(topDividerX, 0), horizonY);
+        ctx.lineTo(tx(bottomDividerX, 1), H);
         ctx.stroke();
       }
+      ctx.restore();
 
-      // 5. Draw 3D Fences/Rails
+      // 5. Draw 3D Fences/Rails (Double Rail design)
       ctx.strokeStyle = config.fenceColor;
       ctx.lineWidth = 2.5;
+      ctx.save();
+      if (environment === 'cyber') {
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = config.fenceColor;
+      }
 
-      // Horizontal rails
+      // Left Fences (Top & Middle rails)
       ctx.beginPath();
-      ctx.moveTo(Vx - 18, horizonY);
-      ctx.lineTo(startX, H - 40);
+      ctx.moveTo(tx(Vx - 18, 0), horizonY);
+      ctx.lineTo(tx(startX, 1), H - 40);
+      ctx.moveTo(tx(Vx - 18, 0), horizonY);
+      ctx.lineTo(tx(startX, 1), H - 20);
       ctx.stroke();
 
+      // Right Fences (Top & Middle rails)
       ctx.beginPath();
-      ctx.moveTo(Vx + 18, horizonY);
-      ctx.lineTo(endX, H - 40);
+      ctx.moveTo(tx(Vx + 18, 0), horizonY);
+      ctx.lineTo(tx(endX, 1), H - 40);
+      ctx.moveTo(tx(Vx + 18, 0), horizonY);
+      ctx.lineTo(tx(endX, 1), H - 20);
       ctx.stroke();
+      ctx.restore();
 
-      // Vertical posts
-      ctx.fillStyle = config.postColor;
-      const numPosts = 10;
+      // Vertical posts with gradients for cylindrical look
+      const numPosts = 12;
       for (let k = 0; k <= numPosts; k++) {
-        const val = k / numPosts;
+        const val = getPovT((k / numPosts) * 100);
+        if (val < 0) continue;
         const t = val * val;
         const y = horizonY + (H - horizonY) * t;
         const postH = 40 * t;
+        const postW = Math.max(1, 4 * t);
 
         // Left post
         const lx = Vx - 18 + (startX - (Vx - 18)) * t;
-        ctx.fillRect(lx - 1.5 * t, y - postH, 3 * t, postH);
+        const leftGrad = ctx.createLinearGradient(lx - postW/2, y, lx + postW/2, y);
+        leftGrad.addColorStop(0, config.postColor);
+        leftGrad.addColorStop(0.5, '#ffffff');
+        leftGrad.addColorStop(1, config.postColor);
+        ctx.fillStyle = environment === 'cyber' ? config.postColor : leftGrad;
+        ctx.fillRect(tx(lx, val) - postW/2, y - postH, postW, postH);
 
         // Right post
         const rx = Vx + 18 + (endX - (Vx + 18)) * t;
-        ctx.fillRect(rx - 1.5 * t, y - postH, 3 * t, postH);
+        const rightGrad = ctx.createLinearGradient(rx - postW/2, y, rx + postW/2, y);
+        rightGrad.addColorStop(0, config.postColor);
+        rightGrad.addColorStop(0.5, '#ffffff');
+        rightGrad.addColorStop(1, config.postColor);
+        ctx.fillStyle = environment === 'cyber' ? config.postColor : rightGrad;
+        ctx.fillRect(tx(rx, val) - postW/2, y - postH, postW, postH);
       }
 
       // 6. Draw Horizontal dirt speed texture
@@ -859,101 +1152,115 @@ export default function LiveSimulation() {
         const rightLimitX = Vx + 18 + (endX - (Vx + 18)) * t;
 
         ctx.beginPath();
-        ctx.moveTo(leftLimitX, lineY);
-        ctx.lineTo(rightLimitX, lineY);
+        ctx.moveTo(tx(leftLimitX, val), lineY);
+        ctx.lineTo(tx(rightLimitX, val), lineY);
         ctx.stroke();
       }
 
       // 7. Draw Checkered Finish Line Banner & Posts at t = 0.92
-      const finishT = 0.92;
-      const finishY = horizonY + (H - horizonY) * (finishT * finishT);
-      const finishLeftX = Vx - 18 + (startX - (Vx - 18)) * finishT;
-      const finishRightX = Vx + 18 + (endX - (Vx + 18)) * finishT;
+      const finishVal = getPovT(92);
+      if (finishVal >= 0) {
+        const finishT = finishVal;
+        const finishT_sq = finishVal * finishVal;
+        const finishY = horizonY + (H - horizonY) * finishT_sq;
+        const finishLeftX = Vx - 18 + (startX - (Vx - 18)) * finishT_sq;
+        const finishRightX = Vx + 18 + (endX - (Vx + 18)) * finishT_sq;
+        const finishLeftX_shifted = tx(finishLeftX, finishVal);
+        const finishRightX_shifted = tx(finishRightX, finishVal);
 
-      ctx.save();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 8;
-      ctx.beginPath();
-      ctx.moveTo(finishLeftX, finishY);
-      ctx.lineTo(finishRightX, finishY);
-      ctx.stroke();
+        ctx.save();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = Math.max(2, 8 * finishVal);
+        ctx.beginPath();
+        ctx.moveTo(finishLeftX_shifted, finishY);
+        ctx.lineTo(finishRightX_shifted, finishY);
+        ctx.stroke();
 
-      ctx.strokeStyle = '#000000';
-      ctx.setLineDash([8, 8]);
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.moveTo(finishLeftX, finishY);
-      ctx.lineTo(finishRightX, finishY);
-      ctx.stroke();
-      ctx.restore();
+        ctx.strokeStyle = '#000000';
+        ctx.setLineDash([Math.max(2, 8 * finishVal), Math.max(2, 8 * finishVal)]);
+        ctx.lineWidth = Math.max(1.5, 6 * finishVal);
+        ctx.beginPath();
+        ctx.moveTo(finishLeftX_shifted, finishY);
+        ctx.lineTo(finishRightX_shifted, finishY);
+        ctx.stroke();
+        ctx.restore();
 
-      // Draw Finish Posts
-      const finishPostH = 65;
-      ctx.fillStyle = '#b91c1c';
+        // Draw Finish Posts
+        const finishPostH = 65 * finishVal;
+        ctx.fillStyle = '#b91c1c';
 
-      ctx.fillRect(finishLeftX - 4, finishY - finishPostH, 8, finishPostH);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(finishLeftX - 4, finishY - finishPostH + 15, 8, 12);
-      ctx.fillRect(finishLeftX - 4, finishY - finishPostH + 40, 8, 12);
+        ctx.fillRect(finishLeftX_shifted - 4 * finishVal, finishY - finishPostH, 8 * finishVal, finishPostH);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(finishLeftX_shifted - 4 * finishVal, finishY - finishPostH + 15 * finishVal, 8 * finishVal, 12 * finishVal);
+        ctx.fillRect(finishLeftX_shifted - 4 * finishVal, finishY - finishPostH + 40 * finishVal, 8 * finishVal, 12 * finishVal);
 
-      ctx.fillStyle = '#b91c1c';
-      ctx.fillRect(finishRightX - 4, finishY - finishPostH, 8, finishPostH);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(finishRightX - 4, finishY - finishPostH + 15, 8, 12);
-      ctx.fillRect(finishRightX - 4, finishY - finishPostH + 40, 8, 12);
+        ctx.fillStyle = '#b91c1c';
+        ctx.fillRect(finishRightX_shifted - 4 * finishVal, finishY - finishPostH, 8 * finishVal, finishPostH);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(finishRightX_shifted - 4 * finishVal, finishY - finishPostH + 15 * finishVal, 8 * finishVal, 12 * finishVal);
+        ctx.fillRect(finishRightX_shifted - 4 * finishVal, finishY - finishPostH + 40 * finishVal, 8 * finishVal, 12 * finishVal);
 
-      // overhead banner
-      ctx.fillStyle = '#0f3224';
-      ctx.strokeStyle = '#d4af37';
-      ctx.lineWidth = 2;
-      const bannerW = finishRightX - finishLeftX - 40;
-      const bannerH = 18;
-      const bannerX = finishLeftX + 20;
-      const bannerY = finishY - finishPostH + 5;
+        // overhead banner
+        ctx.fillStyle = '#0f3224';
+        ctx.strokeStyle = '#d4af37';
+        ctx.lineWidth = Math.max(1, 2 * finishVal);
+        const bannerW = finishRightX_shifted - finishLeftX_shifted - 40 * finishVal;
+        const bannerH = 18 * finishVal;
+        const bannerX = finishLeftX_shifted + 20 * finishVal;
+        const bannerY = finishY - finishPostH + 5 * finishVal;
 
-      ctx.fillRect(bannerX, bannerY, bannerW, bannerH);
-      ctx.strokeRect(bannerX, bannerY, bannerW, bannerH);
+        if (bannerW > 0 && bannerH > 0) {
+          ctx.fillRect(bannerX, bannerY, bannerW, bannerH);
+          ctx.strokeRect(bannerX, bannerY, bannerW, bannerH);
 
-      ctx.fillStyle = '#d4af37';
-      ctx.font = "bold 9px 'Inter', sans-serif";
-      ctx.textAlign = 'center';
-      ctx.fillText("FINISH", Vx, bannerY + 12);
+          ctx.fillStyle = '#d4af37';
+          ctx.font = `bold ${Math.max(5, 9 * finishVal)}px 'Inter', sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText("FINISH", (finishLeftX_shifted + finishRightX_shifted) / 2, bannerY + 12 * finishVal);
+        }
+      }
 
       // Starting Gates (Feature 4)
-      if (racePhase === 'PRE_RACE' || racePhase === 'RUNNING') {
-        const t_gate = 0.08;
-        const y_gate = horizonY + (H - horizonY) * (t_gate * t_gate);
+      const gateVal = getPovT(0);
+      if (gateVal >= 0) {
+        const gateT_sq = gateVal * gateVal;
+        const y_gate = horizonY + (H - horizonY) * gateT_sq;
         
         // Horizontal structure
-        const gateLeftX = Vx - 18 + (startX - (Vx - 18)) * t_gate;
-        const gateRightX = Vx + 18 + (endX - (Vx + 18)) * t_gate;
+        const gateLeftX = Vx - 18 + (startX - (Vx - 18)) * gateT_sq;
+        const gateRightX = Vx + 18 + (endX - (Vx + 18)) * gateT_sq;
+        const gateLeftX_shifted = tx(gateLeftX, gateVal);
+        const gateRightX_shifted = tx(gateRightX, gateVal);
+        
         ctx.strokeStyle = environment === 'cyber' ? '#00f2fe' : '#78350f';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = Math.max(1, 2.5 * gateVal);
         ctx.beginPath();
-        ctx.moveTo(gateLeftX, y_gate - 12);
-        ctx.lineTo(gateRightX, y_gate - 12);
+        ctx.moveTo(gateLeftX_shifted, y_gate - 12 * gateVal);
+        ctx.lineTo(gateRightX_shifted, y_gate - 12 * gateVal);
         ctx.stroke();
 
         horsesRef.current.forEach((horse, laneIndex) => {
           const laneStartX_left = startX + laneIndex * (endX - startX) / numLanes;
           const laneStartX_right = startX + (laneIndex + 1) * (endX - startX) / numLanes;
-          const xL = Vx + (laneStartX_left - Vx) * t_gate;
-          const xR = Vx + (laneStartX_right - Vx) * t_gate;
-          const gateWidth = xR - xL;
+          const xL = Vx + (laneStartX_left - Vx) * gateT_sq;
+          const xR = Vx + (laneStartX_right - Vx) * gateT_sq;
+          const xL_shifted = tx(xL, gateVal);
+          const xR_shifted = tx(xR, gateVal);
+          const gateWidth = xR_shifted - xL_shifted;
 
           // Vertical gate post
           ctx.fillStyle = environment === 'cyber' ? '#00f2fe' : '#a1a1aa';
-          ctx.fillRect(xL - 1, y_gate - 12, 2, 12);
+          ctx.fillRect(xL_shifted - 1, y_gate - 12 * gateVal, 2, 12 * gateVal);
           if (laneIndex === numLanes - 1) {
-            ctx.fillRect(xR - 1, y_gate - 12, 2, 12);
+            ctx.fillRect(xR_shifted - 1, y_gate - 12 * gateVal, 2, 12 * gateVal);
           }
 
           // Gate Barrier Door
           const openPct = racePhase === 'RUNNING' ? Math.min(1, horse.progress / 5) : 0;
           ctx.save();
           ctx.strokeStyle = horse.color;
-          ctx.lineWidth = 1.5;
-          ctx.translate(xL, y_gate - 3);
+          ctx.lineWidth = Math.max(1, 1.5 * gateVal);
+          ctx.translate(xL_shifted, y_gate - 3 * gateVal);
 
           if (openPct < 1) {
             const angle = -openPct * (Math.PI / 2);
@@ -964,18 +1271,18 @@ export default function LiveSimulation() {
             ctx.stroke();
             // diagonal cross on barrier
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-            ctx.lineWidth = 0.8;
+            ctx.lineWidth = Math.max(0.5, 0.8 * gateVal);
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.lineTo(gateWidth, -3);
-            ctx.moveTo(0, -3);
+            ctx.lineTo(gateWidth, -3 * gateVal);
+            ctx.moveTo(0, -3 * gateVal);
             ctx.lineTo(gateWidth, 0);
             ctx.stroke();
           } else {
             // fully open: drawn up vertically
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.lineTo(0, -9);
+            ctx.lineTo(0, -9 * gateVal);
             ctx.stroke();
           }
           ctx.restore();
@@ -986,12 +1293,15 @@ export default function LiveSimulation() {
       horsesRef.current.forEach((horse, laneIndex) => {
         if (horse.flaggedPositions && horse.flaggedPositions.length > 0) {
           horse.flaggedPositions.forEach(pos => {
-            const posT = pos / 100;
-            const y = horizonY + (H - horizonY) * (posT * posT);
+            const val = getPovT(pos);
+            if (val < 0) return;
+            const t = val * val;
+            const y = horizonY + (H - horizonY) * t;
             const laneStartX = startX + (laneIndex + 0.5) * (endX - startX) / numLanes;
-            const x = Vx + (laneStartX - Vx) * posT;
+            const x = Vx + (laneStartX - Vx) * t;
+            const x_shifted = tx(x, val);
 
-            const flagScale = posT;
+            const flagScale = val;
             const flagHeight = 40 * flagScale;
 
             ctx.save();
@@ -1001,15 +1311,15 @@ export default function LiveSimulation() {
             ctx.lineWidth = 3 * flagScale;
 
             ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x, y - flagHeight);
+            ctx.moveTo(x_shifted, y);
+            ctx.lineTo(x_shifted, y - flagHeight);
             ctx.stroke();
 
             ctx.fillStyle = '#ef4444';
             ctx.beginPath();
-            ctx.moveTo(x, y - flagHeight);
-            ctx.lineTo(x + 12 * flagScale, y - flagHeight + 4 * flagScale);
-            ctx.lineTo(x, y - flagHeight + 8 * flagScale);
+            ctx.moveTo(x_shifted, y - flagHeight);
+            ctx.lineTo(x_shifted + 12 * flagScale, y - flagHeight + 4 * flagScale);
+            ctx.lineTo(x_shifted, y - flagHeight + 8 * flagScale);
             ctx.closePath();
             ctx.fill();
             ctx.restore();
@@ -1036,7 +1346,15 @@ export default function LiveSimulation() {
             vHorse.visualProgress = targetProgress;
           }
 
-          const t = vHorse.visualProgress / 100;
+          if (activePov && vHorse.id === activePov.id) {
+            // This is the active POV horse. Do not draw it on the track.
+            return;
+          }
+
+          const val = getPovT(vHorse.visualProgress);
+          if (val < 0) return; // behind us
+          
+          const t = val;
           const laneStartX = startX + (laneIndex + 0.5) * (endX - startX) / numLanes;
           const horseX = Vx + (laneStartX - Vx) * t;
           const baseHorseY = horizonY + (H - horizonY) * (t * t);
@@ -1049,10 +1367,11 @@ export default function LiveSimulation() {
           const size = 16 + 42 * t;
 
           const horseColor = vHorse.color || '#00f2fe';
+          const horseX_shifted = tx(horseX, t);
 
           if (!vHorse.trail) vHorse.trail = [];
           if (racePhase === 'RUNNING' && vHorse.visualProgress < 100) {
-            vHorse.trail.push({ x: horseX, y: horseY, size, alpha: 0.5 });
+            vHorse.trail.push({ x: horseX_shifted, y: horseY, size, alpha: 0.5 });
             if (vHorse.trail.length > 10) vHorse.trail.shift();
           } else {
             if (vHorse.trail.length > 0) vHorse.trail.shift();
@@ -1061,7 +1380,7 @@ export default function LiveSimulation() {
           // Elliptical ground shadow
           ctx.fillStyle = `rgba(0, 0, 0, ${0.45 * t})`;
           ctx.beginPath();
-          ctx.ellipse(horseX, baseHorseY + 2 * t, size * 0.45, size * 0.16, 0, 0, Math.PI * 2);
+          ctx.ellipse(horseX_shifted, baseHorseY + 2 * t, size * 0.45, size * 0.16, 0, 0, Math.PI * 2);
           ctx.fill();
 
           // Speed Trails & Wind Streaks (Feature 8)
@@ -1071,10 +1390,10 @@ export default function LiveSimulation() {
             ctx.lineWidth = 1.2 * t;
             // Draw wind streak lines extending backwards
             ctx.beginPath();
-            ctx.moveTo(horseX, horseY - size * 0.1);
-            ctx.lineTo(horseX - size * 1.5, horseY - size * 0.1);
-            ctx.moveTo(horseX - size * 0.2, horseY + size * 0.15);
-            ctx.lineTo(horseX - size * 1.8, horseY + size * 0.15);
+            ctx.moveTo(horseX_shifted, horseY - size * 0.1);
+            ctx.lineTo(horseX_shifted - size * 1.5, horseY - size * 0.1);
+            ctx.moveTo(horseX_shifted - size * 0.2, horseY + size * 0.15);
+            ctx.lineTo(horseX_shifted - size * 1.8, horseY + size * 0.15);
             ctx.stroke();
 
             // Cyber spark particles
@@ -1082,7 +1401,7 @@ export default function LiveSimulation() {
               ctx.fillStyle = horseColor;
               for (let p = 0; p < 2; p++) {
                 ctx.fillRect(
-                  horseX - (size * 0.45) - Math.random() * 25 * t,
+                  horseX_shifted - (size * 0.45) - Math.random() * 25 * t,
                   horseY + (Math.random() - 0.5) * 12 * t,
                   2, 2
                 );
@@ -1111,7 +1430,7 @@ export default function LiveSimulation() {
             for (let p = 0; p < 2; p++) {
               ctx.beginPath();
               ctx.arc(
-                horseX - (size * 0.45) + (Math.random() - 0.5) * 8,
+                horseX_shifted - (size * 0.45) + (Math.random() - 0.5) * 8,
                 baseHorseY + 2 * t + (Math.random() - 0.5) * 4,
                 (1.5 + Math.random() * 3.5) * t,
                 0,
@@ -1129,14 +1448,14 @@ export default function LiveSimulation() {
           ctx.lineWidth = 2.5;
 
           ctx.beginPath();
-          ctx.arc(horseX, horseY, size * 0.5, 0, Math.PI * 2);
+          ctx.arc(horseX_shifted, horseY, size * 0.5, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
 
           // Inner fill
           ctx.fillStyle = '#1e293b';
           ctx.beginPath();
-          ctx.arc(horseX, horseY, size * 0.48, 0, Math.PI * 2);
+          ctx.arc(horseX_shifted, horseY, size * 0.48, 0, Math.PI * 2);
           ctx.fill();
 
           // Emoji
@@ -1144,7 +1463,7 @@ export default function LiveSimulation() {
           ctx.font = `${Math.round(size * 0.55)}px Arial`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('🏇', horseX, horseY);
+          ctx.fillText('🏇', horseX_shifted, horseY);
 
           // Nametag with Speedometer (Feature 5)
           if (size > 22) {
@@ -1154,7 +1473,7 @@ export default function LiveSimulation() {
             ctx.lineWidth = 1;
             const labelW = size * 1.6;
             const labelH = size * 0.4;
-            const lx = horseX - labelW * 0.5;
+            const lx = horseX_shifted - labelW * 0.5;
             const ly = horseY - size * 0.65 - labelH;
 
             ctx.fillRect(lx, ly, labelW, labelH);
@@ -1163,7 +1482,7 @@ export default function LiveSimulation() {
             ctx.fillStyle = '#ffffff';
             ctx.font = `bold ${Math.max(9, Math.round(size * 0.22))}px 'Inter', sans-serif`;
             const speedText = racePhase === 'RUNNING' && speedVal > 0 ? ` (${speedVal}km/h)` : '';
-            ctx.fillText(`H${vHorse.id}: ${vHorse.name.split(' ')[0]}${speedText}`, horseX, ly + labelH * 0.55);
+            ctx.fillText(`H${vHorse.id}: ${vHorse.name.split(' ')[0]}${speedText}`, horseX_shifted, ly + labelH * 0.55);
             ctx.restore();
           }
 
@@ -1188,7 +1507,7 @@ export default function LiveSimulation() {
               const textWidth = ctx.measureText(vHorse.bubbleText).width;
               const bubbleW = textWidth + 10;
               const bubbleH = 15;
-              const bx = horseX - bubbleW / 2;
+              const bx = horseX_shifted - bubbleW / 2;
               const by = horseY - size * 0.65 - bubbleH - 22; // positioned higher than nametag
 
               ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
@@ -1201,9 +1520,9 @@ export default function LiveSimulation() {
 
               // downward pointer
               ctx.beginPath();
-              ctx.moveTo(horseX - 3, by + bubbleH);
-              ctx.lineTo(horseX + 3, by + bubbleH);
-              ctx.lineTo(horseX, by + bubbleH + 3.5);
+              ctx.moveTo(horseX_shifted - 3, by + bubbleH);
+              ctx.lineTo(horseX_shifted + 3, by + bubbleH);
+              ctx.lineTo(horseX_shifted, by + bubbleH + 3.5);
               ctx.closePath();
               ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
               ctx.fill();
@@ -1213,7 +1532,7 @@ export default function LiveSimulation() {
               ctx.fillStyle = '#0f172a';
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
-              ctx.fillText(vHorse.bubbleText, horseX, by + bubbleH / 2);
+              ctx.fillText(vHorse.bubbleText, horseX_shifted, by + bubbleH / 2);
               ctx.restore();
             }
           }
@@ -1221,8 +1540,10 @@ export default function LiveSimulation() {
           // Draw Flags
           if (stateHorse && stateHorse.flaggedPositions && stateHorse.flaggedPositions.length > 0) {
             stateHorse.flaggedPositions.forEach(flagProg => {
-              const ft = flagProg / 100;
+              const ft = getPovT(flagProg);
+              if (ft < 0) return;
               const flagX = Vx + (laneStartX - Vx) * ft;
+              const flagX_shifted = tx(flagX, ft);
               const flagY = horizonY + (H - horizonY) * (ft * ft);
 
               ctx.save();
@@ -1232,7 +1553,7 @@ export default function LiveSimulation() {
               ctx.textBaseline = 'bottom';
               ctx.shadowColor = '#000';
               ctx.shadowBlur = 4;
-              ctx.fillText('🚩', flagX, flagY - 5);
+              ctx.fillText('🚩', flagX_shifted, flagY - 5);
               ctx.restore();
             });
           }
@@ -1645,6 +1966,175 @@ export default function LiveSimulation() {
         });
       }
 
+      // 10. Draw Jockey POV Cockpit Overlay (Horse Head, Neck, Ears, Reins & Gloves)
+      if (activePov) {
+        ctx.save();
+        
+        // Dynamic gallop bobbing effect based on the horse's speed/stride
+        const targetLaneIndex = activePov.id - 1;
+        const povGallopFreq = 0.02 + 0.03 * (targetLaneIndex % 3);
+        const bobY = (racePhase === 'RUNNING') && povProgress < 100
+          ? Math.sin(Date.now() * povGallopFreq) * 8
+          : 0;
+        const bobX = (racePhase === 'RUNNING') && povProgress < 100
+          ? Math.cos(Date.now() * povGallopFreq) * 2.5
+          : 0;
+
+        const cx = W / 2 + bobX;
+        const cy = H + bobY;
+
+        const mainColor = activePov.color || '#654321';
+
+        // Shadow under the horse neck for depth
+        const ambientGrad = ctx.createRadialGradient(cx, cy - 50, 20, cx, cy - 50, 150);
+        ambientGrad.addColorStop(0, 'rgba(0,0,0,0.35)');
+        ambientGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = ambientGrad;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 120, 60, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw Neck
+        const neckGrad = ctx.createLinearGradient(cx, cy, cx, cy - 110);
+        neckGrad.addColorStop(0, 'rgba(0, 0, 0, 0.45)');
+        neckGrad.addColorStop(0.3, mainColor);
+        neckGrad.addColorStop(1, mainColor);
+
+        ctx.fillStyle = neckGrad;
+        ctx.beginPath();
+        ctx.moveTo(cx - 45, cy + 10);
+        ctx.quadraticCurveTo(cx - 30, cy - 60, cx - 18, cy - 110);
+        ctx.lineTo(cx + 18, cy - 110);
+        ctx.quadraticCurveTo(cx + 30, cy - 60, cx + 45, cy + 10);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw Mane (Bờm ngựa) blowing in the wind
+        ctx.fillStyle = '#1e293b'; // dark mane
+        const windShift = (racePhase === 'RUNNING') ? Math.sin(Date.now() * 0.05) * 4 : 0;
+        ctx.beginPath();
+        ctx.moveTo(cx - 3, cy - 110);
+        for (let i = 0; i < 6; i++) {
+          const my = cy - 100 + i * 16;
+          const mx = cx + (i % 2 === 0 ? -4 : 4) + windShift;
+          ctx.lineTo(mx, my);
+          ctx.lineTo(cx - 2, my + 8);
+        }
+        ctx.lineTo(cx - 15, cy);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw Head (Back of Head / Snout)
+        ctx.fillStyle = mainColor;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy - 110, 22, 28, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Darker snout overlay at the top (extends down/forward)
+        const snoutGrad = ctx.createLinearGradient(cx, cy - 110, cx, cy - 85);
+        snoutGrad.addColorStop(0, mainColor);
+        snoutGrad.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
+        ctx.fillStyle = snoutGrad;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy - 98, 16, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ears twitching effect for a more lifelike feel
+        const leftEarTwitch = Math.sin(Date.now() * 0.003) * 0.08;
+        const rightEarTwitch = Math.cos(Date.now() * 0.004) * 0.08;
+
+        // Left Ear
+        ctx.save();
+        ctx.translate(cx - 13, cy - 128);
+        ctx.rotate(leftEarTwitch);
+        ctx.fillStyle = mainColor;
+        ctx.beginPath();
+        ctx.moveTo(-7, 10);
+        ctx.quadraticCurveTo(-11, -12, 0, -25);
+        ctx.quadraticCurveTo(8, -12, 5, 10);
+        ctx.closePath();
+        ctx.fill();
+        // Inner Left Ear (Pinkish details)
+        ctx.fillStyle = '#fda4af';
+        ctx.beginPath();
+        ctx.moveTo(-3, 6);
+        ctx.quadraticCurveTo(-6, -6, 0, -18);
+        ctx.quadraticCurveTo(4, -6, 2, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Right Ear
+        ctx.save();
+        ctx.translate(cx + 13, cy - 128);
+        ctx.rotate(rightEarTwitch);
+        ctx.fillStyle = mainColor;
+        ctx.beginPath();
+        ctx.moveTo(-5, 10);
+        ctx.quadraticCurveTo(-8, -12, 0, -25);
+        ctx.quadraticCurveTo(11, -12, 7, 10);
+        ctx.closePath();
+        ctx.fill();
+        // Inner Right Ear (Pinkish details)
+        ctx.fillStyle = '#fda4af';
+        ctx.beginPath();
+        ctx.moveTo(-2, 6);
+        ctx.quadraticCurveTo(-4, -6, 0, -18);
+        ctx.quadraticCurveTo(6, -6, 3, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Reins (Dây cương)
+        ctx.strokeStyle = '#2d1e10'; // Leather brown
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        
+        // Left Rein
+        ctx.beginPath();
+        ctx.moveTo(cx - 15, cy - 98);
+        ctx.bezierCurveTo(cx - 60, cy - 70, cx - 180, cy - 20, cx - 160, cy);
+        ctx.stroke();
+
+        // Right Rein
+        ctx.beginPath();
+        ctx.moveTo(cx + 15, cy - 98);
+        ctx.bezierCurveTo(cx + 60, cy - 70, cx + 180, cy - 20, cx + 160, cy);
+        ctx.stroke();
+
+        // Hands / Gloves holding reins at the bottom corners
+        const drawGlove = (gx, gy, isLeft) => {
+          ctx.save();
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = 'rgba(0,0,0,0.4)';
+          
+          // Glove body (colored cyber/slate depending on the theme)
+          ctx.fillStyle = environment === 'cyber' ? '#00f2fe' : '#475569';
+          ctx.beginPath();
+          ctx.arc(gx, gy, 14, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Sleeve cuff
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(gx - 16, gy, 32, 12);
+          
+          // Gold knuckle guards/protectors
+          ctx.fillStyle = '#d4af37';
+          ctx.beginPath();
+          ctx.arc(gx + (isLeft ? 4 : -4), gy - 4, 6, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.restore();
+        };
+
+        if (racePhase === 'RUNNING' || racePhase === 'FINISHED' || racePhase === 'PRE_RACE') {
+          drawGlove(cx - 110, H - 15, true);
+          drawGlove(cx + 110, H - 15, false);
+        }
+
+        ctx.restore();
+      }
+
       // Restore screen shake context (Feature 10)
       ctx.restore();
 
@@ -1726,6 +2216,7 @@ export default function LiveSimulation() {
     commentaryText.current = "Hệ thống đang chuẩn bị cuộc đua...";
     fireworks.current = [];
     crowdBubbles.current = [];
+    setPovHorse(null);
 
     if (racePhase === 'FINISHED') {
       // Refresh real data if any
@@ -1792,6 +2283,7 @@ export default function LiveSimulation() {
 
   const handleStop = () => {
     if (racePhase === 'RUNNING') setRacePhase('IDLE');
+    setPovHorse(null);
   };
 
   const handleFlagClick = (horse) => {
@@ -1803,6 +2295,8 @@ export default function LiveSimulation() {
   const handleCanvasClick = (e) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    if (povHorse) return; // Disable direct canvas clicks in POV mode to avoid coordinate mapping skew bugs
 
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -1881,6 +2375,10 @@ export default function LiveSimulation() {
         }
         return h;
       }));
+
+      if (isBlacklisted && povHorse?.id === selectedHorseForFlag.id) {
+        setPovHorse(null);
+      }
 
       // Update commentary immediately for flag/violation
       if (isBlacklisted) {
@@ -2012,6 +2510,17 @@ export default function LiveSimulation() {
                 onClick={handleCanvasClick}
                 style={{ cursor: 'crosshair' }}
               />
+              {povHorse && (
+                <div className="pov-exit-hud">
+                  <div className="d-flex align-items-center gap-2">
+                    <span className="material-symbols-outlined text-warning animate-pulse">videocam</span>
+                    <span>Jockey POV: <strong>{povHorse.name}</strong> (Lane {povHorse.id})</span>
+                  </div>
+                  <button className="pov-exit-btn" onClick={() => setPovHorse(null)}>
+                    Exit POV
+                  </button>
+                </div>
+              )}
             </div>
             <div className="text-center mt-3 text-secondary small">
               💡 <span className="text-info">Tip:</span> Click directly on a track lane inside the simulator to quickly flag a violation at that specific progress position.
@@ -2053,6 +2562,23 @@ export default function LiveSimulation() {
                         </span>
                       )}
                       <div className="leaderboard-progress">{Math.round(horse.progress)}%</div>
+                      {racePhase === 'RUNNING' && !horse.isDisqualified && (
+                        <button
+                          className={`btn-pov-action me-1 ${povHorse?.id === horse.id ? 'active' : ''}`}
+                          onClick={() => {
+                            if (povHorse?.id === horse.id) {
+                              setPovHorse(null);
+                            } else {
+                              setPovHorse(horse);
+                            }
+                          }}
+                          title={povHorse?.id === horse.id ? "Exit POV" : "Jockey POV"}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                            {povHorse?.id === horse.id ? 'videocam_off' : 'videocam'}
+                          </span>
+                        </button>
+                      )}
                       <button
                         className="btn-flag-action"
                         onClick={() => handleFlagClick(horse)}

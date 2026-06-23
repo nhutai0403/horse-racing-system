@@ -14,34 +14,31 @@ const INSPECTION_KEY = 'referee_inspection_horses';
 const seedInitialData = () => {
   if (!localStorage.getItem(COMPLETED_RACES_KEY)) {
     localStorage.setItem(COMPLETED_RACES_KEY, JSON.stringify([
-      { id: 101, raceName: 'Qualifier Round 1', date: '2026-07-01', time: '14:00', status: 'FINISHED' },
-      { id: 102, raceName: 'Qualifier Round 2', date: '2026-07-01', time: '15:00', status: 'FINISHED' }
+      { id: 999, raceName: 'Đua Mô Phỏng Thử Nghiệm (Demo Mode)', date: '2026-07-01', time: '14:00', status: 'FINISHED' }
     ]));
-    localStorage.setItem(RACE_RESULTS_PREFIX + '101', JSON.stringify([
-      { rank: 1, horseName: 'Lightning Bolt', jockeyName: 'John Doe', time: '1m 20s' },
-      { rank: 2, horseName: 'Desert Wind', jockeyName: 'Jane Smith', time: '1m 22s' },
-      { rank: 3, horseName: 'Pegasus Gold', jockeyName: 'Mike Tyson', time: '1m 25s' },
-    ]));
-    localStorage.setItem(RACE_RESULTS_PREFIX + '102', JSON.stringify([
-      { rank: 1, horseName: 'Midnight Star', jockeyName: 'Alex Lee', time: '1m 18s' },
-      { rank: 2, horseName: 'Desert Wind', jockeyName: 'Jane Smith', time: '1m 21s' },
-      { rank: 3, horseName: 'Stormbreaker', jockeyName: 'Alice Green', time: '1m 24s' },
+    localStorage.setItem(RACE_RESULTS_PREFIX + '999', JSON.stringify([
+      { rank: 1, horseName: 'Thần Phong', jockeyName: 'Nguyễn Văn Đạt', time: '1m 20s' },
+      { rank: 2, horseName: 'Xích Thố', jockeyName: 'Lê Hoàng Minh', time: '1m 22s' },
+      { rank: 3, horseName: 'Bạch Long', jockeyName: 'Trần Văn Nam', time: '1m 25s' },
+      { rank: 4, horseName: 'Hắc Báo', jockeyName: 'Phạm Quốc Bảo', time: '1m 28s' },
+      { rank: 5, horseName: 'Tia Chớp', jockeyName: 'Huỳnh Gia Huy', time: '1m 32s' }
     ]));
   }
 
   const storedViolations = localStorage.getItem(VIOLATIONS_KEY);
   if (!storedViolations || !storedViolations.includes('raceName')) {
     localStorage.setItem(VIOLATIONS_KEY, JSON.stringify([
-      { id: 1, date: '2026-07-01', raceName: 'Qualifier Round 1', horseName: 'Stormbreaker', jockeyName: 'Alice Green', violationType: 'Weight Tampering', status: 'FLAGGED' },
-      { id: 2, date: '2026-06-25', raceName: 'Qualifier Round 2', horseName: 'Shadowfax', jockeyName: 'Tom Hardy', violationType: 'Illegal Blocking', status: 'BLACKLISTED' }
+      { id: 1, date: '2026-07-01', raceName: 'Đua Mô Phỏng Thử Nghiệm (Demo Mode)', horseName: 'Hắc Báo', jockeyName: 'Phạm Quốc Bảo', violationType: 'Illegal Blocking', status: 'FLAGGED' }
     ]));
   }
 
   if (!localStorage.getItem(INSPECTION_KEY)) {
     localStorage.setItem(INSPECTION_KEY, JSON.stringify([
-      { id: 1, horseName: 'Lightning Bolt', breed: 'Thoroughbred', jockeyName: 'John Doe', weight: 65, status: 'PENDING_INSPECTION', raceName: 'Qualifier Round 1' },
-      { id: 2, horseName: 'Desert Wind', breed: 'Arabian', jockeyName: 'Jane Smith', weight: 62, status: 'PENDING_INSPECTION', raceName: 'Qualifier Round 1' },
-      { id: 3, horseName: 'Midnight Star', breed: 'Appaloosa', jockeyName: 'Alex Lee', weight: 68, status: 'PENDING_INSPECTION', raceName: 'Qualifier Round 2' },
+      { id: 1, horseName: 'Thần Phong', breed: 'Thoroughbred', jockeyName: 'Nguyễn Văn Đạt', weight: 65, status: 'PENDING_INSPECTION', raceName: 'Đua Mô Phỏng Thử Nghiệm (Demo Mode)' },
+      { id: 2, horseName: 'Xích Thố', breed: 'Arabian', jockeyName: 'Lê Hoàng Minh', weight: 62, status: 'PENDING_INSPECTION', raceName: 'Đua Mô Phỏng Thử Nghiệm (Demo Mode)' },
+      { id: 3, horseName: 'Bạch Long', breed: 'Appaloosa', jockeyName: 'Trần Văn Nam', weight: 68, status: 'PENDING_INSPECTION', raceName: 'Đua Mô Phỏng Thử Nghiệm (Demo Mode)' },
+      { id: 4, horseName: 'Hắc Báo', breed: 'Quarter Horse', jockeyName: 'Phạm Quốc Bảo', weight: 64, status: 'PENDING_INSPECTION', raceName: 'Đua Mô Phỏng Thử Nghiệm (Demo Mode)' },
+      { id: 5, horseName: 'Tia Chớp', breed: 'Appaloosa', jockeyName: 'Huỳnh Gia Huy', weight: 63, status: 'PENDING_INSPECTION', raceName: 'Đua Mô Phỏng Thử Nghiệm (Demo Mode)' }
     ]));
   }
 };
@@ -68,16 +65,48 @@ export async function getRefereeDashboardStatsAPI() {
 }
 
 export async function getAssignedRacesAPI(status = '') {
+  if (isMockMode()) {
+    seedInitialData();
+    return [
+      { raceId: 999, raceName: 'Đua Mô Phỏng Thử Nghiệm (Demo Mode)', raceDate: '2026-07-01', startTime: '14:00', status: 'Upcoming', distance: 1200 }
+    ];
+  }
   const response = await axiosClient.get(`/referee/races?status=${status}`);
   return response.data;
 }
 
 export async function getRacePreCheckAPI(raceId) {
+  if (isMockMode()) {
+    seedInitialData();
+    const mockNames = ['Thần Phong', 'Xích Thố', 'Bạch Long', 'Hắc Báo', 'Tia Chớp'];
+    const jockeys = ['Nguyễn Văn Đạt', 'Lê Hoàng Minh', 'Trần Văn Nam', 'Phạm Quốc Bảo', 'Huỳnh Gia Huy'];
+    const mockParticipants = mockNames.map((name, idx) => ({
+      participantId: idx + 1,
+      horseId: 200 + idx,
+      horseName: name,
+      jockeyId: 300 + idx,
+      jockeyName: jockeys[idx],
+      ownerName: 'Tập đoàn ' + ['Alpha', 'Vanguard', 'Omega', 'Titan', 'Apex'][idx % 5],
+      registeredWeight: 65,
+      actualWeight: (60 + Math.random() * 10).toFixed(1),
+      status: 'PENDING_INSPECTION'
+    }));
+    return {
+      raceId: 999,
+      raceName: 'Đua Mô Phỏng Thử Nghiệm (Demo Mode)',
+      trackCondition: 'Good',
+      weather: 'Sunny',
+      participants: mockParticipants
+    };
+  }
   const response = await axiosClient.get(`/referee/races/${raceId}/pre-check`);
   return response.data;
 }
 
 export async function startRaceAPI(raceId) {
+  if (isMockMode()) {
+    return { success: true, message: 'Race simulation started (Mock Mode)' };
+  }
   const response = await axiosClient.post(`/referee/races/${raceId}/start`);
   return response.data;
 }

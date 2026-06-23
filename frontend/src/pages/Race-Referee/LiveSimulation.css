@@ -293,3 +293,108 @@
     transform: scale(1);
   }
 }
+
+/* POV Action Button in Leaderboard */
+.btn-pov-action {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.btn-pov-action:hover {
+  background: #3b82f6;
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+  border-color: #3b82f6;
+}
+
+.btn-pov-action.active {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+  animation: pulse-border 1.5s infinite;
+}
+
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Floating POV Exit HUD */
+.pov-exit-hud {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  right: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  z-index: 10;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: slide-down-hud 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-down-hud {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.pov-exit-btn {
+  background: #ef4444;
+  border: none;
+  color: white;
+  padding: 5px 15px;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pov-exit-btn:hover {
+  background: #dc2626;
+  transform: scale(1.03);
+}
+
+.animate-pulse {
+  animation: icon-pulse 1s infinite alternate;
+}
+
+@keyframes icon-pulse {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
