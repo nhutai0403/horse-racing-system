@@ -109,6 +109,7 @@ CREATE TABLE [dbo].[bets](
 	[odds] [decimal](10, 2) NOT NULL,
 	[status] [nvarchar](20) NULL,
 	[payout_amount] [decimal](18, 2) NULL,
+	[bet_type] [nvarchar](20) NULL,
 	[created_at] [datetime] NULL,
 PRIMARY KEY CLUSTERED 
 (
