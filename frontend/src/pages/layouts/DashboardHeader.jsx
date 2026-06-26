@@ -163,23 +163,21 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
           </h1>
         </div>
 
-        {/* Desktop Navigation Links (Hidden for ADMIN since they use left sidebar) */}
-        {user?.role !== 'ADMIN' && (
-          <div className="d-none d-xl-flex align-items-center gap-2 flex-grow-1 justify-content-center mx-4">
-            {navLinks && navLinks.map((link) => (
-              <NavLink
-                key={link.path}
-                to={link.path}
-                className={({ isActive }) => 
-                  `nav-link-horizontal ${isActive ? 'nav-link-horizontal-active' : 'nav-link-horizontal-inactive'}`
-                }
-              >
-                {link.icon && <span className="material-symbols-outlined me-1 fs-6">{link.icon}</span>}
-                {link.label}
-              </NavLink>
-            ))}
-          </div>
-        )}
+        {/* Desktop Navigation Links */}
+        <div className="d-none d-xl-flex align-items-center gap-2 flex-grow-1 justify-content-center mx-4">
+          {navLinks && navLinks.map((link) => (
+            <NavLink
+              key={link.path}
+              to={link.path}
+              className={({ isActive }) => 
+                `nav-link-horizontal ${isActive ? 'nav-link-horizontal-active' : 'nav-link-horizontal-inactive'}`
+              }
+            >
+              {link.icon && <span className="material-symbols-outlined me-1 fs-6">{link.icon}</span>}
+              {link.label}
+            </NavLink>
+          ))}
+        </div>
 
         {/* Right Controls */}
         <div className="d-flex align-items-center gap-2 gap-sm-3">

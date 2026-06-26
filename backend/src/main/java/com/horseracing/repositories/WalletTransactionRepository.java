@@ -9,4 +9,5 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
     List<WalletTransaction> findByWalletIdOrderByCreatedAtDesc(Integer walletId);
     Optional<WalletTransaction> findByPayosOrderCode(Long payosOrderCode);
     List<WalletTransaction> findByTransactionTypeOrderByCreatedAtDesc(String transactionType);
+    long countByTransactionTypeAndStatus(String transactionType, String status);
 }

@@ -1,46 +1,87 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTournamentsAPI } from '../../../services/races';
-import { getUpgradeRequestsAPI, getRaceRegistrationsAPI, getRefereesAPI } from '../../../services/admin';
+import { getUpgradeRequestsAPI, getRaceRegistrationsAPI, getRefereesAPI, getAdminDashboardStatsAPI } from '../../../services/admin';
 import DataTable from '../../../components/DataTable';
 
 export default function AdminDashboardContent() {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
-    usersCount: 15,
+    usersCount: 0,
     tournamentsCount: 0,
     racesCount: 0,
     pendingUpgradesCount: 0,
-    pendingWithdrawalsCount: 3
+    pendingWithdrawalsCount: 0
   });
   const [recentRequests, setRecentRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Chart hover states
+  const [revHovered, setRevHovered] = useState(null);
+  const [roleHovered, setRoleHovered] = useState(null);
+  const [betHovered, setBetHovered] = useState(null);
+
+  // Chart datasets from DB
+  const [revenueData, setRevenueData] = useState([]);
+  const [roleDistribution, setRoleDistribution] = useState({});
+  const [betVolumeData, setBetVolumeData] = useState([]);
+
   useEffect(() => {
     const loadDashboardStats = async () => {
       try {
-        const [tournaments, upgrades, registrations, referees] = await Promise.all([
-          getTournamentsAPI().catch(() => []),
-          getUpgradeRequestsAPI().catch(() => []),
-          getRaceRegistrationsAPI().catch(() => []),
-          getRefereesAPI().catch(() => [])
-        ]);
+        // 1. Fetch DB stats
+        const dbStats = await getAdminDashboardStatsAPI();
+        
+        // 2. Format revenue data points
+        const maxRev = Math.max(...dbStats.revenueData.map(d => d.val), 0) || 100000;
+        const formattedRev = dbStats.revenueData.map((d, idx) => {
+          const N = dbStats.revenueData.length;
+          const x = 30 + idx * (440.0 / (N - 1 || 1));
+          const y = 170 - (d.val / maxRev) * 130;
+          return {
+            month: d.month,
+            val: d.val,
+            x: x,
+            y: y
+          };
+        });
+        setRevenueData(formattedRev);
 
-        const pendingUpgrades = upgrades.filter(u => u.status === 'PENDING');
-        
-        // Mock some users + count of real referees
-        const totalUsers = 12 + referees.length;
-        
+        // 3. Set raw role distribution
+        setRoleDistribution(dbStats.roleDistribution || {});
+
+        // 4. Format bet volumes
+        const maxBets = Math.max(...dbStats.betVolumeData.map(d => d.bets), 0) || 10;
+        const formattedBets = dbStats.betVolumeData.map((d, idx) => {
+          const N = dbStats.betVolumeData.length;
+          const barWidth = 14;
+          const spacing = N > 1 ? (190.0 / (N - 1)) : 190.0;
+          const x = 35 + idx * spacing;
+          const barHeight = (d.bets / maxBets) * 120;
+          const y = 170 - barHeight;
+          return {
+            tournament: d.tournament,
+            bets: d.bets,
+            x: x,
+            y: y,
+            height: barHeight
+          };
+        });
+        setBetVolumeData(formattedBets);
+
+        // 5. Fetch recent requests list (using existing API)
+        const upgrades = await getUpgradeRequestsAPI().catch(() => []);
+        setRecentRequests(upgrades.slice(0, 5));
+
+        // 6. Set stats counts
         setStats({
-          usersCount: totalUsers,
-          tournamentsCount: tournaments.length,
-          racesCount: registrations.length, // use registrations count as proxy for total active entries/races
-          pendingUpgradesCount: pendingUpgrades.length,
-          pendingWithdrawalsCount: 3 // mock value
+          usersCount: dbStats.usersCount,
+          tournamentsCount: dbStats.tournamentsCount,
+          racesCount: dbStats.racesCount,
+          pendingUpgradesCount: dbStats.pendingUpgradesCount,
+          pendingWithdrawalsCount: dbStats.pendingWithdrawalsCount
         });
 
-        // Take top 5 recent upgrade requests
-        setRecentRequests(upgrades.slice(0, 5));
       } catch (e) {
         console.error('Error fetching dashboard stats', e);
       } finally {
@@ -200,6 +241,355 @@ export default function AdminDashboardContent() {
               </div>
             </div>
 
+          </div>
+
+          {/* Charts Section */}
+          <div className="row g-4 mb-4">
+            {/* Revenue Trend Area Chart */}
+            <div className="col-12 col-xl-6">
+              <div className="glass-card position-relative h-100" style={{ minHeight: '320px' }}>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <div>
+                    <h3 className="ho-font-epilogue fs-5 fw-bold m-0 text-dark">Platform Revenue Growth</h3>
+                    <p className="text-secondary small m-0">Monthly commission fees (10% of bet volumes)</p>
+                  </div>
+                  <span className="badge bg-success-subtle text-success fw-bold px-2 py-1" style={{ fontSize: '11px' }}>
+                    Live DB Sync
+                  </span>
+                </div>
+                
+                <div className="position-relative" style={{ height: '220px' }}>
+                  {revenueData.length === 0 ? (
+                    <div className="d-flex align-items-center justify-content-center h-100 text-muted small">No data available</div>
+                  ) : (
+                    <svg viewBox="0 0 500 200" width="100%" height="100%" className="overflow-visible">
+                      <defs>
+                        <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--ho-primary-dark, #0f5132)" stopOpacity="0.3" />
+                          <stop offset="100%" stopColor="var(--ho-primary-dark, #0f5132)" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      
+                      {/* Gridlines */}
+                      <line x1="30" y1="40" x2="470" y2="40" stroke="#e2e8f0" strokeDasharray="3 3" />
+                      <line x1="30" y1="80" x2="470" y2="80" stroke="#e2e8f0" strokeDasharray="3 3" />
+                      <line x1="30" y1="120" x2="470" y2="120" stroke="#e2e8f0" strokeDasharray="3 3" />
+                      <line x1="30" y1="160" x2="470" y2="160" stroke="#e2e8f0" strokeDasharray="3 3" />
+                      
+                      {/* Y-Axis Labels */}
+                      {(() => {
+                        const maxVal = Math.max(...revenueData.map(d => d.val), 0) || 100000;
+                        const formatMillion = (val) => {
+                          if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+                          if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
+                          return val.toString();
+                        };
+                        return (
+                          <>
+                            <text x="24" y="44" textAnchor="end" fill="#718096" fontSize="10" className="ho-font-grotesk">{formatMillion(maxVal)}</text>
+                            <text x="24" y="84" textAnchor="end" fill="#718096" fontSize="10" className="ho-font-grotesk">{formatMillion(maxVal * 0.65)}</text>
+                            <text x="24" y="124" textAnchor="end" fill="#718096" fontSize="10" className="ho-font-grotesk">{formatMillion(maxVal * 0.35)}</text>
+                            <text x="24" y="164" textAnchor="end" fill="#718096" fontSize="10" className="ho-font-grotesk">{formatMillion(maxVal * 0.1)}</text>
+                          </>
+                        );
+                      })()}
+
+                      {/* Area fill */}
+                      <polygon 
+                        points={`30,170 ${revenueData.map(d => `${d.x},${d.y}`).join(' ')} 470,170`} 
+                        fill="url(#revenueGrad)" 
+                      />
+                      
+                      {/* Stroke line */}
+                      <path 
+                        d={revenueData.map((d, i) => `${i === 0 ? 'M' : 'L'} ${d.x} ${d.y}`).join(' ')} 
+                        fill="none" 
+                        stroke="var(--ho-primary-dark, #0f5132)" 
+                        strokeWidth="3" 
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+
+                      {/* Hover vertical line */}
+                      {revHovered !== null && revenueData[revHovered] && (
+                        <line 
+                          x1={revenueData[revHovered].x} 
+                          y1="30" 
+                          x2={revenueData[revHovered].x} 
+                          y2="170" 
+                          stroke="#D4AF37" 
+                          strokeWidth="1.5" 
+                          strokeDasharray="4 4" 
+                        />
+                      )}
+
+                      {/* X-Axis Baseline */}
+                      <line x1="30" y1="170" x2="470" y2="170" stroke="#cbd5e0" strokeWidth="1" />
+
+                      {/* Interactive dots */}
+                      {revenueData.map((d, idx) => (
+                        <g key={idx}>
+                          {/* Invisible large catch-area for hover */}
+                          <circle 
+                            cx={d.x} 
+                            cy={d.y} 
+                            r="15" 
+                            fill="transparent" 
+                            style={{ cursor: 'pointer' }}
+                            onMouseEnter={() => setRevHovered(idx)}
+                            onMouseLeave={() => setRevHovered(null)}
+                          />
+                          {/* Visual circle */}
+                          <circle 
+                            cx={d.x} 
+                            cy={d.y} 
+                            r={revHovered === idx ? 7 : 5} 
+                            fill={revHovered === idx ? "var(--ho-accent-gold, #D4AF37)" : "#ffffff"} 
+                            stroke="var(--ho-primary-dark, #0f5132)" 
+                            strokeWidth={revHovered === idx ? 3 : 2} 
+                            style={{ transition: 'all 0.2s ease', pointerEvents: 'none' }}
+                          />
+                          {/* Month labels */}
+                          <text 
+                            x={d.x} 
+                            y="188" 
+                            textAnchor="middle" 
+                            fill="#4a5568" 
+                            fontSize="10" 
+                            className="ho-font-grotesk fw-bold"
+                          >
+                            {d.month}
+                          </text>
+                        </g>
+                      ))}
+                    </svg>
+                  )}
+                  
+                  {/* Tooltip */}
+                  {revHovered !== null && revenueData[revHovered] && (
+                    <div 
+                      className="position-absolute bg-dark text-white p-2 rounded shadow text-start" 
+                      style={{ 
+                        left: `${Math.min(380, revenueData[revHovered].x + 10)}px`, 
+                        top: `${revenueData[revHovered].y - 45}px`,
+                        pointerEvents: 'none',
+                        zIndex: 10,
+                        fontSize: '11px',
+                        minWidth: '100px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
+                      }}
+                    >
+                      <div className="fw-bold text-warning">{revenueData[revHovered].month}</div>
+                      <div className="small text-white-50">Revenue:</div>
+                      <div className="fw-bold text-white">{formatVND(revenueData[revHovered].val)}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Active User Distribution Donut Chart */}
+            <div className="col-12 col-md-6 col-xl-3">
+              <div className="glass-card position-relative h-100" style={{ minHeight: '320px' }}>
+                <div>
+                  <h3 className="ho-font-epilogue fs-5 fw-bold m-0 text-dark">User Breakdown</h3>
+                  <p className="text-secondary small mb-3">System user accounts distribution</p>
+                </div>
+
+                <div className="d-flex align-items-center justify-content-center" style={{ height: '180px' }}>
+                  {/* Donut SVG */}
+                  <div className="position-relative" style={{ width: '130px', height: '130px' }}>
+                    <svg viewBox="0 0 200 200" width="100%" height="100%">
+                      <circle cx="100" cy="100" r="50" fill="transparent" stroke="#f0eedf" strokeWidth="18" />
+                      
+                      {/* Slices */}
+                      {(() => {
+                        let accumulatedCircumference = 0;
+                        const totalUsers = Object.values(roleDistribution || {}).reduce((a, b) => a + b, 0) || 1;
+                        const roleColors = {
+                          Spectators: '#95d4ac',
+                          Owners: '#D4AF37',
+                          Jockeys: '#0f5132',
+                          Referees: '#745c00',
+                          Admins: '#ef4444'
+                        };
+                        return Object.entries(roleDistribution || {}).map(([role, count], idx) => {
+                          const percentage = count / totalUsers;
+                          const strokeLength = percentage * 314.16;
+                          const strokeOffset = 314.16 - accumulatedCircumference;
+                          accumulatedCircumference += strokeLength;
+                          
+                          return (
+                            <circle 
+                              key={idx}
+                              cx="100" 
+                              cy="100" 
+                              r="50" 
+                              fill="transparent" 
+                              stroke={roleColors[role] || '#718096'} 
+                              strokeWidth="18" 
+                              strokeDasharray={`${strokeLength} 314.16`}
+                              strokeDashoffset={strokeOffset} 
+                              transform="rotate(-90 100 100)"
+                              style={{ 
+                                transition: 'all 0.3s ease',
+                                cursor: 'pointer'
+                              }}
+                              onMouseEnter={() => setRoleHovered(idx)}
+                              onMouseLeave={() => setRoleHovered(null)}
+                            />
+                          );
+                        });
+                      })()}
+
+                      {/* Total Users Label */}
+                      <text x="100" y="98" textAnchor="middle" className="ho-font-epilogue fw-extrabold" fontSize="16" fill="var(--ho-primary-dark)">
+                        {Object.values(roleDistribution || {}).reduce((a, b) => a + b, 0)}
+                      </text>
+                      <text x="100" y="112" textAnchor="middle" className="ho-font-grotesk text-secondary" fontSize="8" letterSpacing="0.05em">
+                        TOTAL USERS
+                      </text>
+                    </svg>
+
+                    {/* Tooltip inside */}
+                    {roleHovered !== null && (() => {
+                      const totalUsers = Object.values(roleDistribution || {}).reduce((a, b) => a + b, 0) || 1;
+                      const entries = Object.entries(roleDistribution || {});
+                      const [role, count] = entries[roleHovered];
+                      const pct = ((count / totalUsers) * 100).toFixed(0);
+                      return (
+                        <div 
+                          className="position-absolute bg-dark text-white p-2 rounded shadow text-start" 
+                          style={{ 
+                            left: '50%', 
+                            top: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            pointerEvents: 'none',
+                            zIndex: 10,
+                            fontSize: '9px',
+                            minWidth: '95px',
+                            textAlign: 'center',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            opacity: 0.95
+                          }}
+                        >
+                          <div className="fw-bold">{role}</div>
+                          <div className="text-warning fw-extrabold">{count} ({pct}%)</div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Donut Legend */}
+                <div className="d-flex flex-wrap justify-content-center gap-2 mt-1" style={{ fontSize: '9.5px' }}>
+                  {Object.entries(roleDistribution || {}).map(([role, count]) => {
+                    const roleColors = {
+                      Spectators: '#95d4ac',
+                      Owners: '#D4AF37',
+                      Jockeys: '#0f5132',
+                      Referees: '#745c00',
+                      Admins: '#ef4444'
+                    };
+                    return (
+                      <div key={role} className="d-flex align-items-center gap-1">
+                        <span className="rounded-circle" style={{ width: '8px', height: '8px', backgroundColor: roleColors[role] }} />
+                        <span className="text-secondary">{role.substring(0, 4)}: <strong>{count}</strong></span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Betting Activity Volume Column Chart */}
+            <div className="col-12 col-md-6 col-xl-3">
+              <div className="glass-card position-relative h-100" style={{ minHeight: '320px' }}>
+                <div>
+                  <h3 className="ho-font-epilogue fs-5 fw-bold m-0 text-dark">Betting Volume</h3>
+                  <p className="text-secondary small mb-3">Total placed bets per tournament</p>
+                </div>
+
+                <div className="position-relative" style={{ height: '220px' }}>
+                  {betVolumeData.length === 0 ? (
+                    <div className="d-flex align-items-center justify-content-center h-100 text-muted small">No data available</div>
+                  ) : (
+                    <svg viewBox="0 0 250 200" width="100%" height="100%" className="overflow-visible">
+                      {/* Gridlines */}
+                      <line x1="30" y1="50" x2="230" y2="50" stroke="#e2e8f0" strokeDasharray="3 3" />
+                      <line x1="30" y1="100" x2="230" y2="100" stroke="#e2e8f0" strokeDasharray="3 3" />
+                      <line x1="30" y1="150" x2="230" y2="150" stroke="#e2e8f0" strokeDasharray="3 3" />
+
+                      {/* Y-Axis Labels */}
+                      {(() => {
+                        const maxB = Math.max(...betVolumeData.map(d => d.bets), 0) || 10;
+                        return (
+                          <>
+                            <text x="24" y="54" textAnchor="end" fill="#718096" fontSize="9" className="ho-font-grotesk">{maxB}</text>
+                            <text x="24" y="104" textAnchor="end" fill="#718096" fontSize="9" className="ho-font-grotesk">{Math.round(maxB * 0.6)}</text>
+                            <text x="24" y="154" textAnchor="end" fill="#718096" fontSize="9" className="ho-font-grotesk">{Math.round(maxB * 0.2)}</text>
+                          </>
+                        );
+                      })()}
+
+                      {/* Baseline */}
+                      <line x1="30" y1="170" x2="230" y2="170" stroke="#cbd5e0" strokeWidth="1" />
+
+                      {/* Columns */}
+                      {betVolumeData.map((d, idx) => {
+                        const barWidth = 16;
+                        return (
+                          <g key={idx}>
+                            <rect 
+                              x={d.x - barWidth/2} 
+                              y={d.y} 
+                              width={barWidth} 
+                              height={d.height} 
+                              fill={betHovered === idx ? "var(--ho-accent-gold-hover, #fed65b)" : "var(--ho-primary-dark, #003820)"}
+                              rx="3"
+                              style={{ transition: 'all 0.2s ease', cursor: 'pointer' }}
+                              onMouseEnter={() => setBetHovered(idx)}
+                              onMouseLeave={() => setBetHovered(null)}
+                            />
+                            {/* X-axis Label abbreviation */}
+                            <text 
+                              x={d.x} 
+                              y="185" 
+                              textAnchor="middle" 
+                              fill="#4a5568" 
+                              fontSize="8" 
+                              className="ho-font-grotesk fw-bold"
+                            >
+                              {d.tournament.length > 5 ? d.tournament.substring(0, 4) + '..' : d.tournament}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  )}
+
+                  {/* Tooltip */}
+                  {betHovered !== null && betVolumeData[betHovered] && (
+                    <div 
+                      className="position-absolute bg-dark text-white p-2 rounded shadow text-start" 
+                      style={{ 
+                        left: `${Math.min(130, betVolumeData[betHovered].x)}px`, 
+                        top: `${betVolumeData[betHovered].y - 30}px`,
+                        pointerEvents: 'none',
+                        zIndex: 10,
+                        fontSize: '11px',
+                        minWidth: '120px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
+                      }}
+                    >
+                      <div className="fw-bold text-warning">{betVolumeData[betHovered].tournament}</div>
+                      <div className="small text-white-50">Volume:</div>
+                      <div className="fw-bold text-white">{betVolumeData[betHovered].bets} bets</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Detailed Lists Grid */}

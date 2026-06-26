@@ -17,7 +17,7 @@ export default function SpectatorChatbot() {
       console.error("Failed to load chat history", err);
       // Fallback message if error
       setMessages([
-        { sender: 'AI', message: 'Xin chào! Tôi là Trợ lý ảo AI của hệ thống. Tôi có thể giúp gì cho bạn?', createdAt: new Date().toISOString() }
+        { sender: 'AI', message: 'Hello! I am your AI assistant. How can I help you today?', createdAt: new Date().toISOString() }
       ]);
     } finally {
       setLoadingHistory(false);
@@ -53,7 +53,7 @@ export default function SpectatorChatbot() {
 
     try {
       const res = await sendChatMessageAPI(text);
-      const aiReply = res?.text || "Xin lỗi, tôi gặp sự cố khi xử lý câu hỏi này.";
+      const aiReply = res?.text || "Sorry, I encountered an issue processing your request.";
       
       const aiMsg = {
         sender: 'AI',
@@ -65,7 +65,7 @@ export default function SpectatorChatbot() {
       console.error("Failed to get chatbot response", err);
       const errorMsg = {
         sender: 'AI',
-        message: err.message || "Không thể kết nối đến máy chủ AI lúc này.",
+        message: err.message || "Unable to connect to AI server at the moment.",
         createdAt: new Date().toISOString()
       };
       setMessages(prev => [...prev, errorMsg]);
@@ -75,23 +75,23 @@ export default function SpectatorChatbot() {
   };
 
   const handleClearHistory = async () => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa lịch sử trò chuyện này?")) {
+    if (window.confirm("Are you sure you want to clear this chat history?")) {
       try {
         await clearChatHistoryAPI();
         setMessages([
-          { sender: 'AI', message: 'Đã xóa lịch sử trò chuyện. Tôi có thể giúp gì thêm cho bạn?', createdAt: new Date().toISOString() }
+          { sender: 'AI', message: 'Chat history cleared. How else can I help you?', createdAt: new Date().toISOString() }
         ]);
       } catch (err) {
-        alert("Xóa lịch sử chat thất bại: " + err.message);
+        alert("Failed to clear chat history: " + err.message);
       }
     }
   };
 
   const suggestions = [
-    "Làm sao để tôi nạp tiền?",
-    "Tôi muốn nâng cấp lên vai trò Chủ Ngựa?",
-    "Làm sao để cược cuộc đua?",
-    "Rút tiền mất bao lâu?"
+    "How do I deposit funds?",
+    "How do I upgrade to Horse Owner role?",
+    "How do I place a bet?",
+    "How long do withdrawals take?"
   ];
 
   return (
@@ -101,30 +101,36 @@ export default function SpectatorChatbot() {
       <div className="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <span className="role-badge">AI CHATBOT</span>
-          <h2 className="ho-font-epilogue fs-3 fw-bold text-dark mb-1">Trợ Lý Ảo AI</h2>
-          <p className="text-secondary small">Giải đáp các câu hỏi nghiệp vụ, luật đua, cách thức nạp/rút tiền và cá cược.</p>
+          <h2 className="ho-font-epilogue fs-3 fw-bold text-dark mb-1">AI Virtual Assistant</h2>
+          <p className="text-secondary small">Ask questions about operations, racing rules, deposits/withdrawals, and betting.</p>
         </div>
         <button 
           onClick={handleClearHistory} 
           className="ho-btn ho-btn-outline-danger btn-sm"
           style={{ fontSize: '11px', textTransform: 'none', padding: '6px 12px' }}
         >
-          Xóa lịch sử chat
+          Clear Chat History
         </button>
       </div>
 
       {/* Chat Box */}
       <div className="chat-window">
         <div className="chat-header">
-          <span className="material-symbols-outlined">smart_toy</span>
-          <span>Trợ Lý Đua Ngựa AI</span>
+          <div className="rounded-circle overflow-hidden border border-warning me-2" style={{ width: '36px', height: '36px', flexShrink: 0 }}>
+            <img 
+              src="https://images.unsplash.com/photo-1598974357801-ae6e44f80698?w=80&auto=format&fit=crop&q=80" 
+              alt="Horse AI Agent" 
+              className="w-100 h-100 object-fit-cover" 
+            />
+          </div>
+          <span>AI Horse Assistant</span>
         </div>
 
         <div className="chat-messages-container">
           {loadingHistory ? (
             <div className="text-center my-auto">
               <div className="spinner-border spinner-border-sm text-success" role="status"></div>
-              <p className="text-secondary small mt-2">Đang tải lịch sử chat...</p>
+              <p className="text-secondary small mt-2">Loading chat history...</p>
             </div>
           ) : (
             messages.map((m, idx) => {
@@ -132,23 +138,55 @@ export default function SpectatorChatbot() {
               return (
                 <div 
                   key={idx}
-                  className={`chat-bubble ${isUser ? 'user' : 'ai'}`}
+                  className={`d-flex ${isUser ? 'justify-content-end' : 'justify-content-start'} align-items-end gap-2 mb-2`}
                 >
-                  <div className="message-content">{m.message}</div>
-                  <div className="chat-bubble-meta">
-                    {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {/* AI Avatar */}
+                  {!isUser && (
+                    <div className="rounded-circle overflow-hidden border border-success" style={{ width: '32px', height: '32px', flexShrink: 0 }}>
+                      <img 
+                        src="https://images.unsplash.com/photo-1598974357801-ae6e44f80698?w=80&auto=format&fit=crop&q=80" 
+                        alt="AI Avatar" 
+                        className="w-100 h-100 object-fit-cover" 
+                      />
+                    </div>
+                  )}
+
+                  <div className={`chat-bubble ${isUser ? 'user' : 'ai'}`}>
+                    <div className="message-content">{m.message}</div>
+                    <div className="chat-bubble-meta">
+                      {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
+
+                  {/* User Avatar */}
+                  {isUser && (
+                    <div 
+                      className="rounded-circle overflow-hidden border d-flex align-items-center justify-content-center bg-success text-white fw-bold" 
+                      style={{ width: '32px', height: '32px', flexShrink: 0, fontSize: '11px' }}
+                    >
+                      U
+                    </div>
+                  )}
                 </div>
               );
             })
           )}
           
           {sending && (
-            <div className="chat-bubble ai">
-              <div className="d-flex align-items-center gap-1 py-1">
-                <span className="spinner-grow spinner-grow-sm text-success" role="status"></span>
-                <span className="spinner-grow spinner-grow-sm text-success" role="status" style={{ animationDelay: '0.2s' }}></span>
-                <span className="spinner-grow spinner-grow-sm text-success" role="status" style={{ animationDelay: '0.4s' }}></span>
+            <div className="d-flex justify-content-start align-items-end gap-2 mb-2">
+              <div className="rounded-circle overflow-hidden border border-success" style={{ width: '32px', height: '32px', flexShrink: 0 }}>
+                <img 
+                  src="https://images.unsplash.com/photo-1598974357801-ae6e44f80698?w=80&auto=format&fit=crop&q=80" 
+                  alt="AI Avatar" 
+                  className="w-100 h-100 object-fit-cover" 
+                />
+              </div>
+              <div className="chat-bubble ai">
+                <div className="d-flex align-items-center gap-1 py-1">
+                  <span className="spinner-grow spinner-grow-sm text-success" role="status"></span>
+                  <span className="spinner-grow spinner-grow-sm text-success" role="status" style={{ animationDelay: '0.2s' }}></span>
+                  <span className="spinner-grow spinner-grow-sm text-success" role="status" style={{ animationDelay: '0.4s' }}></span>
+                </div>
               </div>
             </div>
           )}
@@ -178,7 +216,7 @@ export default function SpectatorChatbot() {
           <input 
             type="text" 
             className="chat-input" 
-            placeholder="Nhập câu hỏi của bạn tại đây..."
+            placeholder="Type your question here..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             disabled={sending}

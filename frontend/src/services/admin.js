@@ -195,3 +195,13 @@ export async function getPrizeDistributionsAPI(raceId) {
     throw new Error(errMsg, { cause: error });
   }
 }
+
+export async function getAdminDashboardStatsAPI() {
+  try {
+    const response = await axiosClient.get('/admin/dashboard/stats');
+    return response.data;
+  } catch (error) {
+    const errMsg = error.response?.data?.message || 'Failed to fetch dashboard stats.';
+    throw new Error(errMsg, { cause: error });
+  }
+}

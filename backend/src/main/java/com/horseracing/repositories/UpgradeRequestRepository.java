@@ -13,4 +13,6 @@ public interface UpgradeRequestRepository extends JpaRepository<UpgradeRequest, 
     List<UpgradeRequest> findByStatusOrderByCreatedAtDesc(RequestStatus status);
 
     boolean existsByUserAndStatus(User user, RequestStatus status);
+
+    long countByStatus(RequestStatus status);
 }

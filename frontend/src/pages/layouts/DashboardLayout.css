@@ -174,14 +174,33 @@
 
 /* Sidebar Nav Styles for Admin */
 .admin-sidebar {
-  background-color: #ffffff;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
+  background-color: var(--ho-primary-dark, #003820) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
   transition: width 0.3s ease;
   z-index: 10;
+  height: 100vh;
+  position: sticky;
+  top: 0;
 }
 
-.sidebar-nav-link {
+.admin-sidebar-brand-wrapper {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.admin-sidebar-logo {
+  color: #ffffff !important;
+}
+
+.admin-sidebar-logo-accent {
+  color: var(--ho-accent-gold, #D4AF37) !important;
+}
+
+.admin-sidebar-sublabel {
+  color: var(--ho-primary-light, #95d4ac) !important;
+}
+
+.admin-sidebar .sidebar-nav-link {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -189,33 +208,83 @@
   border-radius: 10px;
   font-family: 'Hanken Grotesk', sans-serif;
   text-decoration: none !important;
-  color: #4a5568 !important;
+  color: rgba(255, 255, 255, 0.75) !important;
   font-weight: 600;
   font-size: 0.85rem;
   margin-bottom: 6px;
   transition: all 0.2s ease-in-out;
 }
 
-.sidebar-nav-link:hover {
-  background-color: rgba(0, 56, 32, 0.04);
-  color: var(--ho-primary-dark, #003820) !important;
+.admin-sidebar .sidebar-nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff !important;
   transform: translateX(4px);
 }
 
-.sidebar-nav-link-active {
+.admin-sidebar .sidebar-nav-link-active {
   background-color: var(--ho-accent-gold, #D4AF37) !important;
   color: #1c1b1b !important;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.35);
 }
 
-.sidebar-nav-link-active:hover {
+.admin-sidebar .sidebar-nav-link-active:hover {
   background-color: var(--ho-accent-gold-hover, #fed65b) !important;
   color: #1c1b1b !important;
   transform: none;
 }
 
-.sidebar-nav-link span.material-symbols-outlined {
+.admin-sidebar .sidebar-nav-link span.material-symbols-outlined {
   font-size: 20px;
   color: inherit !important;
 }
+
+.admin-sidebar-footer {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.admin-sidebar-logout-btn {
+  color: #fca5a5 !important;
+  border-color: rgba(252, 165, 165, 0.3) !important;
+}
+
+.admin-sidebar-logout-btn:hover {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+}
+
+/* Responsive/Mobile Admin Sidebar and Drawer */
+@media (max-width: 1199.98px) {
+  .admin-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100vh !important;
+    z-index: 1060 !important;
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.3);
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: none;
+  }
+  
+  .admin-sidebar.admin-sidebar-mobile-open {
+    display: flex !important;
+    transform: translateX(0);
+  }
+}
+
+.admin-mobile-header {
+  background-color: var(--ho-primary-dark, #003820) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.admin-mobile-header .material-symbols-outlined {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.admin-mobile-header .material-symbols-outlined:hover {
+  color: #ffffff !important;
+}
+
 
