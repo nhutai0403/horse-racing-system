@@ -5,7 +5,7 @@ import { getWalletBalanceAPI } from '../../../services/wallet';
 import SpectatorLiveSimulation from './SpectatorLiveSimulation';
 import '../Spectator.css';
 
-export default function SpectatorTournaments() {
+export default function SpectatorLiveSimulationPage() {
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -165,15 +165,6 @@ export default function SpectatorTournaments() {
     }
   };
 
-  const translateBetType = (type) => {
-    switch (type) {
-      case 'WIN': return 'Hạng 1 (WIN)';
-      case 'PLACE': return 'Hạng 1 hoặc Hạng 2 (PLACE)';
-      case 'SHOW': return 'Top 3 (SHOW)';
-      default: return type;
-    }
-  };
-
   // Filter bets for the selected race
   const currentRaceBets = selectedRace
     ? myBets.filter(b => b.raceId === selectedRace.id || b.raceId === parseInt(selectedRace.id))
@@ -206,8 +197,8 @@ export default function SpectatorTournaments() {
       <div className="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
           <span className="role-badge">SPECTATOR ROLE</span>
-          <h2 className="ho-font-epilogue fs-3 fw-bold text-dark mb-1">Giải Đấu & Vòng Đua</h2>
-          <p className="text-secondary small m-0">Tra cứu thông tin các giải đua đang diễn ra, đặt cược Pari-Mutuel và theo dõi giả lập trực tiếp.</p>
+          <h2 className="ho-font-epilogue fs-3 fw-bold text-dark mb-1">Mô Phỏng Trực Tiếp & Đặt Cược</h2>
+          <p className="text-secondary small m-0">Xem trực tiếp mô phỏng giải đấu thời gian thực và đặt cược Pari-Mutuel cho các trận đấu.</p>
         </div>
         
         {/* Wallet balance pill */}
@@ -314,26 +305,36 @@ export default function SpectatorTournaments() {
                                     <div className="text-muted small py-2">Chưa có vòng đua nào được tạo trong giải đấu này.</div>
                                   ) : (
                                     <div className="d-flex flex-column gap-2">
-                                      {racesMap[t.id].map(r => (
-                                        <div 
-                                          key={r.id}
-                                          onClick={() => handleRaceClick(r)}
-                                          className={`race-sub-card p-3 d-flex justify-content-between align-items-center cursor-pointer ${selectedRace?.id === r.id ? 'border-primary' : ''}`}
-                                          style={{ cursor: 'pointer', border: '1px solid #e5e2e1' }}
-                                        >
-                                          <div>
-                                            <strong className="text-dark">{r.raceName} (Vòng {r.raceRound || 1})</strong>
-                                            <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>
-                                              Lịch chạy: {r.raceDate} lúc {r.startTime || r.raceTime || 'Chưa định giờ'} | Quãng đường: {r.distance}m
+                                      {racesMap[t.id].map(r => {
+                                        const isLive = r.status === 'RUNNING';
+                                        return (
+                                          <div 
+                                            key={r.id}
+                                            onClick={() => handleRaceClick(r)}
+                                            className={`race-sub-card p-3 d-flex justify-content-between align-items-center cursor-pointer ${selectedRace?.id === r.id ? 'border-primary shadow-sm bg-white' : ''}`}
+                                            style={{ cursor: 'pointer', border: '1px solid #e5e2e1', borderRadius: '10px' }}
+                                          >
+                                            <div>
+                                              <div className="d-flex align-items-center gap-2">
+                                                <strong className="text-dark">{r.raceName} (Vòng {r.raceRound || 1})</strong>
+                                                {isLive && (
+                                                  <span className="badge bg-danger animate-pulse text-white d-flex align-items-center gap-1" style={{ fontSize: '9px', padding: '2px 6px' }}>
+                                                    <span className="pulse-dot bg-white"></span> LIVE
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>
+                                                Lịch chạy: {r.raceDate} lúc {r.startTime || r.raceTime || 'Chưa định giờ'} | Quãng đường: {r.distance}m
+                                              </div>
+                                            </div>
+                                            <div className="d-flex align-items-center gap-2">
+                                              <span className="badge bg-light text-dark small">{r.surfaceType || 'Grass'}</span>
+                                              <span className={`badge ${isLive ? 'bg-danger text-white' : 'bg-info text-white'} text-uppercase small`} style={{ fontSize: '10px' }}>{r.status}</span>
+                                              <span className="material-symbols-outlined text-secondary">arrow_forward_ios</span>
                                             </div>
                                           </div>
-                                          <div className="d-flex align-items-center gap-2">
-                                            <span className="badge bg-light text-dark small">{r.surfaceType || 'Turf'}</span>
-                                            <span className="badge bg-info text-white text-uppercase small" style={{ fontSize: '10px' }}>{r.status}</span>
-                                            <span className="material-symbols-outlined text-secondary">arrow_forward_ios</span>
-                                          </div>
-                                        </div>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   )}
                                 </div>
@@ -373,23 +374,25 @@ export default function SpectatorTournaments() {
                   </div>
                   <div className="col-6 mt-2">
                     <span className="small text-secondary block">Trạng thái vòng đua:</span>
-                    <span className="fw-bold text-info small text-uppercase">{selectedRace.status}</span>
+                    <span className={`fw-bold small text-uppercase ${selectedRace.status === 'RUNNING' ? 'text-danger animate-pulse' : 'text-info'}`}>
+                      {selectedRace.status === 'RUNNING' ? '● Đang chạy (LIVE)' : selectedRace.status}
+                    </span>
                   </div>
                   <div className="col-6 mt-2">
                     <span className="small text-secondary block">Bề mặt đường chạy:</span>
-                    <span className="fw-bold text-dark small">{selectedRace.surfaceType || 'Turf'}</span>
+                    <span className="fw-bold text-dark small">{selectedRace.surfaceType || 'Grass'}</span>
                   </div>
                 </div>
 
                 {/* Simulation entry button for running/finished races */}
                 {(selectedRace.status === 'RUNNING' || selectedRace.status === 'FINISHED') && (
-                  <div className="mb-4">
+                  <div className="mb-4 animate-bounce-subtle">
                     <button 
                       className="ho-btn ho-btn-gold-solid w-100 py-3 d-flex align-items-center justify-content-center gap-2"
                       onClick={() => setActiveSimulationRace(selectedRace)}
                     >
-                      <span className="material-symbols-outlined">analytics</span>
-                      {selectedRace.status === 'FINISHED' ? 'Xem Ảnh Về Đích (Photo Finish)' : 'Xem Mô Phỏng Trực Tiếp (Live Simulation)'}
+                      <span className="material-symbols-outlined animate-spin-slow">analytics</span>
+                      {selectedRace.status === 'FINISHED' ? 'Xem Ảnh Về Đích (Photo Finish)' : 'XEM MÔ PHỎNG TRỰC TIẾP (LIVE SIMULATION)'}
                     </button>
                   </div>
                 )}
@@ -562,7 +565,7 @@ export default function SpectatorTournaments() {
                   info
                 </span>
                 <p className="text-secondary small">
-                  Chọn một giải đấu bên trái, bấm vào vòng đua để xem thông tin chi tiết, danh sách thi đấu và tiến hành đặt cược.
+                  Chọn một giải đấu bên trái, bấm vào vòng đua để xem thông tin chi tiết, đặt cược Pari-Mutuel và theo dõi mô phỏng.
                 </p>
               </div>
             )}

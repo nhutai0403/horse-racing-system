@@ -8,16 +8,16 @@ import SpectatorDashboardContent from './components/SpectatorDashboardContent';
 import SpectatorTournaments from './components/SpectatorTournaments';
 import SpectatorWallet from './components/SpectatorWallet';
 import SpectatorUpgradeRole from './components/SpectatorUpgradeRole';
-import SpectatorChatbot from './components/SpectatorChatbot';
+import SpectatorLiveSimulationPage from './components/SpectatorLiveSimulationPage';
 
 import './Spectator.css';
 
 const spectatorNavLinks = [
   { path: '/spectator/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { path: '/spectator/tournaments', label: 'Giải Đấu & Vòng Đua', icon: 'emoji_events' },
+  { path: '/spectator/live', label: 'Mô Phỏng Trực Tiếp', icon: 'sports_score' },
   { path: '/spectator/wallet', label: 'Ví & Giao Dịch', icon: 'account_balance_wallet' },
-  { path: '/spectator/upgrade', label: 'Nâng Cấp Tài Khoản', icon: 'manage_accounts' },
-  { path: '/spectator/chat', label: 'Trợ Lý Ảo AI', icon: 'forum' }
+  { path: '/spectator/upgrade', label: 'Nâng Cấp Tài Khoản', icon: 'manage_accounts' }
 ];
 
 export default function SpectatorPage() {
@@ -34,12 +34,13 @@ export default function SpectatorPage() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<SpectatorDashboardContent />} />
         <Route path="tournaments" element={<SpectatorTournaments />} />
+        <Route path="live" element={<SpectatorLiveSimulationPage />} />
         <Route path="wallet" element={<SpectatorWallet />} />
         <Route path="upgrade" element={<SpectatorUpgradeRole />} />
-        <Route path="chat" element={<SpectatorChatbot />} />
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Routes>
     </DashboardLayout>
   );
 }
+

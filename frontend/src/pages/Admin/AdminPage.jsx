@@ -18,6 +18,7 @@ const adminNavLinks = [
   { path: '/admin/usermanagement', label: 'User Management', icon: 'group' },
   { path: '/admin/upgradeuserrole', label: 'Upgrade User Role', icon: 'manage_accounts' },
   { path: '/admin/tournamentmanagement', label: 'Quản Lý Giải Đấu', icon: 'emoji_events' },
+  { path: '/admin/racemanagement', label: 'Duyệt Đăng Ký Đua', icon: 'flag' },
   { path: '/admin/withdrawals', label: 'Withdrawals', icon: 'account_balance_wallet' }
 ];
 

@@ -22,21 +22,23 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
       let combinedNotifications = [];
 
       // 1. Fetch friend requests (both Jockey and Horse Owner roles can receive friend requests)
-      try {
-        const directory = await getConnectionsDirectoryAPI();
-        const pendingFriendRequests = directory
-          .filter(u => u.friendStatus === 'PENDING_RECEIVED')
-          .map(u => ({
-            id: `FRIEND_REQ_${u.userId || u.id}`,
-            ownerName: u.fullName,
-            senderName: u.fullName,
-            userId: u.userId || u.id,
-            connectionId: u.connectionId,
-            type: 'FRIEND_REQUEST'
-          }));
-        combinedNotifications = [...combinedNotifications, ...pendingFriendRequests];
-      } catch (err) {
-        console.error('Failed to load connections for notifications:', err);
+      if (user.role === 'HORSE_OWNER' || user.role === 'JOCKEY') {
+        try {
+          const directory = await getConnectionsDirectoryAPI();
+          const pendingFriendRequests = directory
+            .filter(u => u.friendStatus === 'PENDING_RECEIVED')
+            .map(u => ({
+              id: `FRIEND_REQ_${u.userId || u.id}`,
+              ownerName: u.fullName,
+              senderName: u.fullName,
+              userId: u.userId || u.id,
+              connectionId: u.connectionId,
+              type: 'FRIEND_REQUEST'
+            }));
+          combinedNotifications = [...combinedNotifications, ...pendingFriendRequests];
+        } catch (err) {
+          console.error('Failed to load connections for notifications:', err);
+        }
       }
 
       // 2. Fetch ride invitations for JOCKEY
@@ -161,21 +163,23 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
           </h1>
         </div>
 
-        {/* Desktop Navigation Links */}
-        <div className="d-none d-xl-flex align-items-center gap-2 flex-grow-1 justify-content-center mx-4">
-          {navLinks && navLinks.map((link) => (
-            <NavLink
-              key={link.path}
-              to={link.path}
-              className={({ isActive }) => 
-                `nav-link-horizontal ${isActive ? 'nav-link-horizontal-active' : 'nav-link-horizontal-inactive'}`
-              }
-            >
-              {link.icon && <span className="material-symbols-outlined me-1 fs-6">{link.icon}</span>}
-              {link.label}
-            </NavLink>
-          ))}
-        </div>
+        {/* Desktop Navigation Links (Hidden for ADMIN since they use left sidebar) */}
+        {user?.role !== 'ADMIN' && (
+          <div className="d-none d-xl-flex align-items-center gap-2 flex-grow-1 justify-content-center mx-4">
+            {navLinks && navLinks.map((link) => (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                className={({ isActive }) => 
+                  `nav-link-horizontal ${isActive ? 'nav-link-horizontal-active' : 'nav-link-horizontal-inactive'}`
+                }
+              >
+                {link.icon && <span className="material-symbols-outlined me-1 fs-6">{link.icon}</span>}
+                {link.label}
+              </NavLink>
+            ))}
+          </div>
+        )}
 
         {/* Right Controls */}
         <div className="d-flex align-items-center gap-2 gap-sm-3">

@@ -172,3 +172,50 @@
   color: inherit !important;
 }
 
+/* Sidebar Nav Styles for Admin */
+.admin-sidebar {
+  background-color: #ffffff;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
+  transition: width 0.3s ease;
+  z-index: 10;
+}
+
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-family: 'Hanken Grotesk', sans-serif;
+  text-decoration: none !important;
+  color: #4a5568 !important;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  transition: all 0.2s ease-in-out;
+}
+
+.sidebar-nav-link:hover {
+  background-color: rgba(0, 56, 32, 0.04);
+  color: var(--ho-primary-dark, #003820) !important;
+  transform: translateX(4px);
+}
+
+.sidebar-nav-link-active {
+  background-color: var(--ho-accent-gold, #D4AF37) !important;
+  color: #1c1b1b !important;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+}
+
+.sidebar-nav-link-active:hover {
+  background-color: var(--ho-accent-gold-hover, #fed65b) !important;
+  color: #1c1b1b !important;
+  transform: none;
+}
+
+.sidebar-nav-link span.material-symbols-outlined {
+  font-size: 20px;
+  color: inherit !important;
+}
+
