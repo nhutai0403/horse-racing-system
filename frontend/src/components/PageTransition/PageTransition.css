@@ -1,0 +1,400 @@
+/* PageTransition.css */
+
+.page-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  pointer-events: none;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Kích hoạt tương tác chuột chỉ khi đang trong trạng thái chặn chuyển trang */
+.page-transition-overlay.state-closing,
+.page-transition-overlay.state-loading {
+  pointer-events: all;
+}
+
+/* CÁC TẤM RÀO CHẮN KIM LOẠI TỐI (GATES) */
+.pt-gate {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: radial-gradient(circle at center, #0b1320 0%, #03070f 100%);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Chi tiết vân kim loại carbon công nghệ cao */
+.pt-gate::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.05;
+  background-image: 
+    linear-gradient(45deg, #ffffff 25%, transparent 25%), 
+    linear-gradient(-45deg, #ffffff 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, #ffffff 75%), 
+    linear-gradient(-45deg, transparent 75%, #ffffff 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+}
+
+.pt-gate-left {
+  left: 0;
+  transform: translateX(-100%);
+  border-right: 3px solid #00f0ff;
+}
+
+.pt-gate-right {
+  right: 0;
+  transform: translateX(100%);
+  border-left: 3px solid #00f0ff;
+}
+
+/* Hiệu ứng sập rào chắn (Closing) */
+.state-closing .pt-gate-left,
+.state-loading .pt-gate-left {
+  transform: translateX(0);
+}
+
+.state-closing .pt-gate-right,
+.state-loading .pt-gate-right {
+  transform: translateX(0);
+}
+
+/* Hiệu ứng mở rào chắn (Opening) */
+.state-opening .pt-gate-left {
+  transform: translateX(-100%);
+}
+
+.state-opening .pt-gate-right {
+  transform: translateX(100%);
+}
+
+/* Các viền sáng công nghệ chạy dọc rào chắn */
+.pt-gate-edge-glow {
+  position: absolute;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: #00f0ff;
+  box-shadow: 0 0 20px #00f0ff, 0 0 40px #00f0ff;
+}
+
+.pt-gate-left .pt-gate-edge-glow {
+  right: -2px;
+}
+
+.pt-gate-right .pt-gate-edge-glow {
+  left: -2px;
+}
+
+/* Đường sọc cảnh báo màu cam neon ở các góc góc rào chắn */
+.pt-gate-warning-lines {
+  position: absolute;
+  width: 150px;
+  height: 30px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #f59e0b,
+    #f59e0b 10px,
+    #03070f 10px,
+    #03070f 20px
+  );
+  opacity: 0.75;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+
+.pt-gate-left .pt-gate-warning-lines {
+  top: 40px;
+  left: -30px;
+  transform: rotate(15deg);
+}
+
+.pt-gate-right .pt-gate-warning-lines {
+  bottom: 40px;
+  right: -30px;
+  transform: rotate(15deg);
+}
+
+/* KHÔNG GIAN TRUNG TÂM (CENTER HUB) */
+.pt-center-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 400px;
+  height: 400px;
+  opacity: 0;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.state-loading .pt-center-hub {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* VÒNG TRÒN LOADING PHÁT SÁNG CÔNG NGHỆ */
+.pt-loading-circle-outer {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border: 2px dashed rgba(0, 240, 255, 0.3);
+  border-top-color: #00f0ff;
+  border-bottom-color: #00f0ff;
+  border-radius: 50%;
+  animation: pt-spin-clockwise 3s linear infinite;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+}
+
+.pt-loading-circle-inner {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border: 1px dotted rgba(252, 211, 77, 0.2);
+  border-left-color: #fcd34d;
+  border-right-color: #fcd34d;
+  border-radius: 50%;
+  animation: pt-spin-counter-clockwise 2s linear infinite;
+  box-shadow: 0 0 15px rgba(252, 211, 77, 0.1);
+}
+
+.pt-loading-circle-glow {
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  border: 3px solid transparent;
+  border-top-color: rgba(0, 240, 255, 0.8);
+  border-radius: 50%;
+  filter: blur(4px);
+  animation: pt-spin-clockwise 1.5s ease-in-out infinite;
+}
+
+/* BIỂU TƯỢNG NGỰA HOLOGRAM CÔNG NGHỆ LƠ LỬNG */
+.pt-hologram-container {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: pt-float-gravity 3s ease-in-out infinite;
+}
+
+.pt-hologram-horse-svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #00f0ff;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.8)) drop-shadow(0 0 18px rgba(0, 240, 255, 0.4));
+  animation: pt-hologram-glitch 4s ease infinite;
+}
+
+/* Tạo lớp phủ scanline ảo giác */
+.pt-hologram-scanline-overlay {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pt-hologram-scanline-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 240, 255, 0.15) 50%
+  ), linear-gradient(
+    90deg, 
+    rgba(255, 0, 0, 0.03), 
+    rgba(0, 255, 0, 0.01), 
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 4px, 6px 100%;
+}
+
+/* Tia laser quét dọc (Scanner sweep) */
+.pt-laser-sweep {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #00f0ff, transparent);
+  box-shadow: 0 0 8px #00f0ff, 0 0 15px #00f0ff;
+  opacity: 0.8;
+  animation: pt-laser-move 2.5s ease-in-out infinite;
+}
+
+/* HỆ THỐNG HẠT KHÔNG TRỌNG LỰC (ZERO-GRAVITY PARTICLES) */
+.pt-particles-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.state-loading .pt-particles-container {
+  opacity: 1;
+}
+
+/* Hạt bụi vàng (Gold Dust) */
+.pt-particle-gold {
+  position: absolute;
+  bottom: -20px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fcd34d 0%, rgba(252, 211, 77, 0.2) 80%, transparent 100%);
+  filter: drop-shadow(0 0 4px #fcd34d);
+  animation: pt-particle-rise-gold var(--d) linear infinite;
+  animation-delay: var(--delay);
+  left: var(--x);
+  opacity: 0;
+}
+
+/* Tia sáng neon xanh dương (Blue Neon Ray) */
+.pt-particle-blue {
+  position: absolute;
+  bottom: -40px;
+  width: 2px;
+  height: 22px;
+  background: linear-gradient(to top, transparent, #00f0ff 40%, #00f0ff 60%, transparent);
+  box-shadow: 0 0 8px #00f0ff;
+  border-radius: 1px;
+  animation: pt-particle-rise-blue var(--d) linear infinite;
+  animation-delay: var(--delay);
+  left: var(--x);
+  opacity: 0;
+}
+
+/* CHỮ HỆ THỐNG PHÍA DƯỚI */
+.pt-system-loading-text {
+  position: absolute;
+  bottom: -80px;
+  color: #00f0ff;
+  font-family: 'Space Grotesk', 'Courier New', monospace;
+  font-size: 13px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+  white-space: nowrap;
+  animation: pt-pulse-text 1.5s ease-in-out infinite;
+}
+
+/* ANIMATIONS KEYFRAMES */
+
+@keyframes pt-spin-clockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pt-spin-counter-clockwise {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes pt-float-gravity {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes pt-laser-move {
+  0% { top: 0%; }
+  50% { top: 100%; }
+  100% { top: 0%; }
+}
+
+@keyframes pt-pulse-text {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; filter: brightness(1.2); }
+}
+
+/* Hiệu ứng hạt bụi vàng bay lên */
+@keyframes pt-particle-rise-gold {
+  0% {
+    transform: translateY(0) translateX(0) scale(0.3);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-50vh) translateX(var(--wobble)) scale(1.1);
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-105vh) translateX(calc(var(--wobble) * 2)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* Hiệu ứng vệt sáng neon xanh bay lên */
+@keyframes pt-particle-rise-blue {
+  0% {
+    transform: translateY(0) scaleY(0.5);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  90% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-110vh) scaleY(1.2);
+    opacity: 0;
+  }
+}
+
+/* Hiệu ứng nhiễu sóng hologram (glitch) nhẹ của ngựa đua */
+@keyframes pt-hologram-glitch {
+  0%, 95%, 100% {
+    filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.8)) drop-shadow(0 0 18px rgba(0, 240, 255, 0.4));
+    transform: skew(0deg);
+  }
+  96% {
+    filter: drop-shadow(-2px 0 0 #ff0077) drop-shadow(2px 0 0 #00f0ff);
+    transform: skew(-1deg);
+  }
+  97% {
+    filter: drop-shadow(2px -1px 0 #00ff66) drop-shadow(-1px 2px 0 #ff8800);
+    transform: skew(1.5deg);
+  }
+  98% {
+    filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.8));
+    transform: skew(0deg);
+  }
+}

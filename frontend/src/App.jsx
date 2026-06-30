@@ -6,6 +6,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import Header from './components/Header/Header'; 
 import Footer from './components/Footer/Footer';
 import FloatingAiChat from './components/FloatingAiChat/FloatingAiChat';
+import PageTransition from './components/PageTransition/PageTransition';
 
 // Lazy load Page Components
 const AuthPage = lazy(() => import('./pages/AuthPage/AuthPage'));
@@ -45,102 +46,95 @@ function App() {
     <AuthProvider>
       <NotificationProvider>
         <BrowserRouter>
-        <Suspense fallback={
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '100vh',
-            background: '#02140b',
-            color: '#ffffff',
-            fontSize: '1.2rem',
-            fontFamily: 'sans-serif'
-          }}>
-            Loading system...
-          </div>
-        }>
-          <Routes>
-            {/* Public Authentication Routes */}
-            <Route path="/login" element={<AuthPage view="login" />} />
-            <Route path="/signup" element={<AuthPage view="signup" />} />
-            <Route path="/verify-account" element={<VerifyAccountPage />} />
-            <Route path="/verify-email" element={<VerifyAccountPage />} />
-            <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <PageTransition>
+            <Suspense fallback={
+              <PageTransition initialLoading={true}>
+                <div style={{ minHeight: '100vh', background: '#02050a' }} />
+              </PageTransition>
+            }>
+              <Routes>
+                {/* Public Authentication Routes */}
+                <Route path="/login" element={<AuthPage view="login" />} />
+                <Route path="/signup" element={<AuthPage view="signup" />} />
+                <Route path="/verify-account" element={<VerifyAccountPage />} />
+                <Route path="/verify-email" element={<VerifyAccountPage />} />
+                <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-            {/* Standalone Horse Owner Dashboard Suite */}
-            <Route
-              path="/owner/*"
-              element={
-                <ProtectedRoute allowedRoles={["HORSE_OWNER"]}>
-                  <HorseOwnerPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/horseowner/dashboard" element={<Navigate to="/owner" replace />} />
+                {/* Standalone Horse Owner Dashboard Suite */}
+                <Route
+                  path="/owner/*"
+                  element={
+                    <ProtectedRoute allowedRoles={["HORSE_OWNER"]}>
+                      <HorseOwnerPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/horseowner/dashboard" element={<Navigate to="/owner" replace />} />
 
-            {/* Jockey Nested Dashboard Layout */}
-            <Route
-              path="/jockey/*"
-              element={
-                <ProtectedRoute allowedRoles={["JOCKEY"]}>
-                  <JockeyPage />
-                </ProtectedRoute>
-              }
-            />
+                {/* Jockey Nested Dashboard Layout */}
+                <Route
+                  path="/jockey/*"
+                  element={
+                    <ProtectedRoute allowedRoles={["JOCKEY"]}>
+                      <JockeyPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-            {/* Referee Nested Dashboard Layout */}
-            <Route
-              path="/referee/*"
-              element={
-                <ProtectedRoute allowedRoles={["RACE_REFEREE"]}>
-                  <RefereePage />
-                </ProtectedRoute>
-              }
-            />
+                {/* Referee Nested Dashboard Layout */}
+                <Route
+                  path="/referee/*"
+                  element={
+                    <ProtectedRoute allowedRoles={["RACE_REFEREE"]}>
+                      <RefereePage />
+                    </ProtectedRoute>
+                  }
+                />
 
-            {/* Spectator Nested Dashboard Layout */}
-            <Route
-              path="/spectator/*"
-              element={
-                <ProtectedRoute allowedRoles={["SPECTATOR", "HORSE_OWNER", "JOCKEY", "RACE_REFEREE"]}>
-                  <SpectatorPage />
-                </ProtectedRoute>
-              }
-            />
+                {/* Spectator Nested Dashboard Layout */}
+                <Route
+                  path="/spectator/*"
+                  element={
+                    <ProtectedRoute allowedRoles={["SPECTATOR", "HORSE_OWNER", "JOCKEY", "RACE_REFEREE"]}>
+                      <SpectatorPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-            {/* Standalone Admin Dashboard Suite */}
-            <Route
-              path="/admin/*"
-              element={
-                <ProtectedRoute allowedRoles={["ADMIN"]}>
-                  <AdminPage />
-                </ProtectedRoute>
-              }
-            />
+                {/* Standalone Admin Dashboard Suite */}
+                <Route
+                  path="/admin/*"
+                  element={
+                    <ProtectedRoute allowedRoles={["ADMIN"]}>
+                      <AdminPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-            {/* Payment Route */}
-            <Route
-              path="/payment-qr"
-              element={
-                <ProtectedRoute allowedRoles={["HORSE_OWNER", "JOCKEY"]}>
-                  <PaymentQRPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/payment-success" element={<PaymentCallback />} />
-            <Route path="/payment-cancel" element={<PaymentCallback />} />
+                {/* Payment Route */}
+                <Route
+                  path="/payment-qr"
+                  element={
+                    <ProtectedRoute allowedRoles={["HORSE_OWNER", "JOCKEY"]}>
+                      <PaymentQRPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/payment-success" element={<PaymentCallback />} />
+                <Route path="/payment-cancel" element={<PaymentCallback />} />
 
-            {/* Public and Protected Routes enclosed in MainLayout */}
-            <Route element={<MainLayout />}>
-              {/* Landing Dashboard */}
-              <Route path="/" element={<Home />} />
-              <Route path="/home" element={<Navigate to="/" replace />} />
-            </Route>
+                {/* Public and Protected Routes enclosed in MainLayout */}
+                <Route element={<MainLayout />}>
+                  {/* Landing Dashboard */}
+                  <Route path="/" element={<Home />} />
+                  <Route path="/home" element={<Navigate to="/" replace />} />
+                </Route>
 
-            {/* Catch-all fallback redirecting to root */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
+                {/* Catch-all fallback redirecting to root */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </PageTransition>
 
         {customAlert && (
           <div className="custom-alert-overlay" onClick={() => setCustomAlert(null)}>
