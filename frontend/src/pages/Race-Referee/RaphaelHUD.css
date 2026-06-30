@@ -9,7 +9,6 @@
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: white;
 }
 
@@ -97,8 +96,8 @@
     transform: rotate(-45deg);
     font-size: 100px;
     color: #ff8800;
-    font-family: 'Arial Black', sans-serif;
-    font-weight: bold;
+    font-family: var(--font-family);
+    font-weight: 900;
     text-shadow: 0 0 20px #ff8800, 0 0 40px #ffcc00;
 }
 
@@ -286,13 +285,13 @@
     left: 50%;
     transform: translateX(-50%);
     font-size: 40px;
-    font-weight: bold;
+    font-weight: 900;
     color: var(--horse-color);
     text-shadow: 0 0 10px var(--horse-color), 0 0 20px #fff;
     letter-spacing: 5px;
     opacity: 0;
     transition: opacity 0.3s;
-    font-family: 'Arial Black', sans-serif;
+    font-family: var(--font-family);
     text-transform: uppercase;
 }
 
@@ -434,10 +433,10 @@
 
 .raphael-hud-overlay .highlight-supreme {
     color: #ffaa00;
-    font-weight: bold;
+    font-weight: 900;
     font-size: 32px;
     text-shadow: 0 0 15px #ffaa00;
-    font-family: 'Arial Black', sans-serif;
+    font-family: var(--font-family);
 }
 
 @keyframes drawCircle {

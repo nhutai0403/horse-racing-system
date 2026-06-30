@@ -1,3 +1,5 @@
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/google-sans@latest/index.min.css");
+
 :root {
   /* Core Theme Colors */
   --color-primary: #0b4f32;           /* Forest Green (Picker Top) */
@@ -21,7 +23,7 @@
   --ho-border-muted: rgba(255, 255, 255, 0.08);
 
   /* Fonts */
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family: 'Google Sans', 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 * {
@@ -30,7 +32,7 @@
   padding: 0;
 }
 
-body {
+body, input, button, select, textarea {
   font-family: var(--font-family);
   color: var(--color-text-main);
   background-color: var(--color-bg-light);
@@ -68,7 +70,7 @@ body {
 }
 
 .custom-alert-title {
-  font-family: 'Epilogue', var(--font-family);
+  font-family: var(--font-family);
   font-size: 1.25rem;
   font-weight: 700;
   color: #d4af37;
@@ -78,7 +80,7 @@ body {
 }
 
 .custom-alert-message {
-  font-family: 'Space Grotesk', var(--font-family);
+  font-family: var(--font-family);
   font-size: 0.95rem;
   line-height: 1.5;
   color: #e2e8f0;

@@ -309,7 +309,7 @@
   position: absolute;
   bottom: -80px;
   color: #00f0ff;
-  font-family: 'Space Grotesk', 'Courier New', monospace;
+  font-family: var(--font-family), 'Courier New', monospace;
   font-size: 13px;
   letter-spacing: 5px;
   text-transform: uppercase;

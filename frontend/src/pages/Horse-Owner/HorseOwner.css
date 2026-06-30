@@ -23,17 +23,16 @@
 
 /* Base resets/overrides for Horse Owner Section */
 .ho-wrapper {
-  font-family: 'Work Sans', sans-serif;
   background-color: var(--ho-bg-cream);
   color: var(--ho-text-dark);
 }
 
 .ho-font-epilogue {
-  font-family: 'Epilogue', sans-serif;
+  font-family: var(--font-family);
 }
 
 .ho-font-grotesk {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--font-family);
 }
 
 /* Sidebar Styles */
