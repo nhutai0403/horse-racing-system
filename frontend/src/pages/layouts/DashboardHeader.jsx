@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { getConnectionsDirectoryAPI } from '../../services/connections';
 import { getJockeyInvitationsAPI } from '../../services/jockey';
+import { AuthContext } from '../../contexts/AuthContext';
+import axiosClient from '../../api/axiosClient';
 import logo from '../../assets/logo.png';
 
 export default function DashboardHeader({ user, profile, navLinks, logout }) {
@@ -13,6 +15,40 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
   const dropdownRef = useRef(null);
   const notificationRef = useRef(null);
   const navigate = useNavigate();
+  const { refreshToken, login } = useContext(AuthContext);
+
+  const handleActivateRole = async (requestedRole) => {
+    try {
+      const refreshResponse = await axiosClient.post('/auth/refresh', {
+        refreshToken: refreshToken,
+      });
+      
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshResponse.data;
+      
+      localStorage.setItem('horse_racing_accessToken', newAccessToken);
+      localStorage.setItem('horse_racing_refreshToken', newRefreshToken);
+      
+      const profileResponse = await axiosClient.get('/auth/me');
+      const updatedUser = profileResponse.data;
+      
+      login({
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        user: updatedUser,
+      });
+
+      if (requestedRole === 'HORSE_OWNER') {
+        window.location.href = '/owner';
+      } else if (requestedRole === 'JOCKEY') {
+        window.location.href = '/jockey';
+      } else if (requestedRole === 'RACE_REFEREE') {
+        window.location.href = '/referee';
+      }
+    } catch (err) {
+      console.error("Failed to activate new role session:", err);
+      alert("Failed to refresh session. Please try logging out and logging back in.");
+    }
+  };
 
   const loadNotifications = async () => {
     if (!user) {
@@ -62,6 +98,29 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
         }
       }
 
+      // 3. Fetch upgrade requests (only for SPECTATOR role)
+      if (user.role === 'SPECTATOR') {
+        try {
+          const response = await axiosClient.get('/upgrade-requests/me');
+          const myReqs = response.data;
+          if (myReqs && myReqs.length > 0) {
+            myReqs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            const latestReq = myReqs[0];
+            if (latestReq.status === 'APPROVED') {
+              combinedNotifications.unshift({
+                id: `UPGRADE_APPROVED_${latestReq.id}`,
+                type: 'UPGRADE_APPROVED',
+                requestedRole: latestReq.requestedRole,
+                fullName: latestReq.fullName,
+                senderName: 'System',
+              });
+            }
+          }
+        } catch (err) {
+          console.error('Failed to load upgrade requests for notifications:', err);
+        }
+      }
+
       setPendingNotifications(combinedNotifications);
     } catch (e) {
       console.error('Error loading notifications:', e);
@@ -102,7 +161,9 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
 
   const handleNotificationClick = (noti) => {
     setNotificationOpen(false);
-    if (noti.type === 'FRIEND_REQUEST') {
+    if (noti.type === 'UPGRADE_APPROVED') {
+      handleActivateRole(noti.requestedRole);
+    } else if (noti.type === 'FRIEND_REQUEST') {
       if (user?.role === 'JOCKEY') {
         navigate('/jockey/invitations', { state: { activeTab: 'connections', activeSubTab: 'friend-requests' } });
       } else if (user?.role === 'HORSE_OWNER') {
@@ -157,7 +218,14 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
           
           <div 
             className="d-flex align-items-center cursor-pointer"
-            onClick={() => navigate('/')}
+            onClick={() => {
+              if (user?.role === 'RACE_REFEREE') navigate('/referee/home');
+              else if (user?.role === 'JOCKEY') navigate('/jockey/home');
+              else if (user?.role === 'HORSE_OWNER') navigate('/owner/home');
+              else if (user?.role === 'SPECTATOR') navigate('/spectator/home');
+              else if (user?.role === 'ADMIN') navigate('/admin/dashboard');
+              else navigate('/');
+            }}
             style={{ cursor: 'pointer' }}
           >
             <img src={logo} alt="EquineElite Logo" style={{ height: '48px', width: 'auto' }} />
@@ -211,30 +279,42 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
                       No new notifications
                     </div>
                   ) : (
-                    pendingNotifications.map((noti) => (
-                      <button 
-                        key={noti.id} 
-                        className="avatar-dropdown-item d-flex flex-column align-items-start gap-1 py-3 px-3 border-bottom"
-                        style={{ borderBottom: '1px solid #edf2f7', borderTop: 'none', background: 'none', borderRadius: 0 }}
-                        onClick={() => handleNotificationClick(noti)}
-                      >
-                        <div className="d-flex align-items-center gap-2 w-100">
-                          <span className="material-symbols-outlined text-warning" style={{ fontSize: '18px' }}>
-                            {noti.type === 'FRIEND_REQUEST' ? 'person' : 'sports_score'}
-                          </span>
-                          <span className="fw-bold text-dark text-truncate" style={{ fontSize: '12.5px', maxWidth: '200px' }}>
-                            {noti.senderName || 'Invitation'}
-                          </span>
-                          <span className="badge bg-warning text-dark ms-auto" style={{ fontSize: '8px', padding: '2px 4px' }}>New</span>
-                        </div>
-                        <p className="text-secondary small m-0 text-truncate-2" style={{ fontSize: '11.5px', lineHeight: '1.4', textAlign: 'left', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal' }}>
-                          {noti.type === 'FRIEND_REQUEST' 
-                            ? 'sent you a connection request.'
-                            : `Invited you to ride ${noti.horseName} at tournament ${noti.tournamentName}`
-                          }
-                        </p>
-                      </button>
-                    ))
+                    pendingNotifications.map((noti) => {
+                      const isUpgrade = noti.type === 'UPGRADE_APPROVED';
+                      return (
+                        <button 
+                          key={noti.id} 
+                          className="avatar-dropdown-item d-flex flex-column align-items-start gap-1 py-3 px-3 border-bottom"
+                          style={{ 
+                            borderBottom: '1px solid #edf2f7', 
+                            borderTop: 'none', 
+                            background: isUpgrade ? 'rgba(16, 185, 129, 0.05)' : 'none', 
+                            borderRadius: 0 
+                          }}
+                          onClick={() => handleNotificationClick(noti)}
+                        >
+                          <div className="d-flex align-items-center gap-2 w-100">
+                            <span className={`material-symbols-outlined ${isUpgrade ? 'text-success' : 'text-warning'}`} style={{ fontSize: '18px' }}>
+                              {isUpgrade ? 'check_circle' : noti.type === 'FRIEND_REQUEST' ? 'person' : 'sports_score'}
+                            </span>
+                            <span className="fw-bold text-dark text-truncate" style={{ fontSize: '12.5px', maxWidth: '200px' }}>
+                              {noti.senderName || (isUpgrade ? 'System' : 'Invitation')}
+                            </span>
+                            <span className={`badge ${isUpgrade ? 'bg-success text-white' : 'bg-warning text-dark'} ms-auto`} style={{ fontSize: '8px', padding: '2px 4px' }}>
+                              {isUpgrade ? 'Activate' : 'New'}
+                            </span>
+                          </div>
+                          <p className="text-secondary small m-0 text-truncate-2" style={{ fontSize: '11.5px', lineHeight: '1.4', textAlign: 'left', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal' }}>
+                            {isUpgrade 
+                              ? `Upgrade request to ${noti.requestedRole.replace('_', ' ')} has been approved. Click here to activate your role!`
+                              : noti.type === 'FRIEND_REQUEST' 
+                                ? 'sent you a connection request.'
+                                : `Invited you to ride ${noti.horseName} at tournament ${noti.tournamentName}`
+                            }
+                          </p>
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               </div>

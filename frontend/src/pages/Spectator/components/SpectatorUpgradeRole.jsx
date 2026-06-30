@@ -165,6 +165,59 @@ export default function SpectatorUpgradeRole() {
     }
   };
 
+  if (user && user.role !== 'SPECTATOR') {
+    let roleName = user.role;
+    let redirectPath = '/';
+    let portalName = '';
+    if (user.role === 'HORSE_OWNER') {
+      roleName = 'Horse Owner';
+      redirectPath = '/owner/dashboard';
+      portalName = 'Horse Owner';
+    } else if (user.role === 'JOCKEY') {
+      roleName = 'Jockey';
+      redirectPath = '/jockey/dashboard';
+      portalName = 'Jockey';
+    } else if (user.role === 'RACE_REFEREE') {
+      roleName = 'Race Referee';
+      redirectPath = '/referee/dashboard';
+      portalName = 'Race Referee';
+    } else if (user.role === 'ADMIN') {
+      roleName = 'Admin';
+      redirectPath = '/admin/dashboard';
+      portalName = 'Admin';
+    }
+
+    return (
+      <div className="container-fluid p-0 animate-fade-in" style={{ maxWidth: '1440px' }}>
+        <div className="mb-4">
+          <span className="role-badge" style={{ background: '#10b981', color: '#fff' }}>{user.role} ROLE</span>
+          <h2 className="ho-font-epilogue fs-3 fw-bold text-dark mb-1">Account Upgrade</h2>
+          <p className="text-secondary small">Become an official member with the role of Horse Owner, Jockey, or Race Referee.</p>
+        </div>
+        <div className="row g-4 justify-content-center">
+          <div className="col-12 col-xl-8">
+            <div className="glass-card text-center py-5 px-4">
+              <span className="material-symbols-outlined text-success mb-3" style={{ fontSize: '64px' }}>
+                check_circle
+              </span>
+              <h3 className="ho-font-epilogue fs-4 fw-bold text-dark mb-2">Account Upgraded Successfully!</h3>
+              <p className="text-secondary mb-4 mx-auto" style={{ maxWidth: '500px' }}>
+                Your account has been approved and activated with the role of <strong>{roleName}</strong>. 
+                You do not need to submit any further upgrade requests.
+              </p>
+              <button 
+                onClick={() => window.location.href = redirectPath}
+                className="ho-btn ho-btn-gold-solid py-2 px-4"
+              >
+                Go to {portalName} Portal
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container-fluid p-0 animate-fade-in" style={{ maxWidth: '1440px' }}>
       
@@ -186,13 +239,13 @@ export default function SpectatorUpgradeRole() {
               <div className="text-center py-4 px-3 mb-4 rounded border" 
                    style={{ background: 'rgba(252, 211, 77, 0.1)', borderColor: 'rgba(252, 211, 77, 0.3)' }}>
                 <span className="badge bg-warning text-dark text-uppercase mb-2 py-1 px-3" style={{ fontSize: '12px' }}>
-                  Hồ sơ đang chờ duyệt
+                  Under Review
                 </span>
                 <p className="text-dark m-0 small">
-                  Yêu cầu nâng cấp lên vai trò <strong>{myRequest.requestedRole.replace('_', ' ')}</strong> đang chờ Ban quản trị phê duyệt.
+                  Your upgrade request to <strong>{myRequest.requestedRole.replace('_', ' ')}</strong> is pending approval.
                 </p>
                 <p className="text-secondary small mt-1 italic" style={{ fontSize: '12px' }}>
-                  Thông tin phản hồi sẽ hiển thị tại đây sau khi Admin xem xét hồ sơ.
+                  Updates will be shown here once the Admin has reviewed your documents.
                 </p>
               </div>
             )}
@@ -201,27 +254,20 @@ export default function SpectatorUpgradeRole() {
               <div className="text-center py-4 px-3 mb-4 rounded border" 
                    style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
                 <span className="badge bg-success text-white text-uppercase mb-2 py-1 px-3" style={{ fontSize: '12px' }}>
-                  Yêu cầu được chấp thuận!
+                  Request Approved!
                 </span>
                 <p className="text-dark m-0 small">
-                  Yêu cầu nâng cấp của bạn đã được phê duyệt. Hãy bấm nút dưới đây để kích hoạt vai trò mới.
+                  Your upgrade request has been approved. Please check and activate your new role from the notifications menu (bell icon) in the top-right corner.
                 </p>
-                <button 
-                  onClick={handleActivateRole}
-                  className="ho-btn ho-btn-gold-solid mt-3 py-2 px-4"
-                  style={{ textTransform: 'none' }}
-                >
-                  Kích hoạt vai trò {myRequest.requestedRole.replace('_', ' ')}
-                </button>
               </div>
             )}
 
             {myRequest && myRequest.status === 'REJECTED' && (
               <div className="text-center py-3 px-3 mb-4 rounded border text-danger" 
                    style={{ background: 'var(--ho-error-bg)', borderColor: 'rgba(186,26,26,0.2)' }}>
-                <span className="badge bg-danger text-white text-uppercase mb-2">Hồ sơ bị từ chối</span>
-                <p className="m-0 small fw-bold">Lý do: "{myRequest.rejectionReason || 'Không có lý do cụ thể'}"</p>
-                <p className="m-0 small mt-1 text-secondary" style={{ fontSize: '12px' }}>Bạn có thể điều chỉnh thông tin bên dưới và gửi lại yêu cầu mới.</p>
+                <span className="badge bg-danger text-white text-uppercase mb-2">Request Rejected</span>
+                <p className="m-0 small fw-bold">Reason: "{myRequest.rejectionReason || 'No specific reason provided'}"</p>
+                <p className="m-0 small mt-1 text-secondary" style={{ fontSize: '12px' }}>You can adjust your information below and submit a new request.</p>
               </div>
             )}
 

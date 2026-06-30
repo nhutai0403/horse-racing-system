@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { JockeyProvider, useJockey } from './JockeyContext';
 import DashboardLayout from '../layouts/DashboardLayout';
+import Home from '../Home/Home';
 import '../Horse-Owner/HorseOwner.css'; // Reuse premium theme variables, buttons, forms, and timeline classes
 
 // Import Jockey content views
@@ -10,11 +11,14 @@ import JockeyInvitationsContent from './JockeyInvitationsContent';
 import JockeyProfileContent from './JockeyProfileContent';
 
 const jockeyNavLinks = [
+  { path: '/jockey/home', label: 'Home', icon: 'home' },
   { path: '/jockey/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { path: '/jockey/races', label: 'Lịch thi đấu & Giải', icon: 'sports_score' },
-  { path: '/jockey/invitations', label: 'Lời mời & Kết nối', icon: 'mail' },
-  { path: '/jockey/profile', label: 'Hồ sơ & Ví', icon: 'person' },
-  { path: '/spectator/tournaments', label: 'Đặt Cược', icon: 'local_atm' }
+  { path: '/jockey/races', label: 'Races & Tournaments', icon: 'sports_score' },
+  { path: '/jockey/invitations', label: 'Invitations & Connections', icon: 'mail' },
+  { path: '/jockey/profile', label: 'Profile & Wallet', icon: 'person' },
+  { path: '/spectator/tournaments', label: 'Betting', icon: 'local_atm' },
+  { path: '/spectator/live', label: 'Live Simulation', icon: 'live_tv' },
+  { path: '/spectator/wallet', label: 'Wallet & Transactions', icon: 'account_balance_wallet' }
 ];
 
 function JockeyRoutesBridge() {
@@ -43,6 +47,7 @@ function JockeyRoutesBridge() {
     <DashboardLayout navLinks={jockeyNavLinks} profile={profile}>
       <Routes>
         <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="home" element={<Home />} />
         <Route path="dashboard" element={<JockeyDashboardContent />} />
         <Route path="races" element={<JockeyRacesContent />} />
         <Route path="invitations" element={<JockeyInvitationsContent />} />
