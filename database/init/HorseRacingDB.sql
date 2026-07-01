@@ -1096,43 +1096,6 @@ GO
 USE [HorseRacingDB]
 GO
 
--- 1. Insert Roles
-INSERT INTO [dbo].[roles] ([role_name], [description]) VALUES
-('ADMIN', 'System Administrator'),
-('SPECTATOR', 'Normal User'),
-('HORSE_OWNER', 'Horse Owner'),
-('JOCKEY', 'Jockey'),
-('RACE_REFEREE', 'Race Referee');
-GO
-
--- 2. Insert Users (Password: Password123!)
-INSERT INTO [dbo].[users] ([username], [email], [password], [full_name], [phone], [provider], [role], [enabled]) VALUES
-('owner1', 'owner1@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test Owner 1', '0123456789', 'LOCAL', 'HORSE_OWNER', 1),
-('jockey1', 'jockey1@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test Jockey 1', '0987654321', 'LOCAL', 'JOCKEY', 1),
-('jockey2', 'jockey2@test.com', '$2a$10$fGL7iOzTjw1bkUVT3vpfz.9DPzgsYnLpkOj6vg5I38/yCKjf7mVay', 'Test Jockey 2', '0987654322', 'LOCAL', 'JOCKEY', 1);
-GO
-
--- 3. Insert Owner & Jockey Profiles
-INSERT INTO [dbo].[horse_owner_profiles] ([user_id], [stable_name], [approval_status], [reputation_stars]) VALUES
-((SELECT id FROM [users] WHERE username='owner1'), 'Lucky Stable', 'APPROVED', 5.0);
-GO
-
-INSERT INTO [dbo].[jockey_profiles] ([user_id], [approval_status], [win_rate], [experience_year], [ranking_score]) VALUES
-((SELECT id FROM [users] WHERE username='jockey1'), 'APPROVED', 45.5, 5, 1200),
-((SELECT id FROM [users] WHERE username='jockey2'), 'APPROVED', 30.0, 2, 800);
-GO
-
--- 4. Insert Horse Breeds
-INSERT INTO [dbo].[horse_breeds] ([breed_name]) VALUES
-('Thoroughbred'), ('Arabian'), ('Quarter Horse'), ('Appaloosa');
-GO
-
--- 5. Insert Horses
-INSERT INTO [dbo].[horses] ([owner_id], [breed_id], [name], [age], [gender], [status]) VALUES
-((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner1')), (SELECT id FROM [horse_breeds] WHERE breed_name='Thoroughbred'), 'Lightning Bolt', 4, 'MALE', 'ACTIVE'),
-((SELECT id FROM [horse_owner_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='owner1')), (SELECT id FROM [horse_breeds] WHERE breed_name='Arabian'), 'Desert Wind', 3, 'FEMALE', 'ACTIVE');
-GO
-
 ALTER TABLE [dbo].[betting_transactions]  WITH CHECK ADD FOREIGN KEY([wallet_transaction_id])
 REFERENCES [dbo].[wallet_transactions] ([id])
 GO
@@ -1419,11 +1382,23 @@ INSERT INTO [dbo].[tournaments] ([tournament_name], [tournament_status], [start_
 GO
 
 -- 9. Insert Races
-INSERT INTO [dbo].[races] ([race_name], [tournament_id], [race_track_id], [race_date], [race_time], [race_round], [max_horses], [distance], [status]) VALUES
+INSERT INTO [dbo].[races] ([race_name], [tournament_id], [race_track_id], [race_date], [race_time], [race_round], [max_horses], [distance], [status], [referee_id]) VALUES
 ('Qualifier Round 1', 
  (SELECT id FROM [tournaments] WHERE tournament_name='Spring Championship 2026'), 
  (SELECT id FROM [race_tracks] WHERE name='Grand National Track'), 
- '2026-07-01', '14:00:00', 1, 10, 1200, 'Upcoming');
+ '2026-07-01', '14:00:00', 1, 10, 50.0, 'LOCKED_LIST', (SELECT id FROM [users] WHERE username='referee1'));
+GO
+
+-- 10. Insert Race Participants (All are inspected and APPROVED to allow starting the race)
+INSERT INTO [dbo].[race_participants] ([race_id], [horse_id], [jockey_id], [gate_number], [status], [created_at]) VALUES
+((SELECT id FROM [races] WHERE race_name='Qualifier Round 1'), (SELECT id FROM [horses] WHERE name='Horse 1'), (SELECT id FROM [jockey_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='jockey1')), 1, 'APPROVED', GETDATE()),
+((SELECT id FROM [races] WHERE race_name='Qualifier Round 1'), (SELECT id FROM [horses] WHERE name='Horse 2'), (SELECT id FROM [jockey_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='jockey2')), 2, 'APPROVED', GETDATE()),
+((SELECT id FROM [races] WHERE race_name='Qualifier Round 1'), (SELECT id FROM [horses] WHERE name='Horse 3'), (SELECT id FROM [jockey_profiles] WHERE user_id=(SELECT id FROM [users] WHERE username='jockey3')), 3, 'APPROVED', GETDATE());
+GO
+
+-- 11. Create Wallets for all users with a starting balance of 10,000,000.00 VNĐ
+INSERT INTO [dbo].[wallets] ([user_id], [balance], [created_at])
+SELECT id, 10000000.00, GETDATE() FROM [dbo].[users];
 GO
 
 USE [master]

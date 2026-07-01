@@ -11,7 +11,6 @@ import com.horseracing.repositories.JockeyProfileRepository;
 import com.horseracing.repositories.UserConnectionRepository;
 import com.horseracing.repositories.UserRepository;
 import com.horseracing.repositories.UpgradeRequestRepository;
-import com.horseracing.entities.UpgradeRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -243,7 +242,7 @@ public class UserConnectionService {
                 .filter(req -> req.getStatus() == com.horseracing.entities.enums.RequestStatus.APPROVED 
                         && req.getRequestedRole() == user.getRole())
                 .findFirst()
-                .map(UpgradeRequest::getDocumentUrls)
+                .map(req -> req.getDocumentUrls())
                 .orElse(java.util.Collections.emptyList());
         builder.documentUrls(documentUrls);
 

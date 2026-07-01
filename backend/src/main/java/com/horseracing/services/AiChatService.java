@@ -1,5 +1,6 @@
 package com.horseracing.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -22,8 +23,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -67,7 +70,7 @@ public class AiChatService {
                 this.systemPrompt = FileCopyUtils.copyToString(reader);
                 log.info("Loaded System Prompt successfully.");
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.error("Could not load system prompt file. Using default empty prompt.", e);
             this.systemPrompt = "Bạn là trợ lý ảo. Hãy giúp đỡ người dùng.";
         }
@@ -110,32 +113,31 @@ public class AiChatService {
             ObjectNode rootNode = objectMapper.createObjectNode();
 
             // 2. Customize System Instruction based on user role and data
-            String rolePrompt = "";
+            String rolePrompt;
             if (user == null) {
-                rolePrompt = "\nVai trò người dùng hiện tại: GUEST (Khách vãng lai - chưa đăng nhập).\n"
-                        + "Hướng dẫn: Khuyên họ đăng nhập hoặc đăng ký tài khoản nếu họ muốn sử dụng đầy đủ các tính năng như xem giải đấu chi tiết, đặt cược, hoặc quản lý thông tin.";
+                rolePrompt = """
+                        
+                        Vai trò người dùng hiện tại: GUEST (Khách vãng lai - chưa đăng nhập).
+                        Hướng dẫn: Khuyên họ đăng nhập hoặc đăng ký tài khoản nếu họ muốn sử dụng đầy đủ các tính năng như xem giải đấu chi tiết, đặt cược, hoặc quản lý thông tin.""";
             } else {
                 Role role = user.getRole();
                 String balanceInfo = "";
                 if (role == Role.SPECTATOR) {
                     Optional<Wallet> walletOpt = walletRepository.findByUserId(user.getId());
-                    BigDecimal balance = walletOpt.map(Wallet::getBalance).orElse(BigDecimal.ZERO);
+                    BigDecimal balance = walletOpt.map(w -> w.getBalance()).orElse(BigDecimal.ZERO);
                     balanceInfo = " (Số dư ví hiện tại: " + balance + " VND)";
                 }
                 rolePrompt = "\nVai trò người dùng hiện tại: " + role.name() + " (Đã đăng nhập).\n"
                         + "Thông tin tài khoản: Tên: " + user.getFullName() + ", Email: " + user.getEmail() + balanceInfo + ".\n";
 
-                if (role == Role.SPECTATOR) {
-                    rolePrompt += "Hướng dẫn nghiệp vụ cho Spectator: Giải đáp và hướng dẫn họ cách đặt cược, nạp/rút tiền qua PayOS, xem lịch sử đặt cược và lịch sử giao dịch trực tiếp trên giao diện cá nhân.";
-                } else if (role == Role.HORSE_OWNER) {
-                    rolePrompt += "Hướng dẫn nghiệp vụ cho Horse Owner: Hướng dẫn họ cách quản lý ngựa, đăng ký ngựa tham gia giải đấu, và thỏa thuận hợp tác với Jockey (Nài ngựa).";
-                } else if (role == Role.JOCKEY) {
-                    rolePrompt += "Hướng dẫn nghiệp vụ cho Jockey: Hướng dẫn họ xem lịch đua cá nhân và các hợp đồng thỏa thuận với chủ ngựa.";
-                } else if (role == Role.RACE_REFEREE) {
-                    rolePrompt += "Hướng dẫn nghiệp vụ cho Referee: Hướng dẫn họ cách xem lịch bắt giải đấu và cập nhật kết quả các vòng đua được phân công.";
-                } else if (role == Role.ADMIN) {
-                    rolePrompt += "Hướng dẫn nghiệp vụ cho Admin: Hướng dẫn họ cách duyệt yêu cầu nâng cấp vai trò của người dùng, quản lý thành viên và thiết lập giải đấu mới.";
-                }
+                rolePrompt += switch (role) {
+                    case SPECTATOR -> "Hướng dẫn nghiệp vụ cho Spectator: Giải đáp và hướng dẫn họ cách đặt cược, nạp/rút tiền qua PayOS, xem lịch sử đặt cược và lịch sử giao dịch trực tiếp trên giao diện cá nhân.";
+                    case HORSE_OWNER -> "Hướng dẫn nghiệp vụ cho Horse Owner: Hướng dẫn họ cách quản lý ngựa, đăng ký ngựa tham gia giải đấu, và thỏa thuận hợp tác với Jockey (Nài ngựa).";
+                    case JOCKEY -> "Hướng dẫn nghiệp vụ cho Jockey: Hướng dẫn họ xem lịch đua cá nhân và các hợp đồng thỏa thuận với chủ ngựa.";
+                    case RACE_REFEREE -> "Hướng dẫn nghiệp vụ cho Referee: Hướng dẫn họ cách xem lịch bắt giải đấu và cập nhật kết quả các vòng đua được phân công.";
+                    case ADMIN -> "Hướng dẫn nghiệp vụ cho Admin: Hướng dẫn họ cách duyệt yêu cầu nâng cấp vai trò của người dùng, quản lý thành viên và thiết lập giải đấu mới.";
+                    default -> "";
+                };
             }
 
             String finalSystemInstruction = this.systemPrompt + "\n" + rolePrompt + "\n"
@@ -159,7 +161,6 @@ public class AiChatService {
                 Collections.reverse(history); // chronological order
 
                 String lastRole = null;
-                ObjectNode lastContentObj = null;
                 ArrayNode lastPartsArray = null;
 
                 for (int i = 0; i < history.size(); i++) {
@@ -173,7 +174,7 @@ public class AiChatService {
                             if (parsed.has("text")) {
                                 cleanMessage = parsed.get("text").asText();
                             }
-                        } catch (Exception ignored) {
+                        } catch (JsonProcessingException ignored) {
                         }
                     }
 
@@ -187,14 +188,14 @@ public class AiChatService {
                     } else {
                         // Create a new content object
                         lastRole = role;
-                        lastContentObj = objectMapper.createObjectNode();
-                        lastContentObj.put("role", role);
+                        ObjectNode contentObj = objectMapper.createObjectNode();
+                        contentObj.put("role", role);
                         lastPartsArray = objectMapper.createArrayNode();
                         ObjectNode textPart = objectMapper.createObjectNode();
                         textPart.put("text", cleanMessage);
                         lastPartsArray.add(textPart);
-                        lastContentObj.set("parts", lastPartsArray);
-                        contentsArray.add(lastContentObj);
+                        contentObj.set("parts", lastPartsArray);
+                        contentsArray.add(contentObj);
                     }
 
                     // Attach image to the current user's message (which is at the end of the history list)
@@ -285,17 +286,14 @@ public class AiChatService {
         } catch (org.springframework.web.client.HttpStatusCodeException e) {
             log.error("HTTP error calling Gemini API: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
             ObjectNode errorNode = objectMapper.createObjectNode();
-            String userFriendlyMessage;
-            if (e.getStatusCode().value() == 429) {
-                userFriendlyMessage = "Hệ thống AI đang nhận được quá nhiều yêu cầu cùng lúc. Vui lòng thử lại sau ít phút.";
-            } else if (e.getStatusCode().value() == 503) {
-                userFriendlyMessage = "Dịch vụ AI đang bận hoặc tạm thời không khả dụng. Vui lòng thử lại sau giây lát.";
-            } else {
-                userFriendlyMessage = "Đã xảy ra lỗi hệ thống khi kết nối với AI (Mã lỗi: " + e.getStatusCode().value() + "). Vui lòng thử lại sau.";
-            }
+            String userFriendlyMessage = switch (e.getStatusCode().value()) {
+                case 429 -> "Hệ thống AI đang nhận được quá nhiều yêu cầu cùng lúc. Vui lòng thử lại sau ít phút.";
+                case 503 -> "Dịch vụ AI đang bận hoặc tạm thời không khả dụng. Vui lòng thử lại sau giây lát.";
+                default -> "Đã xảy ra lỗi hệ thống khi kết nối với AI (Mã lỗi: " + e.getStatusCode().value() + "). Vui lòng thử lại sau.";
+            };
             errorNode.put("text", userFriendlyMessage);
             return errorNode.toString();
-        } catch (Exception e) {
+        } catch (JsonProcessingException | RestClientException e) {
             log.error("Error calling Gemini API", e);
             ObjectNode errorNode = objectMapper.createObjectNode();
             errorNode.put("text", "Đã xảy ra lỗi khi kết nối với AI. Vui lòng thử lại sau.");

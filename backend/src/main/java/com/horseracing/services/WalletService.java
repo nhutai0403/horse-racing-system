@@ -1,8 +1,6 @@
 package com.horseracing.services;
 
 import com.horseracing.dto.response.WithdrawalResponse;
-import com.horseracing.entities.HorseOwnerProfile;
-import com.horseracing.entities.JockeyProfile;
 import com.horseracing.entities.User;
 import com.horseracing.entities.Wallet;
 import com.horseracing.entities.WalletTransaction;
@@ -115,11 +113,11 @@ public class WalletService {
     public String getBankAccountForUser(User user) {
         if (user.getRole() == com.horseracing.entities.enums.Role.JOCKEY) {
             return jockeyProfileRepository.findByUser(user)
-                    .map(JockeyProfile::getBankAccount)
+                    .map(jp -> jp.getBankAccount())
                     .orElse("");
         } else if (user.getRole() == com.horseracing.entities.enums.Role.HORSE_OWNER) {
             return horseOwnerProfileRepository.findByUser(user)
-                    .map(HorseOwnerProfile::getBankAccount)
+                    .map(hop -> hop.getBankAccount())
                     .orElse("");
         }
         return "";

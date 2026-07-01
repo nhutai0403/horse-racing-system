@@ -38,6 +38,8 @@ public class BetServiceTest {
 
     private User spectatorUser;
     private User adminUser;
+    private User jockeyUser;
+    private User ownerUser;
     private Race race;
     private RaceParticipant participant;
     private Wallet wallet;
@@ -56,6 +58,20 @@ public class BetServiceTest {
                 .fullName("Admin Test")
                 .email("admin@test.com")
                 .role(Role.ADMIN)
+                .build();
+
+        jockeyUser = User.builder()
+                .id(4)
+                .fullName("Jockey Test")
+                .email("jockey@test.com")
+                .role(Role.JOCKEY)
+                .build();
+
+        ownerUser = User.builder()
+                .id(5)
+                .fullName("Owner Test")
+                .email("owner@test.com")
+                .role(Role.HORSE_OWNER)
                 .build();
 
         Tournament tournament = Tournament.builder()
@@ -154,8 +170,82 @@ public class BetServiceTest {
                 .build();
 
         BusinessException exception = assertThrows(BusinessException.class, () -> betService.placeBet(adminUser, request));
-        assertEquals("Chỉ người xem (SPECTATOR) mới được phép đặt cược.", exception.getMessage());
+        assertEquals("Chỉ người xem (SPECTATOR), chủ ngựa (HORSE_OWNER) và nài ngựa (JOCKEY) mới được phép đặt cược.", exception.getMessage());
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
+    }
+
+    @Test
+    void testPlaceBet_JockeyParticipating_Forbidden() {
+        PlaceBetRequest request = PlaceBetRequest.builder()
+                .raceId(10)
+                .participantId(100)
+                .amount(BigDecimal.valueOf(50.0))
+                .betType("WIN")
+                .build();
+
+        when(raceRepository.findById(10)).thenReturn(Optional.of(race));
+        when(raceParticipantRepository.existsByJockeyUserIdAndTournamentId(jockeyUser.getId(), 1)).thenReturn(true);
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> betService.placeBet(jockeyUser, request));
+        assertEquals("Nài ngựa (JOCKEY) không được phép đặt cược trong giải đấu mà mình tham gia.", exception.getMessage());
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
+    }
+
+    @Test
+    void testPlaceBet_HorseOwnerParticipating_Forbidden() {
+        PlaceBetRequest request = PlaceBetRequest.builder()
+                .raceId(10)
+                .participantId(100)
+                .amount(BigDecimal.valueOf(50.0))
+                .betType("WIN")
+                .build();
+
+        when(raceRepository.findById(10)).thenReturn(Optional.of(race));
+        when(raceParticipantRepository.existsByHorseOwnerUserIdAndTournamentId(ownerUser.getId(), 1)).thenReturn(true);
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> betService.placeBet(ownerUser, request));
+        assertEquals("Chủ ngựa (HORSE_OWNER) không được phép đặt cược trong giải đấu mà mình tham gia.", exception.getMessage());
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
+    }
+
+    @Test
+    void testPlaceBet_JockeyNotParticipating_Success() {
+        PlaceBetRequest request = PlaceBetRequest.builder()
+                .raceId(10)
+                .participantId(100)
+                .amount(BigDecimal.valueOf(50.0))
+                .betType("WIN")
+                .build();
+
+        Wallet jockeyWallet = Wallet.builder()
+                .id(51)
+                .user(jockeyUser)
+                .balance(BigDecimal.valueOf(100.0))
+                .build();
+
+        when(raceRepository.findById(10)).thenReturn(Optional.of(race));
+        when(raceParticipantRepository.existsByJockeyUserIdAndTournamentId(jockeyUser.getId(), 1)).thenReturn(false);
+        when(raceParticipantRepository.findById(100)).thenReturn(Optional.of(participant));
+        when(walletRepository.findByUserId(jockeyUser.getId())).thenReturn(Optional.of(jockeyWallet));
+
+        when(betRepository.save(any(Bet.class))).thenAnswer(invocation -> {
+            Bet b = invocation.getArgument(0);
+            b.setId(124);
+            return b;
+        });
+
+        when(walletTransactionRepository.save(any(WalletTransaction.class))).thenAnswer(invocation -> {
+            WalletTransaction wt = invocation.getArgument(0);
+            wt.setId(999);
+            return wt;
+        });
+
+        BetResponse response = betService.placeBet(jockeyUser, request);
+
+        assertNotNull(response);
+        assertEquals(124, response.getId());
+        assertEquals("PENDING", response.getStatus());
+        assertEquals(0, BigDecimal.valueOf(50.0).compareTo(jockeyWallet.getBalance()));
     }
 
     @Test
