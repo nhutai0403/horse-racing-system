@@ -1,19 +1,33 @@
-package com.horseracing.services;
-
-import com.horseracing.dto.request.PlaceBetRequest;
-import com.horseracing.dto.response.BetResponse;
-import com.horseracing.entities.*;
-import com.horseracing.entities.enums.Role;
-import com.horseracing.exceptions.BusinessException;
-import com.horseracing.repositories.*;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+  package com.horseracing.services;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.horseracing.dto.request.PlaceBetRequest;
+import com.horseracing.dto.response.BetResponse;
+import com.horseracing.entities.Bet;
+import com.horseracing.entities.BettingTransaction;
+import com.horseracing.entities.Race;
+import com.horseracing.entities.RaceParticipant;
+import com.horseracing.entities.User;
+import com.horseracing.entities.Wallet;
+import com.horseracing.entities.WalletTransaction;
+import com.horseracing.entities.enums.Role;
+import com.horseracing.exceptions.BusinessException;
+import com.horseracing.repositories.BetRepository;
+import com.horseracing.repositories.BettingTransactionRepository;
+import com.horseracing.repositories.RaceParticipantRepository;
+import com.horseracing.repositories.RaceRepository;
+import com.horseracing.repositories.RaceSimulationRepository;
+import com.horseracing.repositories.WalletRepository;
+import com.horseracing.repositories.WalletTransactionRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -29,14 +43,28 @@ public class BetService {
 
     @Transactional
     public BetResponse placeBet(User user, PlaceBetRequest request) {
-        // 1. Check user role (must be SPECTATOR)
-        if (user.getRole() != Role.SPECTATOR) {
-            throw new BusinessException("Chỉ người xem (SPECTATOR) mới được phép đặt cược.", HttpStatus.FORBIDDEN);
+        // 1. Check user role (SPECTATOR, HORSE_OWNER, and JOCKEY are allowed to bet)
+        Role role = user.getRole();
+        if (role != Role.SPECTATOR && role != Role.HORSE_OWNER && role != Role.JOCKEY) {
+            throw new BusinessException("Chỉ người xem (SPECTATOR), chủ ngựa (HORSE_OWNER) và nài ngựa (JOCKEY) mới được phép đặt cược.", HttpStatus.FORBIDDEN);
         }
 
         // 2. Retrieve and validate Race
         Race race = raceRepository.findById(request.getRaceId())
                 .orElseThrow(() -> new BusinessException("Không tìm thấy cuộc đua.", HttpStatus.NOT_FOUND));
+
+        // Validation for JOCKEY and HORSE_OWNER: cannot bet on tournaments they participate in
+        if (role == Role.JOCKEY) {
+            boolean isParticipating = raceParticipantRepository.existsByJockeyUserIdAndTournamentId(user.getId(), race.getTournament().getId());
+            if (isParticipating) {
+                throw new BusinessException("Nài ngựa (JOCKEY) không được phép đặt cược trong giải đấu mà mình tham gia.", HttpStatus.FORBIDDEN);
+            }
+        } else if (role == Role.HORSE_OWNER) {
+            boolean isParticipating = raceParticipantRepository.existsByHorseOwnerUserIdAndTournamentId(user.getId(), race.getTournament().getId());
+            if (isParticipating) {
+                throw new BusinessException("Chủ ngựa (HORSE_OWNER) không được phép đặt cược trong giải đấu mà mình tham gia.", HttpStatus.FORBIDDEN);
+            }
+        }
 
         // Betting is only allowed when race status is LOCKED_LIST
         String status = race.getStatus();
