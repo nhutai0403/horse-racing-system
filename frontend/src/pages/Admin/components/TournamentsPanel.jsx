@@ -692,7 +692,7 @@ export default function TournamentsPanel() {
                         {formData.imageUrl ? (
                           <div style={{ width: '100%', height: '160px', position: 'relative' }}>
                             <img src={formData.imageUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            
+
                             {/* Hover overlay with action buttons */}
                             <div
                               style={{
@@ -716,7 +716,7 @@ export default function TournamentsPanel() {
                               >
                                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>zoom_in</span>
                               </button>
-                              
+
                               <button
                                 type="button"
                                 className="btn btn-sm btn-light d-flex align-items-center justify-content-center"
@@ -729,8 +729,8 @@ export default function TournamentsPanel() {
                             </div>
                           </div>
                         ) : (
-                          <div 
-                            className="text-center p-3" 
+                          <div
+                            className="text-center p-3"
                             style={{ cursor: 'pointer', width: '100%', height: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
                             onClick={() => fileInputRef.current.click()}
                           >
@@ -1281,11 +1281,11 @@ export default function TournamentsPanel() {
           <img
             src={lightboxImage}
             alt="tournament-lightbox"
-            style={{ 
-              maxWidth: '90%', 
-              maxHeight: '90%', 
-              objectFit: 'contain', 
-              borderRadius: '8px', 
+            style={{
+              maxWidth: '90%',
+              maxHeight: '90%',
+              objectFit: 'contain',
+              borderRadius: '8px',
               border: '2px solid var(--ho-border-gold, #D4AF37)',
               boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
               cursor: isZoomedIn ? 'zoom-out' : 'zoom-in',
@@ -1620,7 +1620,7 @@ function BreedMultiSelectDropdown({
       if (!exactMatch) {
         await onAddNew(val);
       }
-      
+
       const match = options.find(opt => opt.toLowerCase() === val.toLowerCase());
       addTag(match || val);
     } else if (e.key === 'Backspace' && !searchTerm && selectedTags.length > 0) {
@@ -1628,7 +1628,7 @@ function BreedMultiSelectDropdown({
     }
   };
 
-  const filteredOptions = options.filter(opt => 
+  const filteredOptions = options.filter(opt =>
     !selectedTags.some(sel => sel.toLowerCase() === opt.toLowerCase()) &&
     opt.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -1636,7 +1636,7 @@ function BreedMultiSelectDropdown({
   return (
     <div ref={containerRef} style={{ position: 'relative' }} className="form-group">
       <label className="ho-input-label">{label} *</label>
-      
+
       <div
         className="ho-form-input text-dark fw-semibold d-flex flex-wrap align-items-center gap-2"
         style={{

@@ -1,4 +1,4 @@
-.btn {
+.btn-custom-auth {
   width: 100%;
   background-color: var(--color-accent);
   color: var(--color-primary);
@@ -14,19 +14,19 @@
   justify-content: center;
 }
 
-.btn:hover {
+.btn-custom-auth:hover {
   background-color: var(--color-primary);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.06);
   transform: translateY(-2px);
   color: aliceblue;
 }
 
-.btn:active {
+.btn-custom-auth:active {
   transform: translateY(0);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-.btn:focus {
+.btn-custom-auth:focus {
   outline: none;
   box-shadow: 0 0 0 4px rgba(255, 204, 0, 0.4);
 }
