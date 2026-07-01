@@ -6,7 +6,7 @@ import { initialOwnerProfile, initialHorses } from '../pages/Horse-Owner/mockDat
  */
 
 const isMockMode = () => {
-  return false;
+  return localStorage.getItem('backend_online') !== 'true';
 };
 
 export async function getOwnerProfileAPI() {

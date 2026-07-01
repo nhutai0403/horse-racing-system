@@ -9,16 +9,16 @@ import JockeyDashboardContent from './JockeyDashboardContent';
 import JockeyRacesContent from './JockeyRacesContent';
 import JockeyInvitationsContent from './JockeyInvitationsContent';
 import JockeyProfileContent from './JockeyProfileContent';
+import JockeyFinancialsContent from './JockeyFinancialsContent';
+import SpectatorLiveSimulationPage from '../Spectator/components/SpectatorLiveSimulationPage';
 
 const jockeyNavLinks = [
-  { path: '/jockey/home', label: 'Home', icon: 'home' },
   { path: '/jockey/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { path: '/jockey/races', label: 'Races & Tournaments', icon: 'sports_score' },
-  { path: '/jockey/invitations', label: 'Invitations & Connections', icon: 'mail' },
-  { path: '/jockey/profile', label: 'Profile & Wallet', icon: 'person' },
-  { path: '/spectator/tournaments', label: 'Betting', icon: 'local_atm' },
-  { path: '/spectator/live', label: 'Live Simulation', icon: 'live_tv' },
-  { path: '/spectator/wallet', label: 'Wallet & Transactions', icon: 'account_balance_wallet' }
+  { path: '/jockey/races', label: 'Races', icon: 'sports_score' },
+  { path: '/jockey/invitations', label: 'Connections', icon: 'group' },
+  { path: '/jockey/financials', label: 'Financials', icon: 'account_balance_wallet' },
+  { path: '/jockey/profile', label: 'Profile', icon: 'person' },
+  { path: '/jockey/live', label: 'Live Racing', icon: 'live_tv' }
 ];
 
 function JockeyRoutesBridge() {
@@ -51,7 +51,9 @@ function JockeyRoutesBridge() {
         <Route path="dashboard" element={<JockeyDashboardContent />} />
         <Route path="races" element={<JockeyRacesContent />} />
         <Route path="invitations" element={<JockeyInvitationsContent />} />
+        <Route path="financials" element={<JockeyFinancialsContent />} />
         <Route path="profile" element={<JockeyProfileContent />} />
+        <Route path="live" element={<SpectatorLiveSimulationPage />} />
         {/* Catch-all fallback inside jockey route */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Routes>

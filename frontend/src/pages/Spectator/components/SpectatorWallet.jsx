@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getWalletBalanceAPI, depositAPI, withdrawAPI, getTransactionHistoryAPI } from '../../../services/wallet';
 import '../Spectator.css';
 
-export default function SpectatorWallet() {
+export default function SpectatorWallet({ hideHeader = false }) {
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState([]);
@@ -104,11 +104,13 @@ export default function SpectatorWallet() {
     <div className="container-fluid p-0 animate-fade-in" style={{ maxWidth: '1440px' }}>
       
       {/* Title */}
-      <div className="mb-4">
-        <span className="role-badge">SPECTATOR ROLE</span>
-        <h2 className="ho-font-epilogue fs-3 fw-bold text-dark mb-1">My Wallet & Transactions</h2>
-        <p className="text-secondary small">Manage your funds, make deposits via VietQR, or request cash withdrawals.</p>
-      </div>
+      {!hideHeader && (
+        <div className="mb-4">
+          <span className="role-badge">SPECTATOR ROLE</span>
+          <h2 className="ho-font-epilogue fs-3 fw-bold text-dark mb-1">My Wallet & Transactions</h2>
+          <p className="text-secondary small">Manage your funds, make deposits via VietQR, or request cash withdrawals.</p>
+        </div>
+      )}
 
       <div className="row g-4">
         
@@ -131,7 +133,7 @@ export default function SpectatorWallet() {
           </div>
 
           {/* Form Tabs: Deposit & Withdraw */}
-          <div className="glass-card">
+          <div className="glass-card flex-grow-1">
             <ul className="nav nav-pills mb-4 d-flex gap-2" id="pills-tab" role="tablist">
               <li className="nav-item flex-grow-1" role="presentation">
                 <button 
@@ -187,17 +189,27 @@ export default function SpectatorWallet() {
                   <div>
                     <label className="ho-input-label">Quick Select Amount</label>
                     <div className="d-flex flex-wrap gap-2">
-                      {[50000, 100000, 200000, 500000, 1000000].map(val => (
-                        <button 
-                          key={val} 
-                          type="button" 
-                          onClick={() => selectQuickAmount(val)}
-                          className="btn btn-sm btn-outline-success rounded-pill px-3"
-                          style={{ fontSize: '11.5px', fontWeight: '600' }}
-                        >
-                          {val.toLocaleString('en-US')}
-                        </button>
-                      ))}
+                      {[50000, 100000, 200000, 500000, 1000000].map(val => {
+                        const isSelected = depositAmount === val.toString();
+                        return (
+                          <button 
+                            key={val} 
+                            type="button" 
+                            onClick={() => selectQuickAmount(val)}
+                            className={`btn btn-sm rounded-pill px-3 ${isSelected ? 'shadow-sm' : ''}`}
+                            style={{ 
+                              fontSize: '11.5px', 
+                              fontWeight: '600',
+                              backgroundColor: isSelected ? 'var(--ho-accent-gold)' : 'transparent',
+                              color: isSelected ? '#fff' : 'var(--ho-accent-gold)',
+                              border: '1px solid var(--ho-accent-gold)',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            {val.toLocaleString('en-US')}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 

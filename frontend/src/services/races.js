@@ -5,15 +5,16 @@ import axiosClient from '../api/axiosClient';
  */
 
 const isMockMode = () => {
-  return false;
+  return localStorage.getItem('backend_online') !== 'true';
 };
 
 export async function getTournamentsAPI() {
   if (isMockMode()) {
     return [
-      { id: 1, tournamentName: "Spring Championship 2026", location: "Grand National Track", totalPrize: 5000000000, start_date: "2026-07-01", end_date: "2026-07-15", tournament_status: "Upcoming" },
-      { id: 2, tournamentName: "Royal Ascot Series 2026", location: "Ascot, Berkshire, UK", totalPrize: 8000000000, start_date: "2026-07-18", end_date: "2026-07-25", tournament_status: "OPEN_FOR_REGISTER" },
-      { id: 3, tournamentName: "Binh Duong International Championship 2026", location: "Dai Nam Racecourse, Binh Duong", totalPrize: 5000000000, start_date: "2026-08-15", end_date: "2026-08-20", tournament_status: "OPEN_FOR_REGISTER" }
+      { id: 1, tournamentName: "Spring Championship 2026", location: "Grand National Track", totalPrize: 5000000000, startDate: "2026-07-01", endDate: "2026-07-15", tournamentStatus: "UPCOMING" },
+      { id: 2, tournamentName: "Royal Ascot Series 2026", location: "Ascot, Berkshire, UK", totalPrize: 8000000000, startDate: "2026-07-18", endDate: "2026-07-25", tournamentStatus: "OPEN_FOR_REGISTER" },
+      { id: 3, tournamentName: "Binh Duong International Championship 2026", location: "Dai Nam Racecourse, Binh Duong", totalPrize: 5000000000, startDate: "2026-08-15", endDate: "2026-08-20", tournamentStatus: "ACTIVE" },
+      { id: 4, tournamentName: "Winter Classic Cup 2025", location: "Sapa Snow Track, Vietnam", totalPrize: 4000000000, startDate: "2025-12-01", endDate: "2025-12-10", tournamentStatus: "FINISHED" }
     ];
   }
 
@@ -39,7 +40,11 @@ export async function getTournamentRacesAPI(tournamentId) {
       ];
     } else if (tId === 3) {
       return [
-        { id: 301, raceName: "Dai Nam Sprint Cup", raceDate: "2026-08-15", startTime: "09:00:00", surfaceType: "Dirt", distance: 1200, status: "OPEN_FOR_REGISTER", raceTrackName: "Dai Nam Oval Track" }
+        { id: 301, raceName: "Dai Nam Sprint Cup", raceDate: "2026-08-15", startTime: "09:00:00", surfaceType: "Dirt", distance: 1200, status: "ACTIVE", raceTrackName: "Dai Nam Oval Track" }
+      ];
+    } else if (tId === 4) {
+      return [
+        { id: 401, raceName: "Winter Classic Final", raceDate: "2025-12-05", startTime: "10:00:00", surfaceType: "Dirt", distance: 1600, status: "FINISHED", raceTrackName: "Sapa Snow Track" }
       ];
     }
     return [];
@@ -86,7 +91,11 @@ export async function getRaceParticipantsAPI(raceId) {
     
     // Return a dummy horse owned by another owner so the user can register theirs
     return [
-      { id: 10002, horseId: 8881, horseName: "Golden Pegasus", jockeyId: 8882, jockeyName: "Lafitt Dettori", ownerName: "Tran The Anh", gateNumber: 3, status: "READY" }
+      { id: 10001, horseId: 8880, horseName: "Silver Comet", jockeyId: 8881, jockeyName: "William Buick", ownerName: "Nguyen Van A", gateNumber: 1, status: "READY" },
+      { id: 10002, horseId: 8881, horseName: "Golden Pegasus", jockeyId: 8882, jockeyName: "Lafitt Dettori", ownerName: "Tran The Anh", gateNumber: 3, status: "READY" },
+      { id: 10003, horseId: 8882, horseName: "Midnight Thunder", jockeyId: 8883, jockeyName: "Ryan Moore", ownerName: "Le Thi B", gateNumber: 4, status: "READY" },
+      { id: 10004, horseId: 8883, horseName: "Desert Storm", jockeyId: 8884, jockeyName: "Zac Purton", ownerName: "Pham Tuan C", gateNumber: 5, status: "READY" },
+      { id: 10005, horseId: 8884, horseName: "Ocean Breeze", jockeyId: 8885, jockeyName: "Joao Moreira", ownerName: "Hoang Minh D", gateNumber: 8, status: "READY" }
     ];
   }
 

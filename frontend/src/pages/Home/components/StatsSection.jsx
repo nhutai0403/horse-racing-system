@@ -3,21 +3,21 @@ import React from 'react';
 const stats = [
   {
     icon: '♔',
-    label: 'Live Races',
+    label: 'Giải Đua Trực Tiếp',
     value: '12',
-    note: '+4 from yesterday',
+    note: 'Tăng 4 so với hôm qua',
   },
   {
     icon: '▣',
-    label: 'Total Prize Pool',
+    label: 'Tổng Giá Trị Giải Thưởng',
     value: '$4.2M',
-    note: 'Worldwide contributions',
+    note: 'Đóng góp trên toàn cầu',
   },
   {
     icon: '□',
-    label: 'Active Horses',
+    label: 'Chiến Mã Đang Hoạt Động',
     value: '842',
-    note: 'Elite verified stables',
+    note: 'Thuộc hệ thống trang trại tinh hoa',
   },
 ];
 

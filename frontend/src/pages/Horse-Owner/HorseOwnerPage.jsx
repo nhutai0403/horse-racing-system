@@ -10,20 +10,20 @@ import StableContent from './StableContent';
 import RaceEntriesContent from './RaceEntriesContent';
 import ConnectionsContent from './ConnectionsContent';
 import FinancialsContent from './FinancialsContent';
-import AnalyticsContent from './AnalyticsContent';
 import ProfileContent from './ProfileContent';
 
+// Import Spectator components for Horse Owner integration
+import SpectatorTournaments from '../Spectator/components/SpectatorTournaments';
+import SpectatorLiveSimulationPage from '../Spectator/components/SpectatorLiveSimulationPage';
+import SpectatorWallet from '../Spectator/components/SpectatorWallet';
+
 const ownerNavLinks = [
-  { path: '/owner/home', label: 'Home', icon: 'home' },
   { path: '/owner/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { path: '/owner/stable', label: 'Stable', icon: 'bedroom_child' },
+  { path: '/owner/stable', label: 'Horses', icon: 'fence' },
   { path: '/owner/entries', label: 'Race Entries', icon: 'emoji_events' },
   { path: '/owner/friends', label: 'Connections', icon: 'group' },
-  { path: '/owner/financials', label: 'Financials', icon: 'payments' },
-  { path: '/owner/analytics', label: 'Analytics', icon: 'analytics' },
-  { path: '/spectator/tournaments', label: 'Betting', icon: 'local_atm' },
-  { path: '/spectator/live', label: 'Live Simulation', icon: 'live_tv' },
-  { path: '/spectator/wallet', label: 'Wallet & Transactions', icon: 'account_balance_wallet' }
+  { path: '/owner/financials', label: 'Financials', icon: 'account_balance_wallet' },
+  { path: '/owner/live', label: 'Live Racing', icon: 'stadium' }
 ];
 
 function HorseOwnerRoutesBridge() {
@@ -58,8 +58,9 @@ function HorseOwnerRoutesBridge() {
         <Route path="entries" element={<RaceEntriesContent />} />
         <Route path="friends" element={<ConnectionsContent />} />
         <Route path="financials" element={<FinancialsContent />} />
-        <Route path="analytics" element={<AnalyticsContent />} />
         <Route path="profile" element={<ProfileContent />} />
+        {/* Integrated spectator routes */}
+        <Route path="live" element={<SpectatorLiveSimulationPage />} />
       </Routes>
     </DashboardLayout>
   );

@@ -1,17 +1,14 @@
 import { useEffect } from 'react';
-import { useHorseOwner } from './HorseOwnerContext';
+import { useJockey } from './JockeyContext';
 import SpectatorWallet from '../Spectator/components/SpectatorWallet';
+import StatusBadge from '../../components/StatusBadge';
 
-export default function FinancialsContent() {
-  const { profile = {}, transactions = [], refreshData } = useHorseOwner();
+export default function JockeyFinancialsContent() {
+  const { profile = {}, transactions = [], refreshData } = useJockey();
 
   useEffect(() => {
-    if (refreshData) {
-      refreshData();
-    }
-
     const handleRefresh = () => {
-      if (refreshData) {
+      if (refreshData && document.visibilityState === 'visible') {
         refreshData();
       }
     };
@@ -23,77 +20,23 @@ export default function FinancialsContent() {
       window.removeEventListener('focus', handleRefresh);
       document.removeEventListener('visibilitychange', handleRefresh);
     };
-  }, [refreshData]);
+  }, []); // Empty array prevents infinite loop
 
   // Format currency to VND
   const formatVND = (value) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
   };
 
-  // Calculate dynamic stats
+  // Calculate dynamic stats for Jockey
   const totalWinnings = transactions
-    .filter(t => ['WINNINGS', 'PRIZE'].includes(t.type) && (!t.status || t.status === 'SUCCESS'))
+    .filter(t => ['EARNINGS', 'WINNINGS', 'PRIZE'].includes(t.type) && (!t.status || t.status === 'SUCCESS'))
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  const totalEntryFees = transactions
-    .filter(t => t.type === 'ENTRY_FEE' && (!t.status || t.status === 'SUCCESS'))
-    .reduce((sum, t) => sum + (t.amount || 0), 0);
+  const totalWithdrawals = transactions
+    .filter(t => t.type === 'WITHDRAWAL' && (!t.status || t.status === 'SUCCESS'))
+    .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
 
-  const netEarnings = totalWinnings + totalEntryFees;
-
-  // Columns for Transactions DataTable
-  const columns = [
-    {
-      key: 'date',
-      label: 'Date & Time',
-    },
-    {
-      key: 'horse',
-      label: 'Horse',
-      render: (item) => item.horse ? (
-        <span className="fw-bold text-dark">{item.horse}</span>
-      ) : (
-        <span className="text-muted">-</span>
-      )
-    },
-    {
-      key: 'event',
-      label: 'Event / Details',
-    },
-    {
-      key: 'type',
-      label: 'Type',
-      render: (item) => (
-        <StatusBadge status={item.type} />
-      )
-    },
-    {
-      key: 'amount',
-      label: 'Amount',
-      align: 'right',
-      render: (item) => {
-        const isPos = item.amount >= 0;
-        const isPending = item.status === 'PENDING';
-        const isFailed = item.status === 'FAILED' || item.status === 'CANCELLED';
-        
-        let colorClass = isPos ? 'text-success' : 'text-danger';
-        let decorationStyle = {};
-        
-        if (isPending) {
-          colorClass = 'text-warning';
-        } else if (isFailed) {
-          colorClass = 'text-muted';
-          decorationStyle = { textDecoration: 'line-through' };
-        }
-        
-        return (
-          <span className={`fw-bold ${colorClass}`} style={{ fontSize: '13px', ...decorationStyle }}>
-            {isPos && !isPending && !isFailed ? '+' : ''}{formatVND(item.amount)}
-          </span>
-        );
-      }
-    }
-  ];
+  const netEarnings = totalWinnings;
 
   return (
     <div className="container-fluid p-0 animate-fade-in" style={{ maxWidth: '1440px' }}>
@@ -117,7 +60,7 @@ export default function FinancialsContent() {
         <div className="col-12 col-sm-6 col-md-3">
           <div className="glass-card h-100 p-4">
             <h3 className="ho-font-grotesk text-uppercase fw-bold text-secondary mb-2" style={{ fontSize: '10px', letterSpacing: '0.05em' }}>
-              Total Winnings
+              Total Earnings
             </h3>
             <p className="ho-font-epilogue fs-4 fw-bold m-0 text-success">
               +{formatVND(totalWinnings)}
@@ -128,10 +71,10 @@ export default function FinancialsContent() {
         <div className="col-12 col-sm-6 col-md-3">
           <div className="glass-card h-100 p-4">
             <h3 className="ho-font-grotesk text-uppercase fw-bold text-secondary mb-2" style={{ fontSize: '10px', letterSpacing: '0.05em' }}>
-              Total Entry Fees
+              Total Withdrawals
             </h3>
             <p className="ho-font-epilogue fs-4 fw-bold m-0 text-danger">
-              {formatVND(totalEntryFees)}
+              -{formatVND(totalWithdrawals)}
             </p>
           </div>
         </div>
@@ -139,7 +82,7 @@ export default function FinancialsContent() {
         <div className="col-12 col-sm-6 col-md-3">
           <div className="glass-card h-100 p-4">
             <h3 className="ho-font-grotesk text-uppercase fw-bold text-secondary mb-2" style={{ fontSize: '10px', letterSpacing: '0.05em' }}>
-              Net Winnings
+              Net Earnings
             </h3>
             <p className="ho-font-epilogue fs-4 fw-bold m-0" style={{ color: 'var(--ho-accent-gold-text)' }}>
               {formatVND(netEarnings)}

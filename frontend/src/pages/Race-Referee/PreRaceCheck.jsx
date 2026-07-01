@@ -45,11 +45,11 @@ export default function PreRaceCheck() {
   };
 
   const columns = [
-    { key: 'horseName', label: 'Horse Name', render: (item) => <span className="fw-bold">{item.horseName}</span> },
-    { key: 'breed', label: 'Breed' },
-    { key: 'jockeyName', label: 'Jockey' },
-    { key: 'weight', label: 'Weight', render: (item) => `${item.weight} kg`, align: 'center' },
-    { key: 'raceName', label: 'Race' },
+    { key: 'horseName', label: 'Tên Ngựa', render: (item) => <span className="fw-bold" style={{ color: 'var(--ho-primary-dark)' }}>{item.horseName}</span> },
+    { key: 'breed', label: 'Giống' },
+    { key: 'jockeyName', label: 'Kỵ sĩ' },
+    { key: 'weight', label: 'Trọng lượng', render: (item) => `${item.weight} kg`, align: 'center' },
+    { key: 'raceName', label: 'Giải Đấu' },
     { 
       key: 'status', 
       label: 'Status', 
@@ -58,25 +58,25 @@ export default function PreRaceCheck() {
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: 'Hành Động',
       align: 'center',
       render: (item) => (
         <div className="d-flex justify-content-center gap-2">
           <button 
-            className="btn btn-sm btn-outline-success d-flex align-items-center gap-1"
+            className="ho-btn ho-btn-gold-solid d-flex align-items-center justify-content-center p-2"
             disabled={item.status !== 'PENDING_INSPECTION'}
             onClick={() => handleAction(item.id, 'approve')}
-            title="Approve"
+            title="Phê duyệt"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check</span>
           </button>
           <button 
-            className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
+            className="ho-btn ho-btn-outline-danger d-flex align-items-center justify-content-center p-2"
             disabled={item.status !== 'PENDING_INSPECTION'}
             onClick={() => handleAction(item.id, 'reject')}
-            title="Reject"
+            title="Từ chối"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
           </button>
         </div>
       )
@@ -87,15 +87,15 @@ export default function PreRaceCheck() {
     <>
       <div className="container-fluid p-0 animate-fade-in" style={{ maxWidth: '1440px' }}>
         <div className="mb-4">
-          <h2 className="ho-font-epilogue fs-3 fw-bold text-dark mb-1">Pre-Race Check</h2>
-          <p className="text-secondary small">Verify horses and jockeys conditions before allowing them into the race.</p>
+          <h2 className="ho-font-epilogue fs-3 fw-bold mb-1" style={{ color: 'var(--ho-primary-dark)' }}>Kiểm Tra Trước Trận</h2>
+          <p className="text-secondary small">Xác minh tình trạng thể lực và kỹ thuật của ngựa đua cùng kỵ sĩ trước khi cho phép thi đấu.</p>
         </div>
 
         <div className="glass-card">
           {loading ? (
-            <div className="p-4 text-secondary">Loading...</div>
+            <div className="p-4 text-secondary text-center">Đang tải dữ liệu...</div>
           ) : (
-            <DataTable columns={columns} data={horses} emptyMessage="No horses pending inspection." />
+            <DataTable columns={columns} data={horses} emptyMessage="Không có ngựa nào đang chờ kiểm duyệt." />
           )}
         </div>
       </div>

@@ -5,7 +5,7 @@ import axiosClient from '../api/axiosClient';
  */
 
 const isMockMode = () => {
-  return false;
+  return localStorage.getItem('backend_online') !== 'true';
 };
 
 export async function sendChatMessageAPI(message, image = null) {

@@ -17,8 +17,8 @@ export default function DataTable({ columns, data, emptyMessage = 'No data avail
 
   return (
     <div className="table-responsive">
-      <table className="table table-hover align-middle mb-0 border">
-        <thead className="table-light">
+      <table className="table table-hover align-middle mb-0" style={{ borderCollapse: 'collapse', border: 'none' }}>
+        <thead style={{ borderBottom: '2px solid rgba(0,0,0,0.06)' }}>
           <tr>
             {columns.map((col, index) => (
               <th 
@@ -39,6 +39,7 @@ export default function DataTable({ columns, data, emptyMessage = 'No data avail
                 <td 
                   key={colIndex} 
                   className={`py-3 ${col.align === 'right' ? 'text-end' : col.align === 'center' ? 'text-center' : 'text-start'}`}
+                  style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}
                 >
                   {col.render ? col.render(item) : item[col.key]}
                 </td>

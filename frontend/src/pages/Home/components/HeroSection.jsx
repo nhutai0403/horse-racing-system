@@ -10,23 +10,23 @@ export default function HeroSection() {
 
       <div className="hero-container-inner">
         <div className="hero-text-content">
-          <p className="hero-eyebrow">National track and league live dashboard</p>
+          <p className="hero-eyebrow">Hệ thống Bảng điều khiển Giải đấu và Đường đua Quốc gia</p>
           <h1 className="hero-title">
-            Experience the <span>Apex</span> of Equine Competition
+            Trải nghiệm <span>Đỉnh Cao</span> Đua Ngựa Chuyên Nghiệp
           </h1>
           <p className="hero-description">
-            Manage, track, and engage with the world's most exclusive horse racing tournaments in real-time. Where heritage meets high-performance technology.
+            Quản lý, theo dõi và tham gia các giải đua ngựa độc quyền nhất thế giới theo thời gian thực. Nơi di sản giao thoa cùng công nghệ tối tân.
           </p>
           <div className="hero-btn-group">
-            <button className="btn-primary-luxury" type="button">Watch Live Races</button>
-            <button className="btn-secondary-luxury" type="button">Join Tournament</button>
+            <button className="btn-primary-luxury" type="button">Xem Đua Trực Tiếp</button>
+            <button className="btn-secondary-luxury" type="button">Tham Gia Giải Đấu</button>
           </div>
         </div>
 
         <div className="track-preview-card" aria-label="Track preview countdown">
           <div className="track-card-header">
-            <span className="track-label">Track Preview: Royal Ascot</span>
-            <span className="live-status"><span className="pulse-dot" /> Live Rendering</span>
+            <span className="track-label">Đường Đua Sắp Tới: Royal Ascot</span>
+            <span className="live-status"><span className="pulse-dot" /> Mô phỏng 3D</span>
           </div>
           <div className="svg-track-container">
             <span className="track-ring ring-one" />
@@ -34,7 +34,7 @@ export default function HeroSection() {
             <span className="track-ring ring-three" />
             <div className="countdown-box">
               <div className="countdown-time">02:03:08</div>
-              <div className="countdown-sub">Next Match Starts In</div>
+              <div className="countdown-sub">Giải Tiếp Theo Bắt Đầu Sau</div>
             </div>
           </div>
         </div>

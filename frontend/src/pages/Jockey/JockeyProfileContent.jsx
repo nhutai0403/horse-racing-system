@@ -1,22 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useJockey } from './JockeyContext';
-import DataTable from '../../components/DataTable';
-import StatusBadge from '../../components/StatusBadge';
 import { updateJockeyProfileAPI } from '../../services/jockey';
-import { depositAPI, withdrawAPI } from '../../services/wallet';
 
 export default function JockeyProfileContent() {
   const navigate = useNavigate();
-  const { profile, setProfile, transactions, setTransactions, refreshData } = useJockey();
+  const { profile, setProfile, refreshData } = useJockey();
   
   useEffect(() => {
-    if (refreshData) {
-      refreshData();
-    }
-
     const handleRefresh = () => {
-      if (refreshData) {
+      if (refreshData && document.visibilityState === 'visible') {
         refreshData();
       }
     };
@@ -28,8 +21,7 @@ export default function JockeyProfileContent() {
       window.removeEventListener('focus', handleRefresh);
       document.removeEventListener('visibilitychange', handleRefresh);
     };
-  }, [refreshData]);
-  const [activeSubTab, setActiveSubTab] = useState('edit-profile'); // 'edit-profile' | 'wallet'
+  }, []); // Empty array prevents infinite loop
   
   // Profile form state
   const [formData, setFormData] = useState({
@@ -45,19 +37,6 @@ export default function JockeyProfileContent() {
     bankAccount: profile.bankAccount || '',
     description: profile.description || ''
   });
-
-  // Wallet actions state
-  const [amount, setAmount] = useState('');
-  
-  // Format currency to VND
-  const formatVND = (value) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-  };
-
-  const formatInputWithCommas = (val) => {
-    const clean = val.replace(/\D/g, '');
-    return clean.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
@@ -80,127 +59,18 @@ export default function JockeyProfileContent() {
     }
   };
 
-  const handleWalletAction = async (actionType) => {
-    const numericAmt = parseFloat(amount.replace(/,/g, ''));
-    if (isNaN(numericAmt) || numericAmt <= 0) {
-      alert("Vui lòng nhập số tiền hợp lệ.");
-      return;
-    }
-
-    if (actionType === 'WITHDRAW' && numericAmt > profile.walletBalance) {
-      alert("Số dư ví không đủ để thực hiện giao dịch rút tiền.");
-      return;
-    }
-
-    try {
-      if (actionType === 'DEPOSIT') {
-        const res = await depositAPI(numericAmt);
-        navigate('/payment-qr', {
-          state: {
-            amount: numericAmt,
-            qrCode: res.qrCode || '',
-            orderCode: res.orderCode || null,
-            checkoutUrl: res.checkoutUrl || '',
-            returnUrl: '/jockey/profile',
-            bankAccount: profile.bankAccount || '',
-          },
-        });
-      } else {
-        await withdrawAPI(numericAmt);
-        setProfile(prev => ({
-          ...prev,
-          walletBalance: prev.walletBalance - numericAmt
-        }));
-        const newTx = {
-          id: `TXJ_${Date.now()}`,
-          date: new Date().toISOString().replace('T', ' ').slice(0, 19),
-          type: 'WITHDRAWAL',
-          event: `Yêu cầu rút tiền về tài khoản ngân hàng liên kết`,
-          amount: -numericAmt
-        };
-        setTransactions(prev => [newTx, ...prev]);
-        alert('Gửi yêu cầu rút tiền thành công, vui lòng chờ Admin duyệt!');
-      }
-      setAmount('');
-    } catch (err) {
-      alert('Giao dịch ví thất bại: ' + err.message);
-    }
-  };
-
-  const transactionColumns = [
-    {
-      key: 'date',
-      label: 'Thời gian',
-      render: (item) => <span className="text-secondary small">{item.date}</span>
-    },
-    {
-      key: 'event',
-      label: 'Mô tả chi tiết',
-      render: (item) => <span className="text-dark fw-medium small">{item.event}</span>
-    },
-    {
-      key: 'type',
-      label: 'Phân loại',
-      render: (item) => <StatusBadge status={item.type} />
-    },
-    {
-      key: 'amount',
-      label: 'Giá trị (VND)',
-      align: 'right',
-      render: (item) => {
-        const isPos = item.amount >= 0;
-        const isPending = item.status === 'PENDING';
-        const isFailed = item.status === 'FAILED' || item.status === 'CANCELLED';
-        
-        let colorClass = isPos ? 'text-success' : 'text-danger';
-        let decorationStyle = {};
-        
-        if (isPending) {
-          colorClass = 'text-warning';
-        } else if (isFailed) {
-          colorClass = 'text-muted';
-          decorationStyle = { textDecoration: 'line-through' };
-        }
-        
-        return (
-          <span className={`fw-bold ${colorClass}`} style={{ fontSize: '13px', ...decorationStyle }}>
-            {isPos && !isPending && !isFailed ? '+' : ''}{formatVND(item.amount)}
-          </span>
-        );
-      }
-    }
-  ];
-
   return (
     <div className="container-fluid p-0 animate-fade-in" style={{ maxWidth: '1440px' }}>
       {/* Title */}
       <div className="d-flex justify-content-between align-items-end border-bottom pb-3 mb-4" style={{ borderColor: 'var(--ho-border-muted)' }}>
         <div>
           <h2 className="ho-font-epilogue fs-3 fw-bold mb-1" style={{ color: 'var(--ho-primary-dark)' }}>
-            Hồ sơ cá nhân & Ví thưởng
+            Hồ sơ Kỵ sĩ
           </h2>
           <p className="text-secondary small m-0">
-            Quản lý các thông số kỹ thuật của bạn và xem báo cáo tài chính từ giải đua.
+            Quản lý các thông số kỹ thuật, kỹ năng và thông tin liên lạc của bạn.
           </p>
         </div>
-      </div>
-
-      {/* Sub Tabs */}
-      <div className="d-flex gap-2 mb-4 border-bottom pb-2">
-        <button
-          onClick={() => setActiveSubTab('edit-profile')}
-          className={`ho-tab-btn ${activeSubTab === 'edit-profile' ? 'ho-tab-btn-active' : ''}`}
-          style={{ borderRadius: '30px' }}
-        >
-          Thông tin kỵ sĩ
-        </button>
-        <button
-          onClick={() => setActiveSubTab('wallet')}
-          className={`ho-tab-btn ${activeSubTab === 'wallet' ? 'ho-tab-btn-active' : ''}`}
-          style={{ borderRadius: '30px' }}
-        >
-          Ví tiền & Giao dịch
-        </button>
       </div>
 
       {/* Grid Layout */}
@@ -244,8 +114,6 @@ export default function JockeyProfileContent() {
 
         {/* Right column - Main view details */}
         <div className="col-12 col-lg-8">
-          {/* Subtab: Edit Profile Form */}
-          {activeSubTab === 'edit-profile' && (
             <div className="glass-card h-100">
               <h3 className="ho-font-epilogue fs-5 fw-bold mb-4" style={{ color: 'var(--ho-primary-dark)' }}>
                 Cập nhật thông tin chi tiết
@@ -364,60 +232,6 @@ export default function JockeyProfileContent() {
                 </div>
               </form>
             </div>
-          )}
-
-          {/* Subtab: Wallet & Financials Manager */}
-          {activeSubTab === 'wallet' && (
-            <div className="d-flex flex-column gap-4">
-              {/* Balance & Actions Card */}
-              <div className="glass-card" style={{ borderLeft: '4px solid var(--ho-accent-gold)' }}>
-                <div className="row g-4 align-items-center">
-                  <div className="col-12 col-md-5">
-                    <h3 className="ho-font-grotesk text-uppercase fw-bold text-secondary mb-1" style={{ fontSize: '11px', letterSpacing: '0.05em' }}>
-                      Số dư ví hiện tại
-                    </h3>
-                    <p className="ho-font-epilogue fs-2 fw-extrabold m-0 text-success">
-                      {formatVND(profile.walletBalance)}
-                    </p>
-                  </div>
-                  <div className="col-12 col-md-7 border-start border-light ps-md-4">
-                    <label className="ho-input-label ho-font-grotesk">Nhập số tiền giao dịch (VND)</label>
-                    <div className="d-flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Ví dụ: 10,000,000"
-                        className="ho-form-input text-dark fw-bold"
-                        value={amount}
-                        onChange={(e) => setAmount(formatInputWithCommas(e.target.value))}
-                      />
-                      <button
-                        onClick={() => handleWalletAction('DEPOSIT')}
-                        className="ho-btn ho-btn-gold-solid py-2 px-3 fw-bold text-nowrap"
-                        style={{ fontSize: '11px' }}
-                      >
-                        Nạp tiền
-                      </button>
-                      <button
-                        onClick={() => handleWalletAction('WITHDRAW')}
-                        className="ho-btn ho-btn-dark-green py-2 px-3 fw-bold text-nowrap"
-                        style={{ fontSize: '11px' }}
-                      >
-                        Rút tiền
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Transactions Log */}
-              <div className="glass-card">
-                <h3 className="ho-font-epilogue fs-5 fw-bold mb-4" style={{ color: 'var(--ho-primary-dark)' }}>
-                  Lịch sử giao dịch ví thưởng
-                </h3>
-                <DataTable columns={transactionColumns} data={transactions} emptyMessage="Chưa phát sinh giao dịch nào." />
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

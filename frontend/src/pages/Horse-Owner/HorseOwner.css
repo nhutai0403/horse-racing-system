@@ -191,12 +191,15 @@
 }
 
 .badge-custom {
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  padding: 0.125rem 0.5rem;
+  padding: 0.25rem 0.5rem;
+  min-width: 90px;
   border-radius: 9999px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 /* Custom Buttons */

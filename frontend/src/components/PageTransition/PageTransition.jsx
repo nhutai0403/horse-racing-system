@@ -44,6 +44,19 @@ const PageTransition = ({ children, initialLoading = false }) => {
     if (initialLoading) return;
 
     if (location.pathname !== prevPathRef.current) {
+      // Check if both previous and new path are within the same dashboard layout
+      const isOwnerRoute = (path) => path.startsWith('/owner');
+      const isJockeyRoute = (path) => path.startsWith('/jockey');
+      
+      if (
+        (isOwnerRoute(location.pathname) && isOwnerRoute(prevPathRef.current)) ||
+        (isJockeyRoute(location.pathname) && isJockeyRoute(prevPathRef.current))
+      ) {
+        // Skip transition animation for internal dashboard navigation
+        prevPathRef.current = location.pathname;
+        return;
+      }
+
       setTransitionState('closing');
       prevPathRef.current = location.pathname;
     }

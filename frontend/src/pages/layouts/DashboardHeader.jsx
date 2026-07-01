@@ -234,17 +234,41 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
 
         {/* Desktop Navigation Links */}
         <div className="d-none d-xl-flex align-items-center gap-2 flex-grow-1 justify-content-center mx-4">
-          {navLinks && navLinks.map((link) => (
-            <NavLink
-              key={link.path}
-              to={link.path}
-              className={({ isActive }) => 
-                `nav-link-horizontal ${isActive ? 'nav-link-horizontal-active' : 'nav-link-horizontal-inactive'}`
-              }
-            >
-              {link.icon && <span className="material-symbols-outlined me-1 fs-6">{link.icon}</span>}
-              {link.label}
-            </NavLink>
+          {navLinks && navLinks.map((link, idx) => (
+            link.subLinks ? (
+              <div className="nav-dropdown-container position-relative" key={link.label || idx}>
+                <div className="nav-link-horizontal nav-link-horizontal-inactive cursor-pointer d-flex align-items-center">
+                  {link.icon && <span className="material-symbols-outlined me-1 fs-6">{link.icon}</span>}
+                  {link.label}
+                  <span className="material-symbols-outlined ms-1" style={{ fontSize: '18px' }}>expand_more</span>
+                </div>
+                <div className="nav-dropdown-menu">
+                  {link.subLinks.map(sub => (
+                    <NavLink
+                      key={sub.path}
+                      to={sub.path}
+                      className={({ isActive }) => 
+                        `nav-dropdown-item ${isActive ? 'nav-dropdown-item-active' : ''}`
+                      }
+                    >
+                      {sub.icon && <span className="material-symbols-outlined me-2 fs-6">{sub.icon}</span>}
+                      {sub.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                className={({ isActive }) => 
+                  `nav-link-horizontal ${isActive ? 'nav-link-horizontal-active' : 'nav-link-horizontal-inactive'}`
+                }
+              >
+                {link.icon && <span className="material-symbols-outlined me-1 fs-6">{link.icon}</span>}
+                {link.label}
+              </NavLink>
+            )
           ))}
         </div>
 
@@ -380,19 +404,44 @@ export default function DashboardHeader({ user, profile, navLinks, logout }) {
       {mobileMenuOpen && (
         <div className="mobile-nav-menu d-xl-none w-100 position-absolute bg-white shadow border-top py-2 px-3 ho-font-grotesk" style={{ left: 0, top: '100%', zIndex: 1000 }}>
           <div className="d-flex flex-column gap-2">
-            {navLinks && navLinks.map((link) => (
-              <NavLink
-                key={link.path}
-                to={link.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={({ isActive }) => 
-                  `mobile-nav-link p-2 rounded d-flex align-items-center ${isActive ? 'bg-warning text-dark fw-bold' : 'text-dark'}`
-                }
-                style={{ textDecoration: 'none' }}
-              >
-                {link.icon && <span className="material-symbols-outlined me-2 fs-5">{link.icon}</span>}
-                {link.label}
-              </NavLink>
+            {navLinks && navLinks.map((link, idx) => (
+              link.subLinks ? (
+                <div key={link.label || idx} className="d-flex flex-column gap-1">
+                  <div className="p-2 rounded d-flex align-items-center text-dark fw-bold" style={{ backgroundColor: 'rgba(0,0,0,0.03)' }}>
+                    {link.icon && <span className="material-symbols-outlined me-2 fs-5 text-secondary">{link.icon}</span>}
+                    {link.label}
+                  </div>
+                  <div className="d-flex flex-column gap-1 ps-4 border-start border-2 ms-2" style={{ borderColor: 'var(--ho-accent-gold) !important' }}>
+                    {link.subLinks.map(sub => (
+                      <NavLink
+                        key={sub.path}
+                        to={sub.path}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={({ isActive }) => 
+                          `mobile-nav-link p-2 rounded d-flex align-items-center ${isActive ? 'bg-warning text-dark fw-bold' : 'text-dark'}`
+                        }
+                        style={{ textDecoration: 'none', fontSize: '0.9rem' }}
+                      >
+                        {sub.icon && <span className="material-symbols-outlined me-2" style={{fontSize: '18px'}}>{sub.icon}</span>}
+                        {sub.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <NavLink
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) => 
+                    `mobile-nav-link p-2 rounded d-flex align-items-center ${isActive ? 'bg-warning text-dark fw-bold' : 'text-dark'}`
+                  }
+                  style={{ textDecoration: 'none' }}
+                >
+                  {link.icon && <span className="material-symbols-outlined me-2 fs-5">{link.icon}</span>}
+                  {link.label}
+                </NavLink>
+              )
             ))}
             <hr className="my-2" />
             <button 

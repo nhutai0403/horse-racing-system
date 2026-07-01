@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import DashboardHeader from './DashboardHeader';
 import AdminHeader from './AdminHeader';
@@ -11,8 +11,10 @@ import logo from '../../assets/logo.png';
 export default function DashboardLayout({ navLinks, profile, children }) {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const isAdmin = user?.role === 'ADMIN';
+  const isHomePage = location.pathname.endsWith('/home') || location.pathname === '/';
 
   if (isAdmin) {
     return (
@@ -68,7 +70,7 @@ export default function DashboardLayout({ navLinks, profile, children }) {
 
           {/* Right side container: Main Content + Footer */}
           <div className="d-flex flex-column flex-grow-1 position-relative" style={{ overflowX: 'hidden', minHeight: 'calc(100vh - 80px)' }}>
-            <main className="flex-grow-1 p-4 p-md-5" style={{ overflowX: 'hidden' }}>
+            <main className={`flex-grow-1 ${isHomePage ? 'p-0' : 'p-4 p-md-5'}`} style={{ overflowX: 'hidden' }}>
               {children || <Outlet />}
             </main>
 
@@ -91,7 +93,7 @@ export default function DashboardLayout({ navLinks, profile, children }) {
 
       <div className="d-flex flex-grow-1 w-100 position-relative">
         {/* Main content body */}
-        <main className="flex-grow-1 p-4 p-md-5" style={{ minHeight: 'calc(100vh - 80px)', overflowX: 'hidden' }}>
+        <main className={`flex-grow-1 ${isHomePage ? 'p-0' : 'p-4 p-md-5'}`} style={{ minHeight: 'calc(100vh - 80px)', overflowX: 'hidden' }}>
           {children || <Outlet />}
         </main>
       </div>

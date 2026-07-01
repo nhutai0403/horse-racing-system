@@ -19,7 +19,7 @@ export default function StatusBadge({ status, customClass = '', iconOnly = false
     bgColor = 'rgba(239, 68, 68, 0.15)'; // Red
     color = '#b91c1c';
     icon = 'error';
-  } else if (normalizedStatus.includes('TRAINING') || normalizedStatus === 'PENDING' || normalizedStatus === 'PENDING_SENT') {
+  } else if (normalizedStatus.includes('TRAINING') || normalizedStatus.includes('PENDING')) {
     bgColor = 'rgba(245, 158, 11, 0.15)'; // Orange
     color = '#b45309';
     icon = 'sync';

@@ -1,7 +1,7 @@
 import axiosClient from '../api/axiosClient';
 
 const isMockMode = () => {
-  return false;
+  return localStorage.getItem('backend_online') !== 'true';
 };
 
 // LocalStorage Helper Keys

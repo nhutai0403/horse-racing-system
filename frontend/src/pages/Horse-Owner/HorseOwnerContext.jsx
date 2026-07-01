@@ -237,7 +237,7 @@ export function HorseOwnerProvider({ children }) {
       }
 
       // Load Race History
-      setRaceHistory([]);
+      setRaceHistory(initialRaceHistory);
     } catch (error) {
       console.error('Lỗi khi tải dữ liệu chủ ngựa:', error);
     } finally {

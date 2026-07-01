@@ -6,7 +6,7 @@ import { initialJockeyDirectory } from '../pages/Jockey/mockData';
  */
 
 const isMockMode = () => {
-  return false;
+  return localStorage.getItem('backend_online') !== 'true';
 };
 
 const getMockDirectory = () => {

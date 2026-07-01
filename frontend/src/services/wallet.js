@@ -3,7 +3,7 @@ import { initialJockeyTransactions } from '../pages/Jockey/mockData';
 import { initialTransactions } from '../pages/Horse-Owner/mockData';
 
 const isMockMode = () => {
-  return false;
+  return localStorage.getItem('backend_online') !== 'true';
 };
 
 const getUserRole = () => {
