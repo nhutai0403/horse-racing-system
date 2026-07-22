@@ -8,7 +8,8 @@ import {
   createTournamentAPI,
   updateTournamentAPI,
   updateTournamentStatusAPI,
-  deleteTournamentAPI
+  deleteTournamentAPI,
+  confirmRaceRegistrationsAPI
 } from '../../../services/admin';
 import axiosClient from '../../../api/axiosClient';
 import { FaPlus, FaEdit, FaTrash, FaTrophy, FaCalendarAlt, FaMapMarkerAlt, FaDollarSign, FaInfoCircle, FaCheckCircle } from 'react-icons/fa';
@@ -314,6 +315,25 @@ export default function TournamentsPanel() {
       fetchData();
     } catch (err) {
       setError(err.message || 'Lỗi khi cập nhật trạng thái.');
+    }
+  };
+
+  // Confirm / Lock registrations list for a tournament
+  const handleConfirmRegistration = async (tournamentId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn chốt danh sách thi đấu cho giải đấu này? Thao tác này sẽ khóa đăng ký, chuyển trạng thái vòng đua sang LOCKED_LIST và hoàn lại lệ phí cho các đơn chưa được duyệt.")) {
+      return;
+    }
+    setError('');
+    setSuccess('');
+    try {
+      setLoading(true);
+      const res = await confirmRaceRegistrationsAPI(tournamentId);
+      setSuccess(res.message || 'Chốt danh sách giải đấu thành công! Trận đấu đã chuyển sang trạng thái sẵn sàng đua (LOCKED_LIST).');
+      fetchData();
+    } catch (err) {
+      setError(err.message || 'Lỗi khi chốt danh sách thi đấu.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1113,6 +1133,23 @@ export default function TournamentsPanel() {
                     <option value="Finished">Finished (Completed)</option>
                     <option value="Cancelled">Cancelled</option>
                   </select>
+
+                  {t.tournamentStatus === 'Active' && (
+                    <button
+                      onClick={() => handleConfirmRegistration(t.id)}
+                      className="btn btn-warning btn-sm fw-bold text-dark"
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '11px',
+                        borderRadius: '8px',
+                        border: '1px solid #D4AF37',
+                        whiteSpace: 'nowrap'
+                      }}
+                      title="Chốt danh sách đăng ký và chuyển sang LOCKED_LIST để trọng tài chuẩn bị trận đấu"
+                    >
+                      Chốt danh sách
+                    </button>
+                  )}
 
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button

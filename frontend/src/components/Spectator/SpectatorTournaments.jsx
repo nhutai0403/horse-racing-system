@@ -188,10 +188,7 @@ export default function SpectatorTournaments() {
     ? myBets.filter(b => b.raceId === selectedRace.id || b.raceId === parseInt(selectedRace.id))
     : [];
 
-  const isBettingClosed = !selectedRace || (() => {
-    const t = tournaments.find(x => x.id === expandedTournament);
-    return t?.tournamentStatus !== 'OPEN_FOR_REGISTER';
-  })();
+  const isBettingClosed = !selectedRace || selectedRace.status !== 'LOCKED_LIST';
 
   // If active simulation is set, render the simulator directly
   if (activeSimulationRace) {

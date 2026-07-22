@@ -8,6 +8,7 @@ services:
       SA_PASSWORD: "${SA_PASSWORD:-HorseRacing@123}"
       ACCEPT_EULA: "Y"
       MSSQL_PID: "Developer"
+      TZ: "Asia/Ho_Chi_Minh"
     ports:
       - "1433:1433"
     volumes:
@@ -73,6 +74,7 @@ services:
       APP_ACTIVATION_URL: "${APP_ACTIVATION_URL:-http://localhost:5173/verify-email}"
       CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}"
       DDL_AUTO: "${DDL_AUTO:-update}"
+      TZ: "Asia/Ho_Chi_Minh"
     depends_on:
       db:
         condition: service_healthy
